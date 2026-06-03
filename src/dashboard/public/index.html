@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>KARYASTHAN // SECTOR-7</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/style.css">
+<script src="/pages.js" defer></script>
+<script src="/app.js" defer></script>
+</head>
+<body>
+
+<div class="scanlines"></div>
+<div class="vignette"></div>
+
+<div class="app" id="app">
+
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-row">
+        <div class="brand-mark">K</div>
+        <div>
+          <div class="brand-name glitch" data-text="KARYASTHAN">KARYASTHAN</div>
+          <div class="mono" style="font-size:9px;color:var(--ink-4);letter-spacing:0.18em;margin-top:2px;">PANOPTICON · v1.0.0</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-section-title">// Surveillance</div>
+      <a class="nav-link" data-page="status" href="#status"><span class="idx mono">01</span><span class="nav-dot"></span>STATUS</a>
+      <a class="nav-link" data-page="groups" href="#groups"><span class="idx mono">02</span><span class="nav-dot"></span>Groups</a>
+      <a class="nav-link" data-page="people" href="#people"><span class="idx mono">03</span><span class="nav-dot"></span>People</a>
+      <a class="nav-link" data-page="memories" href="#memories"><span class="idx mono">04</span><span class="nav-dot"></span>Memories</a>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-section-title">// Cognition</div>
+      <a class="nav-link" data-page="decisions" href="#decisions"><span class="idx mono">05</span><span class="nav-dot"></span>Decisions</a>
+      <a class="nav-link" data-page="messages" href="#messages"><span class="idx mono">06</span><span class="nav-dot"></span>Search</a>
+      <a class="nav-link" data-page="bills" href="#bills"><span class="idx mono">07</span><span class="nav-dot"></span>Bills</a>
+      <a class="nav-link" data-page="logs" href="#logs"><span class="idx mono">08</span><span class="nav-dot"></span>Live Logs</a>
+    </div>
+
+    <div class="nav-section">
+      <div class="nav-section-title">// Control</div>
+      <a class="nav-link" data-page="settings" href="#settings"><span class="idx mono">09</span><span class="nav-dot"></span>Settings</a>
+      <a class="nav-link" data-page="identity" href="#identity"><span class="idx mono">10</span><span class="nav-dot"></span>Identity</a>
+      <a class="nav-link" data-page="skills" href="#skills"><span class="idx mono">11</span><span class="nav-dot"></span>Skills</a>
+      <a class="nav-link" data-page="audit" href="#audit"><span class="idx mono">12</span><span class="nav-dot"></span>Audit</a>
+    </div>
+
+    <div class="sidebar-foot">
+      <div>UPLINK <span class="dot-live"></span> <span class="ip" id="uplinkIp">—</span></div>
+      <div style="margin-top:6px;">TUNNEL · TS-MESH · ENCRYPTED</div>
+      <div style="margin-top:6px;color:var(--ink-4);">// monitored. always.</div>
+    </div>
+  </aside>
+
+  <main class="main">
+
+    <div class="topbar">
+      <div class="topbar-left">
+        <button class="menu-toggle" id="menuToggle" type="button">≡ MENU</button>
+        <div class="topbar-cell active hide-mobile" id="liveCell"><span class="dot-live"></span>LIVE</div>
+        <div class="topbar-cell hide-mobile">CHAN <b id="topChan">WA</b></div>
+        <div class="topbar-cell hide-mobile">UPTIME <b id="topUptime">—</b></div>
+        <div class="topbar-cell hide-mobile">RATE <b id="topRate">—</b></div>
+      </div>
+      <div class="ticker-box">
+        <div class="ticker-track" id="tickerTrack">
+          <span>▸ BOOTING…</span>
+        </div>
+      </div>
+      <div class="topbar-right">
+        <div class="topbar-cell hide-mobile mono">FRAME <b id="frameNo">000000</b></div>
+        <div class="topbar-cell hide-mobile mono"><span id="clockLocal">—</span> IST</div>
+      </div>
+    </div>
+
+    <div class="content" id="content">
+      <div class="loading">INITIALISING</div>
+    </div>
+  </main>
+</div>
+
+</body>
+</html>

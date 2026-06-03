@@ -1,0 +1,27 @@
+{
+  "seed_terms": {
+    "makkale": "guys/folks (affectionate address)",
+    "machane": "bro/dude",
+    "pwoli": "awesome/cool",
+    "adipoli": "super/amazing",
+    "kidu": "awesome",
+    "sathyam": "truth/seriously",
+    "kashtam": "tough/sad",
+    "katta": "strong/intense",
+    "pani kitti": "got screwed/got punished",
+    "scene illa": "no chance/not happening",
+    "kure": "a lot/many",
+    "vedi": "fun/blast",
+    "mass": "cool/stylish",
+    "theri": "scolding/cursing"
+  },
+  "reactions": {
+    "funny": ["💀", "😂", "🤣", "😭"],
+    "impressive": ["🔥", "👑", "💪", "🫡"],
+    "suspicious": ["🤨", "👀", "🧐"],
+    "bs": ["🤡", "🧢", "😐", "🙄"],
+    "agree": ["💯", "🙌", "👆", "✅"],
+    "love": ["❤️", "🤝", "🫂"],
+    "scared": ["😰", "🥺", "😅"]
+  }
+}

@@ -1,0 +1,39 @@
+# Copy to /etc/systemd/system/karyasthan.service
+# Then: sudo systemctl daemon-reload && sudo systemctl enable --now karyasthan
+#
+# EDIT THESE TO MATCH YOUR INSTALL before enabling:
+#   - User=/Group=    the unix account that owns the install
+#   - the /opt/karyasthan paths below (ExecStart, WorkingDirectory, HOME, ReadWritePaths)
+#   - the node path in ExecStart (run `which node`)
+
+[Unit]
+Description=Karyasthan WhatsApp Agent
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=karyasthan
+Group=karyasthan
+ExecStart=/usr/bin/node /opt/karyasthan/src/index.js
+WorkingDirectory=/opt/karyasthan
+Restart=always
+RestartSec=10
+TimeoutStopSec=30
+
+# Environment
+Environment=HOME=/opt/karyasthan
+Environment=NODE_ENV=production
+
+# Security hardening
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/opt/karyasthan
+PrivateTmp=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+
+[Install]
+WantedBy=multi-user.target
