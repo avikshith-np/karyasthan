@@ -6,14 +6,22 @@
 // built-ins (plus bcryptjs, an existing project dependency, for the optional
 // dashboard password hash). Invoked via `npm run setup` and by install.sh.
 //
-//   STEP 0  preflight (Node >= 20, resolve project root)
-//   STEP 1  .env       create from .env.example, prompt for the essentials
+// INPUT SOURCE: under `curl | bash` the process's stdin is the piped installer
+// script, not the user — so when stdin isn't a TTY we read the controlling
+// terminal (/dev/tty) instead. That's what makes the one-line installer prompt.
+//
+// NON-INTERACTIVE: pass `--non-interactive`/`-y` or set KARYASTHAN_NONINTERACTIVE=1
+// to configure everything from environment variables (no prompts, pairing
+// skipped) — for Docker/CI/headless installs.
+//
+//   STEP 0  preflight (Node >= 20, resolve project root, pick input)
+//   STEP 1  .env       create from .env.example, prompt/env for the essentials
 //   STEP 2  persona    build persona.json + render identity.md from template
 //   STEP 3  database   run migrations
 //   STEP 4  pairing    optionally launch the WhatsApp pairing flow
 
 import readline from 'node:readline/promises';
-import { stdin as input, stdout as output } from 'node:process';
+import tty from 'node:tty';
 import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
@@ -21,6 +29,7 @@ import { spawn } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const output = process.stdout;
 
 // --------------------------------------------------------------------------
 // STEP 0 — Preflight
@@ -44,10 +53,43 @@ const PERSONA_PATH = path.join(PERSONALITY_DIR, 'persona.json');
 const IDENTITY_PATH = path.join(PERSONALITY_DIR, 'identity.md');
 const IDENTITY_TEMPLATE_PATH = path.join(PERSONALITY_DIR, 'identity.template.md');
 
-const rl = readline.createInterface({ input, output });
+// --- Mode + input source ---------------------------------------------------
+const argv = process.argv.slice(2);
+const NON_INTERACTIVE =
+  argv.includes('--non-interactive') ||
+  argv.includes('-y') ||
+  argv.includes('--yes') ||
+  process.env.KARYASTHAN_NONINTERACTIVE === '1';
+
+// When interactive but stdin isn't a TTY (the `curl | bash` case), read the
+// controlling terminal so prompts reach the USER, not the piped script.
+let input = process.stdin;
+let ttyFd = null;
+if (!NON_INTERACTIVE && !process.stdin.isTTY) {
+  try {
+    ttyFd = fs.openSync('/dev/tty', 'r');
+    input = new tty.ReadStream(ttyFd);
+  } catch {
+    input = process.stdin; // no controlling terminal available
+  }
+}
+const HAS_TTY = Boolean(input.isTTY);
+
+// Only build a readline interface when we'll actually prompt.
+const rl = NON_INTERACTIVE ? null : readline.createInterface({ input, output });
+
+function cleanup() {
+  try { rl?.close(); } catch { /* noop */ }
+  try { if (ttyFd != null) input.destroy(); } catch { /* noop */ } // closes the /dev/tty fd
+}
+
+const envOr = (key, def = '') => {
+  const v = process.env[key];
+  return v == null || v === '' ? def : v;
+};
 
 // --------------------------------------------------------------------------
-// Small prompt helpers
+// Small prompt helpers (interactive only)
 // --------------------------------------------------------------------------
 
 /** Ask a question, returning the trimmed answer (or `def` on blank input). */
@@ -181,6 +223,51 @@ function applyEnvUpdates(body, updates) {
   return result;
 }
 
+/** Render identity.md from the template + a persona object. Returns true on write. */
+function renderIdentityFromTemplate(persona) {
+  if (!fs.existsSync(IDENTITY_TEMPLATE_PATH)) {
+    console.log('  ! identity.template.md not found — cannot render identity.md.');
+    return false;
+  }
+  const template = fs.readFileSync(IDENTITY_TEMPLATE_PATH, 'utf-8');
+  const rendered = template
+    .replaceAll('{{NAME}}', persona.name)
+    .replaceAll('{{AGE}}', persona.age == null ? '' : String(persona.age))
+    .replaceAll('{{REGION}}', persona.region || '')
+    .replaceAll('{{LANGUAGE}}', persona.language || 'English')
+    .replaceAll('{{VIBE}}', persona.vibe || '');
+  fs.writeFileSync(IDENTITY_PATH, rendered);
+  console.log(`  Rendered ${path.relative(PROJECT_ROOT, IDENTITY_PATH)}`);
+  return true;
+}
+
+/** Build a persona object from env vars (non-interactive mode). */
+function personaFromEnv() {
+  const name = envOr('KARYASTHAN_NAME', 'Sam');
+  const nameLower = name.toLowerCase();
+  let aliases = envOr('KARYASTHAN_ALIASES', nameLower)
+    .split(',')
+    .map((s) => s.toLowerCase().trim())
+    .filter(Boolean);
+  if (!aliases.includes(nameLower)) aliases = [nameLower, ...aliases];
+  aliases = [...new Set(aliases)];
+
+  const ageRaw = envOr('KARYASTHAN_AGE', '');
+  const ageNum = ageRaw === '' ? null : Number(ageRaw);
+  const region = envOr('KARYASTHAN_REGION', '');
+
+  return {
+    name,
+    displayName: name,
+    aliases,
+    age: Number.isFinite(ageNum) ? ageNum : null,
+    region,
+    language: envOr('KARYASTHAN_LANGUAGE', 'English'),
+    voiceDescriptor: envOr('KARYASTHAN_VOICE', `a young adult from ${region || 'somewhere'} speaking casually to friends`),
+    vibe: envOr('KARYASTHAN_VIBE', 'warm, witty, a real friend not an assistant'),
+  };
+}
+
 // --------------------------------------------------------------------------
 // Steps
 // --------------------------------------------------------------------------
@@ -211,9 +298,27 @@ async function stepEnv() {
   const current = parseEnv(body);
   const updates = {};
 
-  // Helper: only prompt when the key is currently missing/empty.
+  // Helper: only set when the key is currently missing/empty.
   const isSet = (k) => current[k] !== undefined && current[k] !== '';
 
+  // ----- Non-interactive: take values from the environment, no prompts -----
+  // Explicit env vars win; otherwise only fill what's currently empty.
+  if (NON_INTERACTIVE) {
+    const provider = (process.env.LLM_PROVIDER || current.LLM_PROVIDER || 'gemini').toLowerCase();
+    if (process.env.LLM_PROVIDER || !isSet('LLM_PROVIDER')) updates.LLM_PROVIDER = provider;
+    const keyName = API_KEY_FOR_PROVIDER[provider];
+    if (keyName && process.env[keyName]) updates[keyName] = process.env[keyName];
+    if (process.env.WA_PHONE_NUMBER) updates.WA_PHONE_NUMBER = process.env.WA_PHONE_NUMBER;
+    if (Object.keys(updates).length > 0) {
+      fs.writeFileSync(ENV_PATH, applyEnvUpdates(body, updates));
+      console.log(`  Saved ${Object.keys(updates).length} setting(s) from environment.`);
+    } else {
+      console.log('  No environment overrides provided for .env.');
+    }
+    return;
+  }
+
+  // ----- Interactive prompts -----
   // --- LLM provider ---
   let provider = current.LLM_PROVIDER;
   if (!isSet('LLM_PROVIDER')) {
@@ -316,6 +421,30 @@ async function stepEnv() {
 
 async function stepPersona() {
   console.log('\n── Step 2/4 · Persona ──────────────────────────────────────\n');
+
+  // ----- Non-interactive: build persona.json from env, render identity -----
+  if (NON_INTERACTIVE) {
+    let persona;
+    if (fs.existsSync(PERSONA_PATH)) {
+      console.log('  persona.json already exists — keeping it.');
+      try {
+        persona = JSON.parse(fs.readFileSync(PERSONA_PATH, 'utf-8'));
+      } catch (err) {
+        console.log(`  ! Could not read existing persona.json (${err.message}). Skipping identity render.`);
+        return;
+      }
+    } else {
+      persona = personaFromEnv();
+      fs.mkdirSync(PERSONALITY_DIR, { recursive: true });
+      fs.writeFileSync(PERSONA_PATH, JSON.stringify(persona, null, 2) + '\n');
+      console.log(`  Wrote ${path.relative(PROJECT_ROOT, PERSONA_PATH)} (from environment)`);
+    }
+    if (!fs.existsSync(IDENTITY_PATH)) renderIdentityFromTemplate(persona);
+    else console.log('  identity.md already exists — keeping it.');
+    return;
+  }
+
+  // ----- Interactive -----
   console.log("  Let's give your bot an identity. It will answer to a name, have a");
   console.log('  vibe, and speak in a language/region of your choosing.\n');
 
@@ -387,29 +516,13 @@ async function stepPersona() {
     }
   }
 
-  // Render identity.md from the template.
-  if (!fs.existsSync(IDENTITY_TEMPLATE_PATH)) {
-    console.log('  ! identity.template.md not found — cannot render identity.md.');
-    return;
-  }
-
+  // Render identity.md from the template (confirm before overwriting).
   let writeIdentity = true;
   if (fs.existsSync(IDENTITY_PATH)) {
     writeIdentity = await confirm('identity.md already exists — overwrite?', false);
     if (!writeIdentity) console.log('  Keeping existing identity.md.');
   }
-
-  if (writeIdentity) {
-    const template = fs.readFileSync(IDENTITY_TEMPLATE_PATH, 'utf-8');
-    const rendered = template
-      .replaceAll('{{NAME}}', persona.name)
-      .replaceAll('{{AGE}}', persona.age == null ? '' : String(persona.age))
-      .replaceAll('{{REGION}}', persona.region || '')
-      .replaceAll('{{LANGUAGE}}', persona.language || 'English')
-      .replaceAll('{{VIBE}}', persona.vibe || '');
-    fs.writeFileSync(IDENTITY_PATH, rendered);
-    console.log(`  Rendered ${path.relative(PROJECT_ROOT, IDENTITY_PATH)}`);
-  }
+  if (writeIdentity) renderIdentityFromTemplate(persona);
 }
 
 async function stepDatabase() {
@@ -430,11 +543,8 @@ async function stepDatabase() {
 
 async function stepPairing() {
   console.log('\n── Step 4/4 · WhatsApp pairing ─────────────────────────────\n');
-  console.log('  Pairing links this bot to a WhatsApp account via a one-time code.');
-  console.log('  pair.js reads the phone number from its first CLI argument,');
-  console.log('  e.g.  node scripts/pair.js 919876543210\n');
 
-  // Try to surface the configured phone number for convenience.
+  // Surface the configured phone number for the helper command.
   let phone = '';
   try {
     if (fs.existsSync(ENV_PATH)) {
@@ -443,22 +553,31 @@ async function stepPairing() {
   } catch {
     phone = '';
   }
-
-  const wantPair = await confirm('Pair WhatsApp now?', false);
   const cmd = phone ? `node scripts/pair.js ${phone}` : 'node scripts/pair.js <your-number>';
 
+  if (NON_INTERACTIVE) {
+    console.log('  Skipping pairing (non-interactive mode).');
+    console.log(`  Pair later with:  ${cmd}`);
+    return;
+  }
+
+  console.log('  Pairing links this bot to a WhatsApp account via a one-time code.\n');
+
+  const wantPair = await confirm('Pair WhatsApp now?', false);
   if (!wantPair) {
     console.log(`\n  When you're ready, run:\n    ${cmd}\n`);
     return;
   }
 
-  // Hand the terminal over to the pairing script.
+  // Hand the terminal over to the pairing script. Pass the controlling
+  // terminal as its stdin (not our possibly-piped stdin) so it reads the user.
   await new Promise((resolve) => {
     const args = ['scripts/pair.js'];
     if (phone) args.push(phone);
+    const childStdin = ttyFd != null ? ttyFd : 'inherit';
     const child = spawn(process.execPath, args, {
       cwd: PROJECT_ROOT,
-      stdio: 'inherit',
+      stdio: [childStdin, 'inherit', 'inherit'],
     });
     child.on('exit', (code) => {
       if (code && code !== 0 && code !== 130) {
@@ -483,8 +602,27 @@ async function main() {
   console.log('\n╔════════════════════════════════════════════════════════════╗');
   console.log('║              WhatsApp agent · guided setup                  ║');
   console.log('╚════════════════════════════════════════════════════════════╝');
-  console.log('\n  This wizard is safe to re-run — it skips values that are already');
-  console.log('  set and asks before overwriting anything.\n');
+
+  // No terminal and not explicitly headless → don't silently consume stdin.
+  if (!HAS_TTY && !NON_INTERACTIVE) {
+    console.error(
+      '\n  No interactive terminal detected, and non-interactive mode was not requested.\n' +
+      '  Run setup one of these ways:\n' +
+      '    • In a terminal:   cd ' + path.basename(PROJECT_ROOT) + ' && npm run setup\n' +
+      '    • Headless (env):  KARYASTHAN_NONINTERACTIVE=1 KARYASTHAN_NAME=Sam \\\n' +
+      '                       LLM_PROVIDER=gemini GEMINI_API_KEY=... npm run setup\n' +
+      '      (see .env.example / README for the full variable list)\n',
+    );
+    cleanup();
+    process.exit(1);
+  }
+
+  if (NON_INTERACTIVE) {
+    console.log('\n  Running in non-interactive mode (configuration from environment).');
+  } else {
+    console.log('\n  This wizard is safe to re-run — it skips values that are already');
+    console.log('  set and asks before overwriting anything.');
+  }
 
   try {
     await stepEnv();
@@ -496,16 +634,15 @@ async function main() {
     console.log('  All set — run `npm start` to launch.');
     console.log('────────────────────────────────────────────────────────────\n');
   } finally {
-    rl.close();
+    cleanup();
   }
 }
 
-main().catch((err) => {
-  console.error(`\n  Setup failed: ${err?.stack || err}\n`);
-  try {
-    rl.close();
-  } catch {
-    /* already closed */
-  }
-  process.exit(1);
-});
+main().then(
+  () => process.exit(0),
+  (err) => {
+    console.error(`\n  Setup failed: ${err?.stack || err}\n`);
+    cleanup();
+    process.exit(1);
+  },
+);

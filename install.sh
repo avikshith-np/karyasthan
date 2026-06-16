@@ -55,6 +55,7 @@ echo
 
 # --- Get the code ----------------------------------------------------------
 # If we're already inside the repo (piped from within a checkout), use it.
+CLONED=0
 if [ -f package.json ] && grep -q '"name": *"karyasthan"' package.json 2>/dev/null; then
   ok "running inside an existing karyasthan checkout — skipping clone"
 else
@@ -68,6 +69,7 @@ else
   info "Cloning $REPO_URL ..."
   git clone --depth 1 "$REPO_URL" "$TARGET_DIR"
   cd "$TARGET_DIR"
+  CLONED=1
   ok "cloned into ./$TARGET_DIR"
 fi
 echo
@@ -79,10 +81,28 @@ ok "dependencies installed"
 echo
 
 # --- Interactive setup -----------------------------------------------------
+# Under `curl | bash`, this script IS stdin — so the wizard must read the
+# user's answers from the controlling terminal (/dev/tty), not our stdin.
 bold "Launching setup wizard…"
-npm run setup
+if { true < /dev/tty; } 2>/dev/null; then
+  npm run setup < /dev/tty
+elif [ "${KARYASTHAN_NONINTERACTIVE:-}" = "1" ]; then
+  npm run setup
+else
+  warn "No interactive terminal detected — skipping guided setup."
+  if [ "$CLONED" = "1" ]; then
+    info "Finish setup in a terminal:  cd \"$TARGET_DIR\" && npm run setup"
+  else
+    info "Finish setup in a terminal:  npm run setup"
+  fi
+fi
 
 echo
 bold "Done."
-info "Start the bot with:  npm start"
-info "Re-run setup later:  npm run setup"
+if [ "$CLONED" = "1" ]; then
+  info "Start the bot with:  cd \"$TARGET_DIR\" && npm start"
+  info "Re-run setup later:  cd \"$TARGET_DIR\" && npm run setup"
+else
+  info "Start the bot with:  npm start"
+  info "Re-run setup later:  npm run setup"
+fi
