@@ -127,12 +127,18 @@ function parseEnv(text) {
     const eq = line.indexOf('=');
     if (eq === -1) continue;
     const key = line.slice(0, eq).trim();
-    let val = line.slice(eq + 1).trim();
-    // Drop a trailing inline comment if the value isn't quoted.
-    if (!val.startsWith('"') && !val.startsWith("'")) {
-      const hash = val.indexOf(' #');
-      if (hash !== -1) val = val.slice(0, hash).trim();
+    let val = line.slice(eq + 1);
+    // Drop an inline comment when the value isn't quoted. A '#' starts a
+    // comment if it's at the start of the value or preceded by whitespace,
+    // so `KEY=`, `KEY=   # note`, and `KEY=abc # note` all parse correctly
+    // (while `KEY=ab#cd` keeps the '#'). This matters because .env.example
+    // documents empty keys with trailing comments — without this they'd
+    // look "already set" and the wizard would skip prompting for them.
+    if (!val.trimStart().startsWith('"') && !val.trimStart().startsWith("'")) {
+      const m = val.match(/(^|\s)#/);
+      if (m) val = val.slice(0, m.index);
     }
+    val = val.trim();
     out[key] = val;
   }
   return out;
