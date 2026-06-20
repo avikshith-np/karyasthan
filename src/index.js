@@ -20,6 +20,7 @@ import { loadSkills, runSkills } from './skills/skillRunner.js';
 import { extractImageMarker, generateImage, editImage } from './brain/imageGen.js';
 import { extractVoiceMarker, extractSingMarker, generateVoiceNote } from './brain/voiceGen.js';
 import { extractStickerMarker, extractGifMarker, searchGiphy } from './brain/mediaSearch.js';
+import { closeBrowser } from './brain/webBrowse.js';
 import { expireAllActiveBills, expireStaleBills } from './memory/billStore.js';
 import { findPersonInGroupByName, findPersonInGroupByPhoneSuffix } from './memory/peopleStore.js';
 import { phoneFromJid } from './utils/jidUtils.js';
@@ -42,7 +43,9 @@ try {
   if (result.changes > 0) {
     logger.info({ count: result.changes }, 'Expired stale bill splits from previous session');
   }
-} catch {}
+} catch (err) {
+  logger.debug({ err: err.message }, 'Failed to expire stale bills on startup (non-critical)');
+}
 
 // ── Periodic memory maintenance ──
 function runMemoryMaintenance() {
@@ -59,6 +62,17 @@ function runMemoryMaintenance() {
 }
 runMemoryMaintenance(); // run once on startup
 setInterval(runMemoryMaintenance, 6 * 60 * 60 * 1000); // then every 6 hours
+
+// ── Outcome narrative ───────────────────────────────────────────────────────
+// One human-readable line per evaluated message saying what the bot did and why.
+// `evt` drives the dashboard live-log category tag (reply | react | skip | block);
+// the sentence reads naturally in plain stdout/journald too. Structured fields
+// (score, factors, reason, group, msgId) ride along so the dashboard can render the
+// "why" without dumping raw JSON. Emitted at info so every decision is visible by
+// default on the live-logs page.
+function logOutcome(evt, sentence, fields = {}) {
+  logger.info({ evt, ...fields }, sentence);
+}
 
 // ── Message processing pipeline ──
 async function processMessage(sock, msg, context) {
@@ -78,7 +92,7 @@ async function processMessage(sock, msg, context) {
   // 3.4. Muted groups: skip response pipeline entirely. Learning + read
   // receipts still happen above — we observe but stay silent.
   if (context.isGroup && msg.groupJid && isGroupMuted(msg.groupJid)) {
-    logger.debug({ msgId: msg.id, groupJid: msg.groupJid }, 'Skipping — group is muted');
+    logOutcome('block', 'Suppressed — group is muted', { msgId: msg.id, group: msg.groupJid, reason: 'group muted' });
     return;
   }
 
@@ -160,7 +174,9 @@ async function processMessage(sock, msg, context) {
       `INSERT INTO response_log (message_id, group_jid, score, decided, factors_json, created_at)
        VALUES (?, ?, ?, ?, ?, unixepoch())`
     ).run(msg.id, msg.groupJid, decision.score, decision.responseType, JSON.stringify(decision.factors));
-  } catch {}
+  } catch (err) {
+    logger.debug({ err: err.message, msgId: msg.id }, 'Failed to write decision to response_log (non-critical)');
+  }
 
   emitDashboardEvent('decision', {
     messageId: msg.id,
@@ -174,18 +190,28 @@ async function processMessage(sock, msg, context) {
   });
 
   if (!decision.shouldRespond && !looksLikeImageRequest) {
-    logger.debug({
+    const reason = decision.factors.skipReason || 'unknown';
+    const isGuard = reason.startsWith('rate_limited') || reason === 'burst_cooldown';
+    let sentence;
+    if (reason === 'burst_cooldown') sentence = 'Suppressed — burst cooldown (replying too fast)';
+    else if (reason.startsWith('rate_limited')) sentence = `Suppressed — rate-limited (${reason.replace('rate_limited: ', '')})`;
+    else if (reason === 'probability') sentence = "Stayed silent — message didn't clear the response bar";
+    else sentence = `Stayed silent — ${reason}`;
+    logOutcome(isGuard ? 'block' : 'skip', sentence, {
       msgId: msg.id,
-      score: decision.score,
-      reason: decision.factors.skipReason,
-    }, 'Skipping message');
+      group: msg.groupJid,
+      sender: msg.senderName,
+      score: decision.factors.finalScore ?? decision.score,
+      factors: decision.factors,
+      reason,
+    });
     return;
   }
 
   // 5. Check warm-up constraints
   const warmup = checkWarmup(decision.responseType);
   if (!warmup.allowed) {
-    logger.debug({ reason: warmup.reason }, 'Blocked by warmup');
+    logOutcome('block', `Suppressed — ${warmup.reason}`, { msgId: msg.id, group: msg.groupJid, reason: warmup.reason });
     return;
   }
 
@@ -195,12 +221,17 @@ async function processMessage(sock, msg, context) {
     await waitResponseDelay({ isDm: context.isDm });
     await sendReaction(sock, msg.groupJid, msg.id, emoji, msg.senderJid);
     recordSent();
-    logger.info({ emoji, msgId: msg.id }, 'Sent reaction');
+    logOutcome('react', `Reacted ${emoji} to ${msg.senderName || 'someone'}`, {
+      msgId: msg.id, group: msg.groupJid, sender: msg.senderName, emoji, score: decision.score, factors: decision.factors,
+    });
     return;
   }
 
-  // 7. Generate LLM response
-  let llmResult = await generateResponse(msg, context);
+  // 7. Generate LLM response (a web search/browse loop may run inside, so time it
+  //    and credit that time against the response delay below).
+  const genStart = Date.now();
+  let llmResult = await generateResponse(msg, context, { sock });
+  const genMs = Date.now() - genStart;
 
   // 7a. Fallback: if LLM skipped but this is an explicit image request, generate directly
   if (!llmResult && looksLikeImageRequest && config.imageGen.enabled) {
@@ -216,7 +247,10 @@ async function processMessage(sock, msg, context) {
   }
 
   if (!llmResult) {
-    // LLM chose to skip or failed — maybe still react
+    // LLM chose to skip ([SKIP]) or generation failed — either way the bot stays
+    // silent. Any failure detail is logged separately in llm.js as an `issue`.
+    logOutcome('skip', 'Stayed silent — model declined or generation failed', { msgId: msg.id, group: msg.groupJid });
+    // maybe still react
     if (Math.random() < 0.1 && msg.content) {
       const emoji = pickReactionEmoji(msg.content);
       await sendReaction(sock, msg.groupJid, msg.id, emoji, msg.senderJid);
@@ -278,7 +312,10 @@ async function processMessage(sock, msg, context) {
   const processedReplyToId = processed?.replyToId || null;
   const processedMentions = processed?.mentions || [];
 
-  if (!imageRequest && !voiceRequest && !stickerRequest && !gifRequest && !processedText) return;
+  if (!imageRequest && !voiceRequest && !stickerRequest && !gifRequest && !processedText) {
+    logOutcome('skip', 'Stayed silent — response was emptied by cleanup', { msgId: msg.id, group: msg.groupJid });
+    return;
+  }
 
   // Resolve [REPLY:<suffix>] to a concrete message id in this chat (suffix match on id).
   let replyQuoteKey = null;
@@ -288,7 +325,9 @@ async function processMessage(sock, msg, context) {
         `SELECT id FROM messages WHERE group_jid = ? AND id LIKE ? ORDER BY timestamp DESC LIMIT 1`
       ).get(msg.groupJid, `%${processedReplyToId}`);
       if (row?.id) replyQuoteKey = { id: row.id };
-    } catch {}
+    } catch (err) {
+      logger.debug({ err: err.message, msgId: msg.id }, 'Reply-target resolution failed (non-critical)');
+    }
   }
 
   // 8.5. Quality gate — LLM-as-judge before sending (skip for image/voice/sticker/gif responses)
@@ -303,12 +342,14 @@ async function processMessage(sock, msg, context) {
     const gateResult = await evaluateResponse(processedText, recentForGate, { isMention });
 
     if (!gateResult.pass) {
-      logger.info({
+      logOutcome('block', `Blocked by quality gate — ${gateResult.reason || 'low quality'}`, {
         msgId: msg.id,
+        group: msg.groupJid,
+        sender: msg.senderName,
         score: gateResult.score,
         reason: gateResult.reason,
         latencyMs: gateResult.latencyMs,
-      }, 'Quality gate blocked response');
+      });
 
       recordQuality({
         messageId: `gated_${msg.id}_${Date.now()}`,
@@ -337,7 +378,7 @@ async function processMessage(sock, msg, context) {
     isQuestion,
     isDm: context.isDm,
     isDeadChat: decision.factors.momentum >= 1.8,
-  });
+  }, { alreadyElapsedMs: genMs });
 
   // 10. Send response
   let sentMessageId = null;
@@ -355,7 +396,7 @@ async function processMessage(sock, msg, context) {
     const voice = await generateVoiceNote(voiceRequest.text, { sing: isSing });
     await stopTyping(sock, msg.groupJid);
     if (voice) {
-      const sent = await sendVoiceNote(sock, msg.groupJid, voice.buffer, voice.duration, context, { quotedKey: replyQuoteKey || undefined });
+      const sent = await sendVoiceNote(sock, msg.groupJid, voice.buffer, voice.duration, context, { quotedKey: replyQuoteKey || undefined, waveform: voice.waveform });
       if (sent?.key?.id) sentMessageId = sent.key.id;
       recordSent();
       logger.info({ msgId: msg.id, duration: voice.duration }, 'Voice note sent');
@@ -461,7 +502,9 @@ async function processMessage(sock, msg, context) {
         latencyMs: 0,
         wasGated: false,
       });
-    } catch {}
+    } catch (err) {
+      logger.debug({ err: err.message, msgId: sentMessageId }, 'Failed to record sent-response quality (non-critical)');
+    }
   }
 
   // 12. Maybe also react (for text_and_reaction type)
@@ -471,10 +514,12 @@ async function processMessage(sock, msg, context) {
   }
 
   const elapsed = Date.now() - startTime;
-  logger.info({
+  logOutcome('reply', `Replied to ${msg.senderName || 'someone'}`, {
     msgId: msg.id,
     group: msg.groupJid,
+    sender: msg.senderName,
     score: decision.score,
+    factors: decision.factors,
     responseLen: processedText?.length || 0,
     imageGen: !!imageRequest,
     sticker: !!stickerRequest,
@@ -482,7 +527,7 @@ async function processMessage(sock, msg, context) {
     mentions: processedMentions.length,
     replyThreaded: !!replyQuoteKey,
     elapsedMs: elapsed,
-  }, 'Response sent');
+  });
 }
 
 // ── Wire up the message processor ──
@@ -512,6 +557,14 @@ async function start() {
 // ── Graceful shutdown ──
 async function shutdown(signal) {
   logger.info({ signal }, 'Shutting down...');
+  // Close the headless browser first (raced with a timeout so a hung close can't
+  // block exit) — prevents orphaned Chromium processes accumulating across restarts.
+  try {
+    await Promise.race([
+      closeBrowser('shutdown'),
+      new Promise((resolve) => setTimeout(resolve, 3000)),
+    ]);
+  } catch {}
   await disconnectFromWhatsApp();
   closeDb();
   process.exit(0);

@@ -1,3 +1,4 @@
+import { generateWAMessage, generateMessageIDV2 } from '@whiskeysockets/baileys';
 import { logger } from '../utils/logger.js';
 import { config, getPersona } from '../utils/config.js';
 import { storeMessage } from '../memory/messageStore.js';
@@ -225,7 +226,7 @@ export async function sendGif(sock, jid, buffer, caption = '', quotedMsg = null,
 
 /**
  * Send a voice note (push-to-talk audio) to a chat.
- * @param {object} opts - { quotedKey?: { id } }
+ * @param {object} opts - { quotedKey?: { id }, waveform?: Buffer }
  */
 export async function sendVoiceNote(sock, jid, buffer, duration = 0, quotedMsg = null, opts = {}) {
   if (config.dryRun) {
@@ -249,7 +250,23 @@ export async function sendVoiceNote(sock, jid, buffer, duration = 0, quotedMsg =
   }
 
   try {
-    const sent = await sock.sendMessage(jid, content, options);
+    // Build the message ourselves so we can attach the waveform: Baileys' high-level
+    // sendMessage unconditionally overwrites audioMessage.waveform for ptt audio (via
+    // getAudioWaveform, which needs the uninstalled audio-decode dep), wiping anything
+    // we pass in the content. Generating + relaying manually lets us inject ours between
+    // the two steps. This mirrors sendMessage's own generate→relay flow.
+    const fullMsg = await generateWAMessage(jid, content, {
+      logger,
+      userJid: sock.user?.id,
+      upload: sock.waUploadToServer,
+      messageId: generateMessageIDV2(sock.user?.id),
+      quoted: options.quoted,
+    });
+    if (opts.waveform && fullMsg.message?.audioMessage) {
+      fullMsg.message.audioMessage.waveform = Buffer.from(opts.waveform);
+    }
+    await sock.relayMessage(jid, fullMsg.message, { messageId: fullMsg.key.id });
+    const sent = fullMsg;
 
     storeMessage({
       id: sent?.key?.id || `self_${Date.now()}`,
