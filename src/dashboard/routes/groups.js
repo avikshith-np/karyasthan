@@ -8,7 +8,8 @@ import { auditWrite } from '../audit.js';
 import { config } from '../../utils/config.js';
 import { generateResponse } from '../../brain/contextBuilder.js';
 import { postProcess } from '../../brain/postProcess.js';
-import { sendText, sendSticker, sendGif } from '../../whatsapp/actions.js';
+import { sendText, sendSticker, sendGif, sendVoiceNote } from '../../whatsapp/actions.js';
+import { generateVoiceNote } from '../../brain/voiceGen.js';
 import { searchGiphy, pickContextualQuery } from '../../brain/mediaSearch.js';
 import { logger } from '../../utils/logger.js';
 
@@ -124,7 +125,9 @@ export default async function groupsRoutes(app, opts = {}) {
     let textToSend = override;
 
     if (!textToSend) {
-      const llmResult = await generateResponse(triggerMsg, { isGroup: true, isDm: false });
+      // allowWeb:false — a dashboard force-send must stay fast and never launch the
+      // headless browser / run the web loop from a request thread.
+      const llmResult = await generateResponse(triggerMsg, { isGroup: true, isDm: false }, { allowWeb: false });
       if (!llmResult) {
         reply.code(422).send({ error: 'LLM declined to respond. Retry with {"text":"..."} to force.' });
         return;
@@ -236,4 +239,90 @@ export default async function groupsRoutes(app, opts = {}) {
 
   app.post('/api/groups/:jid/send-sticker', (req, reply) => handleForceMedia('sticker', req, reply));
   app.post('/api/groups/:jid/send-gif',     (req, reply) => handleForceMedia('gif', req, reply));
+
+  // Force-send a voice note (TTS). Mirrors /respond — speaks operator-provided text, or an
+  // LLM-generated contextual reply when no text is given — via Gemini TTS. `sing:true` uses
+  // the singing path. Bypasses mute/warmup/rate-limit like the other force-send endpoints.
+  app.post('/api/groups/:jid/send-voice', async (req, reply) => {
+    const jid = req.params.jid;
+    const group = getGroup(jid);
+    if (!group) { reply.code(404).send({ error: 'Group not found' }); return; }
+
+    if (!config.voiceNote.enabled) {
+      reply.code(503).send({ error: 'Voice notes disabled (VOICE_NOTE_ENABLED=false)' });
+      return;
+    }
+    if (!(config.llm.geminiApiKey || config.llm.apiKey)) {
+      reply.code(503).send({ error: 'No Gemini API key configured for TTS' });
+      return;
+    }
+
+    const sock = getSock();
+    if (!sock) { reply.code(503).send({ error: 'Bot socket not connected' }); return; }
+
+    const recent = getRecentMessages(jid, 1);
+    if (!recent.length) { reply.code(400).send({ error: 'No messages in this group yet' }); return; }
+    const latest = recent[recent.length - 1];
+
+    const sing = req.body?.sing === true;
+    const override = typeof req.body?.text === 'string' ? req.body.text.trim() : '';
+    const startTime = Date.now();
+    let speechText = override;
+
+    if (!speechText) {
+      const triggerMsg = {
+        id: latest.id,
+        groupJid: latest.group_jid,
+        senderJid: latest.sender_jid,
+        senderName: latest.sender_name,
+        content: latest.content,
+      };
+      // allowWeb:false — keep the request thread fast; never launch the headless browser.
+      const llmResult = await generateResponse(triggerMsg, { isGroup: true, isDm: false }, { allowWeb: false });
+      if (!llmResult) {
+        reply.code(422).send({ error: 'LLM declined to respond. Retry with {"text":"..."} to force.' });
+        return;
+      }
+      const processed = postProcess(llmResult.text, llmResult.fixatedWords, { isGroup: true });
+      speechText = processed?.text || llmResult.text;
+    }
+
+    if (!speechText) {
+      reply.code(422).send({ error: 'Nothing to speak after post-processing' });
+      return;
+    }
+
+    const voice = await generateVoiceNote(speechText, { sing, ignoreRateLimit: true });
+    if (!voice) {
+      reply.code(422).send({ error: 'Voice generation failed (check GEMINI_API_KEY, voice model, and ffmpeg)' });
+      return;
+    }
+
+    try {
+      await sendVoiceNote(sock, jid, voice.buffer, voice.duration, null, { waveform: voice.waveform });
+    } catch (err) {
+      logger.error({ err: err.message, jid }, 'Force-voice send failed');
+      reply.code(500).send({ error: 'Send failed', detail: err.message });
+      return;
+    }
+
+    const elapsed = Date.now() - startTime;
+    try {
+      getDb().prepare(
+        `INSERT INTO response_log (message_id, group_jid, score, decided, factors_json, response_time_ms, created_at)
+         VALUES (?, ?, ?, ?, ?, ?, unixepoch())`
+      ).run(latest.id, jid, null, sing ? 'sing' : 'voice', JSON.stringify({ forced: true, source: 'dashboard', overridden: !!override, sing }), elapsed);
+    } catch (err) {
+      logger.warn({ err: err.message }, 'Force-voice response_log insert failed');
+    }
+
+    auditWrite(
+      req.basicAuthUser?.username || config.dashboard.user,
+      'media.send_voice_dashboard',
+      jid,
+      { textPreview: speechText.slice(0, 120), sing, overridden: !!override, duration: voice.duration }
+    );
+
+    return { ok: true, text: speechText, duration: voice.duration, sing, elapsedMs: elapsed };
+  });
 }

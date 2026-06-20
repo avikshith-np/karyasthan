@@ -98,12 +98,45 @@ function convertPcmToOggOpus(pcmBuffer) {
 }
 
 /**
+ * Build a 64-byte 0..100 amplitude waveform from raw PCM (s16le, mono) — the same
+ * shape WhatsApp renders for voice notes. Mirrors Baileys' getAudioWaveform math but
+ * runs on the in-hand Int16 PCM (per-array max normalization makes Int16-vs-Float32
+ * scale irrelevant), so no audio-decode dependency or re-decode is needed.
+ */
+export function pcmToWaveform(pcm) {
+  const samples = 64;
+  const sampleCount = Math.floor(pcm.length / 2); // s16le = 2 bytes/sample
+  const blockSize = Math.floor(sampleCount / samples);
+  if (blockSize < 1) return Buffer.alloc(samples); // audio too short → flat
+
+  const filtered = new Array(samples);
+  let max = 0;
+  for (let i = 0; i < samples; i++) {
+    const start = blockSize * i;
+    let sum = 0;
+    for (let j = 0; j < blockSize; j++) sum += Math.abs(pcm.readInt16LE((start + j) * 2));
+    const avg = sum / blockSize;
+    filtered[i] = avg;
+    if (avg > max) max = avg;
+  }
+
+  const mult = max > 0 ? 1 / max : 0; // guard silence (Baileys divides by zero → NaN)
+  const out = Buffer.alloc(samples);
+  for (let i = 0; i < samples; i++) {
+    const v = Math.floor(100 * filtered[i] * mult);
+    out[i] = v > 100 ? 100 : v < 0 ? 0 : v; // belt-and-suspenders clamp
+  }
+  return out;
+}
+
+/**
  * Generate a voice note using Gemini TTS API.
  * @param {string} text - Text to speak or sing
- * @param {{ sing: boolean }} [options] - Set sing: true for singing mode
+ * @param {{ sing?: boolean, ignoreRateLimit?: boolean }} [options] - sing: true for
+ *   singing mode; ignoreRateLimit: true to bypass the hourly cap (manual dashboard sends).
  * Returns { buffer, duration } or null on failure.
  */
-export async function generateVoiceNote(text, { sing = false } = {}) {
+export async function generateVoiceNote(text, { sing = false, ignoreRateLimit = false } = {}) {
   const apiKey = config.llm.geminiApiKey || config.llm.apiKey;
   if (!apiKey) {
     logger.warn('No Gemini API key for voice note generation');
@@ -116,7 +149,7 @@ export async function generateVoiceNote(text, { sing = false } = {}) {
     voiceCount = 0;
     rateWindowStart = now;
   }
-  if (voiceCount >= config.voiceNote.maxPerHour) {
+  if (!ignoreRateLimit && voiceCount >= config.voiceNote.maxPerHour) {
     logger.warn({ voiceCount, max: config.voiceNote.maxPerHour }, 'Voice note rate limit exceeded');
     return null;
   }
@@ -170,12 +203,15 @@ export async function generateVoiceNote(text, { sing = false } = {}) {
 
     // Convert PCM to OGG/Opus for WhatsApp
     const result = await convertPcmToOggOpus(pcmBuffer);
+    // Compute the waveform from the lossless PCM (before encoding) so the voice note
+    // renders amplitude bars like a real person's, not a flat line.
+    const waveform = pcmToWaveform(pcmBuffer);
     const latencyMs = Date.now() - startTime;
 
     voiceCount++;
     logger.info({ model, latencyMs, duration: result.duration, bufferSize: result.buffer.length, voiceCount }, 'Voice note generated');
 
-    return result;
+    return { ...result, waveform };
   } catch (err) {
     logger.warn({ err: err.message, model }, 'Voice note generation failed');
     return null;
