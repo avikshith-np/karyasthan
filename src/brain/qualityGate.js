@@ -52,26 +52,31 @@ export async function evaluateResponse(responseText, conversationSnippet, option
   try {
     const userMessage = `Recent conversation:\n${conversationSnippet}\n\nCandidate response from ${getPersona().name}:\n"${responseText}"\n\nRate this response.`;
 
+    // The judge gets a fallback provider (noFallback omitted) so a flaky/slow
+    // primary judge doesn't silently bypass the gate. timeoutMs is propagated into
+    // the fallback call inside callLlm, so the whole judge stays bounded.
     const response = await callLlm(GATE_SYSTEM_PROMPT, userMessage, {
       provider: config.qualityGate.provider,
       model: config.qualityGate.model,
       maxTokens: config.qualityGate.maxTokens,
       temperature: config.qualityGate.temperature,
       timeoutMs: config.qualityGate.timeoutMs,
-      noFallback: true,
     });
 
     const latencyMs = Date.now() - startTime;
 
+    // Fail-open branches: when the judge can't produce a usable verdict we send the
+    // (already-generated) reply anyway, but log it loudly (warn + evt:'issue') so a
+    // silently-bypassed gate is visible on the dashboard and in journald.
     if (!response) {
-      logger.debug({ latencyMs }, 'Quality gate: no response (fail-open)');
+      logger.warn({ evt: 'issue', reason: 'no_response', latencyMs }, 'Quality gate bypassed — judge returned no response (fail-open)');
       return { pass: true, score: null, reason: 'no_response', latencyMs };
     }
 
     // Parse JSON from response (handle potential markdown wrapping)
     const jsonMatch = response.match(/\{[\s\S]*?\}/);
     if (!jsonMatch) {
-      logger.debug({ response: response.slice(0, 100), latencyMs }, 'Quality gate: bad JSON (fail-open)');
+      logger.warn({ evt: 'issue', reason: 'parse_error', latencyMs, response: response.slice(0, 100) }, 'Quality gate bypassed — judge output not parseable (fail-open)');
       return { pass: true, score: null, reason: 'parse_error', latencyMs };
     }
 
@@ -80,6 +85,7 @@ export async function evaluateResponse(responseText, conversationSnippet, option
     const reason = parsed.reason || 'unknown';
 
     if (score === null) {
+      logger.warn({ evt: 'issue', reason: 'invalid_score', latencyMs }, 'Quality gate bypassed — judge gave no numeric score (fail-open)');
       return { pass: true, score: null, reason: 'invalid_score', latencyMs };
     }
 
@@ -94,7 +100,7 @@ export async function evaluateResponse(responseText, conversationSnippet, option
     return { pass, score, reason, latencyMs };
   } catch (err) {
     const latencyMs = Date.now() - startTime;
-    logger.debug({ err: err.message, latencyMs }, 'Quality gate error (fail-open)');
+    logger.warn({ evt: 'issue', reason: 'error', err: err.message, latencyMs }, 'Quality gate bypassed — judge call errored (fail-open)');
     return { pass: true, score: null, reason: `error: ${err.message}`, latencyMs };
   }
 }

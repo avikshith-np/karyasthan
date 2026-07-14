@@ -2,6 +2,7 @@ import { config as loadEnv } from 'dotenv';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { PROVIDER_NAMES, PROVIDER_KEY_FIELD } from '../brain/providers.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PROJECT_ROOT = path.resolve(__dirname, '..', '..');
@@ -88,6 +89,11 @@ export const config = {
     provider: optional('LLM_PROVIDER', 'anthropic'),
     model: optional('LLM_MODEL', 'gemini-3-flash-preview'),
     apiKey: process.env.LLM_API_KEY || '',
+    // Endpoint for the 'local' provider — a local OpenAI-compatible server
+    // (llama.cpp / LM Studio / vLLM). Applies ONLY when provider is 'local'; cloud
+    // providers always use their own endpoint. .env-only routing surface —
+    // deliberately not in MUTABLE_KEYS/getSafeConfig.
+    baseUrl: optional('LLM_BASE_URL', ''),
     monthlyBudgetUsd: parseFloat(optional('LLM_MONTHLY_BUDGET_USD', '30')),
     fallbackProvider: optional('LLM_FALLBACK_PROVIDER', 'ollama'),
     fallbackModel: optional('LLM_FALLBACK_MODEL', 'gemini-3-flash-preview'),
@@ -152,6 +158,34 @@ export const config = {
     gifMaxPerHour: parseInt(optional('GIF_MAX_PER_HOUR', '8'), 10),
   },
 
+  // Web Search + Browsing.
+  //   search  → self-hosted SearXNG JSON API (no API key)
+  //   browse  → Playwright headless Chromium (renders JS)
+  // The master on/off is the "web-search" skill (Skills tab); WEB_SEARCH_ENABLED is
+  // only its BOOT DEFAULT (see src/skills/web-search.skill.js enabledByDefault).
+  webSearch: {
+    enabled: optional('WEB_SEARCH_ENABLED', 'true') === 'true',
+    searxngUrl: optional('SEARXNG_URL', 'http://127.0.0.1:8888').replace(/\/+$/, ''),
+    maxResults: parseInt(optional('WEB_SEARCH_MAX_RESULTS', '4'), 10),
+    // One tool round (initial + 1 lookup). 2 enables search→browse-a-result but also
+    // needs IN_FLIGHT_SAFETY_MS raised (events.js) — see plan/CLAUDE.md.
+    maxHops: parseInt(optional('WEB_SEARCH_MAX_HOPS', '1'), 10),
+    timeoutMs: parseInt(optional('WEB_SEARCH_TIMEOUT_MS', '5000'), 10),
+    // Wall-clock budget for all web ops in one turn; once spent, force a no-tool answer.
+    budgetMs: parseInt(optional('WEB_SEARCH_BUDGET_MS', '20000'), 10),
+    searchMaxPerHour: parseInt(optional('WEB_SEARCH_MAX_PER_HOUR', '30'), 10),
+    browse: {
+      enabled: optional('WEB_BROWSE_ENABLED', 'true') === 'true',
+      maxPerHour: parseInt(optional('WEB_BROWSE_MAX_PER_HOUR', '15'), 10),
+      timeoutMs: parseInt(optional('WEB_BROWSE_TIMEOUT_MS', '8000'), 10),
+      maxContentChars: parseInt(optional('WEB_BROWSE_MAX_CHARS', '4000'), 10),
+      maxConcurrent: parseInt(optional('WEB_BROWSE_CONCURRENCY', '2'), 10),
+      idleMs: parseInt(optional('WEB_BROWSE_IDLE_MS', '300000'), 10),
+      // SSRF escape hatch — keep false in production. .env only (never dashboard-mutable).
+      allowPrivate: optional('WEB_BROWSE_ALLOW_PRIVATE', 'false') === 'true',
+    },
+  },
+
   // Quality Gate
   qualityGate: {
     enabled: optional('QUALITY_GATE_ENABLED', 'true') === 'true',
@@ -159,9 +193,9 @@ export const config = {
     model: optional('QUALITY_GATE_MODEL', 'gemini-3-flash-preview'),
     threshold: parseFloat(optional('QUALITY_GATE_THRESHOLD', '0.4')),
     mentionThreshold: parseFloat(optional('QUALITY_GATE_MENTION_THRESHOLD', '0.25')),
-    maxTokens: parseInt(optional('QUALITY_GATE_MAX_TOKENS', '150'), 10),
+    maxTokens: parseInt(optional('QUALITY_GATE_MAX_TOKENS', '256'), 10),
     temperature: parseFloat(optional('QUALITY_GATE_TEMPERATURE', '0.1')),
-    timeoutMs: parseInt(optional('QUALITY_GATE_TIMEOUT_MS', '3000'), 10),
+    timeoutMs: parseInt(optional('QUALITY_GATE_TIMEOUT_MS', '8000'), 10),
   },
 
   // Dashboard (read-only web UI)
@@ -178,6 +212,12 @@ export const config = {
   },
 };
 
+// Fail-loud if 'local' is the primary/fallback provider but no base URL is set —
+// local calls would otherwise fetch('') and fall through to the fallback every message.
+if ((config.llm.provider === 'local' || config.llm.fallbackProvider === 'local') && !config.llm.baseUrl) {
+  console.error('[config] LLM provider "local" selected but LLM_BASE_URL is empty — local calls will fail. Set LLM_BASE_URL.');
+}
+
 // Keys the dashboard is allowed to mutate in-memory, with their expected type.
 // Typing here (not inferred from the live value) because Number.isInteger(0)
 // is true, which would mis-type a float field that happens to currently hold 0.
@@ -189,15 +229,31 @@ const MUTABLE_KEYS = {
   'maxGlobalHour': 'int',
   'llm.temperature': 'float',
   'llm.maxTokens': 'int',
+  // LLM routing — provider/model are dashboard-switchable live (enum validated against
+  // src/brain/providers.js). llm.baseUrl is deliberately NOT here — .env-only SSRF surface.
+  'llm.provider': 'enum:provider',
+  'llm.model': 'string',
+  'llm.fallbackProvider': 'enum:provider',
+  'llm.fallbackModel': 'string',
   'qualityGate.enabled': 'bool',
   'qualityGate.threshold': 'float',
   'qualityGate.mentionThreshold': 'float',
+  'qualityGate.provider': 'enum:provider',
+  'qualityGate.model': 'string',
   'imageGen.enabled': 'bool',
   'imageGen.maxPerHour': 'int',
   'voiceNote.enabled': 'bool',
   'voiceNote.maxPerHour': 'int',
   'media.stickerMaxPerHour': 'int',
   'media.gifMaxPerHour': 'int',
+  // Web search — master on/off lives in the Skills tab (not here). searxngUrl and
+  // browse.allowPrivate are deliberately .env-only (SSRF surface).
+  'webSearch.maxResults': 'int',
+  'webSearch.maxHops': 'int',
+  'webSearch.searchMaxPerHour': 'int',
+  'webSearch.browse.enabled': 'bool',
+  'webSearch.browse.maxPerHour': 'int',
+  'webSearch.browse.maxConcurrent': 'int',
 };
 
 function coerce(type, incoming) {
@@ -211,6 +267,14 @@ function coerce(type, incoming) {
     const n = Number(incoming);
     if (!Number.isFinite(n)) return null;
     return type === 'int' ? Math.round(n) : n;
+  }
+  if (type === 'string') {
+    return typeof incoming === 'string' && incoming.trim() ? incoming.trim() : null;
+  }
+  if (type === 'enum:provider') {
+    if (typeof incoming !== 'string') return null;
+    const v = incoming.trim();
+    return PROVIDER_NAMES.includes(v) ? v : null;
   }
   return null;
 }
@@ -230,15 +294,59 @@ export function updateConfig(patch) {
     }
     const parts = key.split('.');
     let cursor = config;
-    for (let i = 0; i < parts.length - 1; i++) cursor = cursor[parts[i]];
+    let missingParent = false;
+    for (let i = 0; i < parts.length - 1; i++) {
+      cursor = cursor[parts[i]];
+      if (!cursor || typeof cursor !== 'object') { missingParent = true; break; }
+    }
+    if (missingParent) {
+      rejected[key] = 'missing parent';
+      continue;
+    }
     const leaf = parts[parts.length - 1];
     const coerced = coerce(type, incoming);
     if (coerced === null) {
       rejected[key] = `bad type (expected ${type})`;
       continue;
     }
+    // Provider-switch usability guard, scoped to enum:provider keys ONLY (every other
+    // key's flow is unchanged): refuse a switch to a cloud provider whose API key isn't
+    // configured — it would silently break responses (callLlm returns null on an
+    // unkeyed provider) or force the fallback. ollama has no key field, so never rejected.
+    if (type === 'enum:provider') {
+      if (coerced === 'local' && !config.llm.baseUrl) {
+        rejected[key] = 'local base URL not set (LLM_BASE_URL)';
+        continue;
+      }
+      const keyField = PROVIDER_KEY_FIELD[coerced];
+      if (keyField && !config.llm[keyField] && !config.llm.apiKey) {
+        rejected[key] = 'provider key not configured';
+        continue;
+      }
+    }
     cursor[leaf] = coerced;
     applied[key] = coerced;
+  }
+  return { applied, rejected };
+}
+
+// LLM provider API-key fields settable from the dashboard (Tier 3). Kept separate
+// from MUTABLE_KEYS so secrets never flow through the generic patch/diff path.
+const LLM_KEY_FIELDS = new Set(['apiKey', 'geminiApiKey', 'glmApiKey', 'openrouterApiKey']);
+
+/**
+ * In-memory setter for provider API keys. Returns applied FIELD NAMES only —
+ * never key values. Callers (and audit) must not log the values. Changes revert
+ * on restart unless persisted to .env via the route's writeEnvVars path.
+ */
+export function updateLlmKeys(patch) {
+  const applied = [];
+  const rejected = {};
+  for (const [field, value] of Object.entries(patch || {})) {
+    if (!LLM_KEY_FIELDS.has(field)) { rejected[field] = 'unknown key field'; continue; }
+    if (typeof value !== 'string' || !value.trim()) { rejected[field] = 'must be a non-empty string'; continue; }
+    config.llm[field] = value.trim();
+    applied.push(field);
   }
   return { applied, rejected };
 }
@@ -264,6 +372,12 @@ export function getSafeConfig() {
       maxTokens: config.llm.maxTokens,
       fallbackProvider: config.llm.fallbackProvider,
       fallbackModel: config.llm.fallbackModel,
+      // Presence booleans only — never the key values (mirrors media.giphyConfigured).
+      apiKeyConfigured: !!config.llm.apiKey,
+      geminiKeyConfigured: !!(config.llm.geminiApiKey || config.llm.apiKey),
+      glmKeyConfigured: !!(config.llm.glmApiKey || config.llm.apiKey),
+      openrouterKeyConfigured: !!(config.llm.openrouterApiKey || config.llm.apiKey),
+      baseUrlConfigured: !!config.llm.baseUrl,
     },
     qualityGate: {
       enabled: config.qualityGate.enabled,
@@ -286,6 +400,19 @@ export function getSafeConfig() {
       stickerMaxPerHour: config.media.stickerMaxPerHour,
       gifMaxPerHour: config.media.gifMaxPerHour,
       giphyConfigured: !!config.media.giphyApiKey,
+    },
+    webSearch: {
+      enabled: config.webSearch.enabled,
+      searxngConfigured: !!config.webSearch.searxngUrl,
+      maxResults: config.webSearch.maxResults,
+      maxHops: config.webSearch.maxHops,
+      searchMaxPerHour: config.webSearch.searchMaxPerHour,
+      browse: {
+        enabled: config.webSearch.browse.enabled,
+        maxPerHour: config.webSearch.browse.maxPerHour,
+        maxConcurrent: config.webSearch.browse.maxConcurrent,
+        allowPrivate: config.webSearch.browse.allowPrivate,
+      },
     },
     dashboard: {
       readOnly: config.dashboard.readOnly,

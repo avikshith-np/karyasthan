@@ -6,6 +6,7 @@ import { callLlm } from '../brain/llm.js';
 import { logger } from '../utils/logger.js';
 import { hasEmoji } from '../utils/emoji.js';
 import { getPersona } from '../utils/config.js';
+import { flattenContent } from '../utils/transcript.js';
 
 // Counters for batched LLM analysis
 const groupMessageCounts = new Map(); // groupJid → messages since last analysis
@@ -250,7 +251,7 @@ async function runBatchAnalysis(chatJid) {
 
   const chatLog = messages.map(m => {
     const name = m.is_from_self ? getPersona().name : (m.sender_name || 'Unknown');
-    return `[${name}]: ${m.content || `[${m.message_type}]`}`;
+    return `[${name}]: ${flattenContent(m.content, m.message_type)}`;
   }).join('\n');
 
   const prompt = `Analyze this WhatsApp group chat excerpt. Extract the following as JSON:

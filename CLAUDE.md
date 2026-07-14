@@ -25,6 +25,7 @@ npm run dev            # Run with pretty-printed logs (pino-pretty)
 npm run migrate        # Run database migrations
 npm run test:llm       # Test LLM connection with sample messages
 npm run test:decision  # Test decision engine with mock messages (10 iterations each)
+npm run test:search    # Test web search/browse (marker extractor, sanitizer, SSRF guard, live SearXNG)
 npm run inspect        # Inspect/debug memory database content
 node scripts/pair.js [phone]  # Pair WhatsApp via phone number (pairing code flow)
 ```
@@ -38,7 +39,7 @@ The message processing pipeline flows through these stages:
 1. **Memory extraction** (`src/memory/learningPipeline.js`) — async, non-blocking. Fast heuristics on every message; LLM batch analysis every 100 messages per group.
 2. **Decision engine** (`src/brain/decisionEngine.js`) — multiplicative 6-factor probability model (mention, question, humor, momentum, recency, BS detection). Direct mentions bypass probabilistic scoring at 95% confidence.
 3. **Audio transcription** (`src/brain/transcribe.js`) — downloads voice messages via Baileys and transcribes using OpenRouter or native Gemini API. Transliterates non-English audio to English script.
-4. **LLM generation** (`src/brain/contextBuilder.js` + `src/brain/llm.js`) — builds system prompt from identity doc + group context + people profiles + memories, then calls LLM. Multi-provider: OpenRouter (primary), Anthropic, OpenAI, Gemini, Zhipu GLM, Ollama (local fallback).
+4. **LLM generation** (`src/brain/contextBuilder.js` + `src/brain/llm.js`) — builds system prompt from identity doc + group context + people profiles + memories, then calls LLM. Multi-provider: OpenRouter (primary), Anthropic, OpenAI, Gemini, Zhipu GLM, Ollama (local fallback). When the **web-search** skill is enabled, `generateResponse` runs a bounded **marker + re-prompt loop**: the LLM may emit `[SEARCH: query]` / `[BROWSE: url]` as its whole message, the tool runs (`src/brain/webSearch.js` SearXNG / `src/brain/webBrowse.js` Playwright), the sanitized results are appended to the user message, and the LLM is re-prompted to answer in voice. `llm.js` is untouched — it stays provider-agnostic. See "Web search & browsing" below.
 5. **Post-processing** (`src/brain/postProcess.js`) — strips AI artifacts, markdown, splits long messages.
 6. **Humanization** (`src/behavior/timing.js`) — context-aware response delays, typing indicator simulation (refreshed every 7s), delayed read receipts.
 
@@ -70,6 +71,7 @@ All config via `.env` (see `.env.example`). Key variables:
 - **WhatsApp**: `WA_PHONE_NUMBER`
 - **Behavior**: `RESPONSE_RATE` (base probability, default 0.15), `MAX_RESPONSE_LENGTH`, `SLEEP_START_HOUR`/`SLEEP_END_HOUR`, `TIMEZONE`
 - **Rate limits**: `MAX_PER_GROUP_HOUR`, `MAX_GLOBAL_HOUR`
+- **Web search/browse**: `WEB_SEARCH_ENABLED` (boot default for the Skills-tab toggle), `SEARXNG_URL`, `WEB_SEARCH_MAX_RESULTS`, `WEB_SEARCH_MAX_HOPS`, `WEB_SEARCH_TIMEOUT_MS`, `WEB_SEARCH_BUDGET_MS`, `WEB_SEARCH_MAX_PER_HOUR`, `WEB_BROWSE_ENABLED`, `WEB_BROWSE_MAX_PER_HOUR`, `WEB_BROWSE_TIMEOUT_MS`, `WEB_BROWSE_MAX_CHARS`, `WEB_BROWSE_CONCURRENCY`, `WEB_BROWSE_IDLE_MS`, `WEB_BROWSE_ALLOW_PRIVATE` (SSRF escape hatch — keep `false`). See "Web search & browsing" below.
 - **Paths**: `DB_PATH`, `AUTH_PATH`, `LOG_LEVEL`
 - **Toggles**: `WARMUP_ENABLED`, `DRY_RUN`
 - **Dashboard**: `DASHBOARD_ENABLED`, `DASHBOARD_HOST` (default `127.0.0.1`), `DASHBOARD_PORT` (default `7070`), `DASHBOARD_USER`, `DASHBOARD_PASS_HASH` (bcrypt), `DASHBOARD_COOKIE_SECRET`, `DASHBOARD_ALLOW_CIDRS` (comma-sep CIDRs), `DASHBOARD_READONLY` (v1 hard-defaults to `true`)
@@ -97,7 +99,9 @@ Pages (hash-routed SPA): `#status`, `#groups` → `#group/<jid>`, `#people` → 
 
 ### Writes
 
-- `PATCH /api/config` — live-tune allow-listed keys (`responseRate`, `dryRun`, `llm.temperature`, `llm.maxTokens`, `qualityGate.*`, rate caps, feature toggles). In-memory only; a pm2 restart reverts unless you also edit `.env`
+- `PATCH /api/config` — live-tune allow-listed keys (`responseRate`, `dryRun`, `llm.temperature`, `llm.maxTokens`, `qualityGate.*`, rate caps, feature toggles, **LLM routing**: `llm.provider`/`llm.model`/`llm.fallbackProvider`/`llm.fallbackModel`/`qualityGate.provider`/`qualityGate.model`). Provider keys are `enum:provider` validated against `PROVIDER_NAMES` (`src/brain/providers.js`) and a switch to an unkeyed cloud provider is rejected. In-memory only; a pm2 restart reverts unless you also persist via `/api/config/persist`. **`llm.baseUrl` is intentionally NOT mutable here** (.env-only SSRF surface)
+- `POST /api/llm/keys` (`{field, value, persist?}`) — set/update a provider API key (`apiKey`/`geminiApiKey`/`glmApiKey`/`openrouterApiKey`) in-memory; `persist:true` writes it to `.env` via the isolated `writeEnvVars` path (chmod 0600). Keys never flow through `KEY_TO_ENV`/`/api/config/diff`, and the value is never echoed or audited — only the field name
+- `POST /api/llm/test` (`{provider, model}`) — cheap `noFallback` probe of a provider/model before switching; rate-limited 10/min. Provider `local` is probed at the configured `baseUrl`; cloud providers at their own endpoint
 - `POST/PATCH/DELETE /api/memories` — memory CRUD
 - `PATCH /api/people/:jid` — edit `real_name`, `summary`, `traits[]`, `interests[]`
 - `PATCH /api/groups/:jid` — edit `vibe`, `language`
@@ -115,6 +119,22 @@ API surface is under `/api/*`; the static SPA is served from `src/dashboard/publ
 - `POST /api/config/persist` — write the live config back to `.env` with a timestamped backup
 - Extracting decision-engine weights to a tunable table
 
+## Web search & browsing
+
+The bot can look things up mid-conversation. Search uses a **self-hosted SearXNG** JSON API (no API key); browsing uses a **Playwright headless Chromium** (renders JS).
+
+- **Mechanism** — a marker + re-prompt loop inside `generateResponse` (`src/brain/contextBuilder.js`), not provider tool-calling, so `llm.js` and all 6 providers are untouched. The LLM emits `[SEARCH: query]` / `[BROWSE: url]` as its whole message; the tool runs; sanitized, fenced, length-capped results are appended to the user message; the LLM is re-prompted to answer in persona voice. Intermediate results never leave `generateResponse`, so the final text still flows through media-marker extraction + `postProcess` + quality gate unchanged.
+- **On/off** — the **`web-search` skill** in the dashboard Skills tab is the runtime master switch. It's a *manifest* skill (`src/skills/web-search.skill.js`): `shouldHandle()` always returns `false`, so it never intercepts messages — it only provides the tab row + toggle. The loop and the system-prompt injection both gate on `isSkillEnabled('web-search')` (`src/skills/skillRunner.js`). `WEB_SEARCH_ENABLED` is only its **boot default** (via `enabledByDefault`); the toggle is in-memory and resets on restart. `WEB_SEARCH_ENABLED=false` is the durable off-switch.
+- **Latency budget** — `processMessage` is wrapped in a 60s in-flight guard (`events.js`). `maxHops=1` (default) keeps a web turn within it; `index.js` also credits the generation time against the subsequent `waitResponseDelay`. `maxHops=2` (chain search→browse) requires raising `IN_FLIGHT_SAFETY_MS`.
+- **Security** — `browseUrl` URLs come from untrusted group chat, so `webBrowse.js` runs an SSRF guard (rejects non-http(s), private/loopback/link-local/`169.254.169.254`/multicast, the bot's own dashboard host:port and the SearXNG host; re-checks after redirects). `WEB_BROWSE_ALLOW_PRIVATE=true` disables it — keep it false. The app-layer guard is best-effort; the supported hardening is **network-level egress filtering**. Fetched content is sanitized (`sanitizeWebContent` strips marker-looking tokens + `@digits`) before being fed back, to stop a malicious page from injecting an `[IMAGE:]` marker that would bypass the quality gate and trigger a real image send.
+- **Setup** — SearXNG must enable JSON output in its `settings.yml` (`search: { formats: [html, json] }`). Playwright is in `dependencies`; after `npm install` run `npx playwright install chromium` (~300MB). If Chromium is absent, browsing degrades to null and search still works. Web ops run under `DRY_RUN` (they're read-only generation, not a send). Test with `npm run test:search`.
+- **Tuning** — `config.webSearch.*` (`src/utils/config.js`); `maxResults`/`maxHops`/`searchMaxPerHour`/`browse.{enabled,maxPerHour,maxConcurrent}` are dashboard-mutable via `PATCH /api/config`. `searxngUrl` and `browse.allowPrivate` are `.env`-only (SSRF surface).
+
 ## Deployment
 
 A systemd unit file is provided in `karyasthan.service`. Copy to `/etc/systemd/system/` and enable with `sudo systemctl daemon-reload && sudo systemctl enable --now karyasthan`.
+
+<!-- SPECKIT START -->
+For additional context about technologies to be used, project structure,
+shell commands, and other important information, read the current plan
+<!-- SPECKIT END -->

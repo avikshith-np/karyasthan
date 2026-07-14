@@ -3,6 +3,7 @@ import path from 'path';
 import { config } from '../utils/config.js';
 import { logger } from '../utils/logger.js';
 import { callLlm } from './llm.js';
+import { flattenContent } from '../utils/transcript.js';
 
 const GIPHY_BASE = 'https://api.giphy.com/v1';
 
@@ -262,7 +263,7 @@ export async function pickContextualQuery(recentMessages, kind) {
 
   const transcript = recentMessages
     .slice(-15)
-    .map(m => `[${m.sender_name || 'Unknown'}]: ${m.content || `[${m.message_type}]`}`)
+    .map(m => `[${m.sender_name || 'Unknown'}]: ${flattenContent(m.content, m.message_type)}`)
     .join('\n');
 
   const kindLabel = kind === 'sticker' ? 'sticker' : 'GIF';
@@ -271,7 +272,7 @@ export async function pickContextualQuery(recentMessages, kind) {
   const text = await callLlm(systemPrompt, transcript, {
     provider: config.qualityGate.provider,
     model: config.qualityGate.model,
-    maxTokens: 32,
+    maxTokens: 256, // short query, but thinking models need headroom or content comes back empty
     temperature: 0.4,
     timeoutMs: 5000,
     noFallback: true,

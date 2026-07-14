@@ -32,7 +32,10 @@ const messageBuffers = new Map(); // chatJid → { messages[], timer, sock, cont
 // a second parallel processMessage. When the in-flight promise settles, any
 // pending buffer is re-flushed in one shot with full updated context.
 const inFlight = new Map(); // chatJid → Promise
-const IN_FLIGHT_SAFETY_MS = 60_000;
+// 90s: a web-search turn during provider degradation (LLM 503 retries + fallback +
+// search + re-prompt) has been measured at ~55s; 60s risked force-releasing the chat
+// lock mid-turn and double-replying. Still small enough to unstick a truly hung chat.
+const IN_FLIGHT_SAFETY_MS = 90_000;
 
 const DEBOUNCE_GROUP_MS = 8000;  // 8s for group chats — wait for people to finish typing
 const DEBOUNCE_DM_MS = 3000;    // 3s for DMs
@@ -175,7 +178,14 @@ function flushBuffer(chatJid) {
       );
     }),
   ]).catch(err => {
-    logger.warn({ err: err.message, chatJid }, 'In-flight guard released with error');
+    if (err?.message === 'processMessage in-flight timeout') {
+      logger.error(
+        { evt: 'issue', chatJid, timeoutMs: IN_FLIGHT_SAFETY_MS },
+        'Message processing hit the in-flight safety timeout — forced release (a reply may have been dropped)',
+      );
+    } else {
+      logger.warn({ evt: 'issue', err: err.message, chatJid }, 'In-flight guard released with error');
+    }
   }).finally(() => {
     if (timeoutHandle) clearTimeout(timeoutHandle);
     inFlight.delete(chatJid);
@@ -407,10 +417,12 @@ async function handleMessage(sock, msg) {
     messageType,
     quotedId,
     quotedContent,
+    // Persisted (messages.quoted_participant) — the authoritative author JID of the
+    // quoted message, used for reply attribution in the conversation transcript.
+    quotedParticipant,
     // In-memory only — not persisted to SQLite; used by processMessage for
     // image-edit dispatch and any future quoted-media flows.
     quotedMessageType,
-    quotedParticipant,
     quotedRawMessage,
     isFromSelf,
     timestamp: msg.messageTimestamp
@@ -433,7 +445,9 @@ async function handleMessage(sock, msg) {
       if (target?.is_from_self) {
         recordReaction(reactionTargetId, text, senderJid);
       }
-    } catch {}
+    } catch (err) {
+      logger.debug({ err: err.message, targetId: reactionTargetId }, 'Failed to record reaction feedback (non-critical)');
+    }
   }
 
   // Fire-and-forget media description — updates DB content asynchronously

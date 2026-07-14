@@ -63,6 +63,7 @@ CREATE TABLE IF NOT EXISTS messages (
     message_type    TEXT DEFAULT 'text',
     quoted_id       TEXT,
     quoted_content  TEXT,
+    quoted_participant TEXT,
     is_from_self    INTEGER DEFAULT 0,
     timestamp       INTEGER NOT NULL,
     metadata_json   TEXT DEFAULT '{}',

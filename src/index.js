@@ -16,6 +16,7 @@ import { getDb } from './memory/db.js';
 import { cleanExpiredMemories, decayMemories } from './memory/relationshipStore.js';
 import { evaluateResponse, recordQuality } from './brain/qualityGate.js';
 import { getRecentMessages } from './memory/messageStore.js';
+import { flattenContent } from './utils/transcript.js';
 import { loadSkills, runSkills } from './skills/skillRunner.js';
 import { extractImageMarker, generateImage, editImage } from './brain/imageGen.js';
 import { extractVoiceMarker, extractSingMarker, generateVoiceNote } from './brain/voiceGen.js';
@@ -336,7 +337,7 @@ async function processMessage(sock, msg, context) {
     const recentForGate = getRecentMessages(msg.groupJid, 5)
       .filter(m => !m.is_from_self)
       .slice(-5)
-      .map(m => `[${m.sender_name || 'Unknown'}]: ${m.content || `[${m.message_type}]`}`)
+      .map(m => `[${m.sender_name || 'Unknown'}]: ${flattenContent(m.content, m.message_type)}`)
       .join('\n');
 
     const gateResult = await evaluateResponse(processedText, recentForGate, { isMention });

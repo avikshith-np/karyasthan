@@ -1,10 +1,14 @@
 import { config, getSafeConfig, updateConfig, CONFIG_MUTABLE_KEYS } from '../../utils/config.js';
+import { PROVIDER_NAMES } from '../../brain/providers.js';
+import { getModelCatalog } from '../modelStore.js';
 import { auditWrite } from '../audit.js';
 import { computeEnvDiff, persistEnvDiff } from '../envWriter.js';
 
 export default async function configRoutes(app) {
   app.get('/api/config', async () => ({
     mutableKeys: CONFIG_MUTABLE_KEYS,
+    providers: PROVIDER_NAMES,
+    models: getModelCatalog(),
     values: getSafeConfig(),
   }));
 

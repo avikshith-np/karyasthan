@@ -36,6 +36,14 @@ export function runMigrations() {
   // Execute the entire schema at once — better-sqlite3's exec() handles multiple statements
   database.exec(schema);
 
+  // Idempotent column adds for pre-existing databases. CREATE TABLE IF NOT EXISTS is a
+  // no-op on an existing table, so new columns must be ALTERed in explicitly.
+  const msgCols = database.prepare('PRAGMA table_info(messages)').all();
+  if (!msgCols.some(c => c.name === 'quoted_participant')) {
+    database.exec('ALTER TABLE messages ADD COLUMN quoted_participant TEXT');
+    logger.info('Migration: added messages.quoted_participant column');
+  }
+
   logger.info('Database migrations complete');
 }
 

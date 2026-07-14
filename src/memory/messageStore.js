@@ -1,19 +1,22 @@
 import { getDb } from './db.js';
 
 const INSERT_MSG = `INSERT OR IGNORE INTO messages
-  (id, group_jid, sender_jid, sender_name, content, message_type, quoted_id, quoted_content, is_from_self, timestamp, metadata_json)
-  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+  (id, group_jid, sender_jid, sender_name, content, message_type, quoted_id, quoted_content, quoted_participant, is_from_self, timestamp, metadata_json)
+  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
 
-const RECENT_MSGS = `SELECT * FROM messages WHERE group_jid = ? ORDER BY timestamp DESC LIMIT ?`;
+// rowid DESC is a deterministic tie-breaker: WhatsApp timestamps are second-resolution,
+// so without it same-second messages sort non-deterministically and adjacent A/B turns
+// can swap, which scrambles the turn order the LLM uses to attribute who said what.
+const RECENT_MSGS = `SELECT * FROM messages WHERE group_jid = ? ORDER BY timestamp DESC, rowid DESC LIMIT ?`;
 
 const RECENT_DM_MSGS = `SELECT * FROM messages
   WHERE group_jid = ? AND (sender_jid = ? OR is_from_self = 1)
-  ORDER BY timestamp DESC LIMIT ?`;
+  ORDER BY timestamp DESC, rowid DESC LIMIT ?`;
 
 const SEARCH_MSGS = `SELECT m.* FROM messages_fts f
   JOIN messages m ON m.rowid = f.rowid
   WHERE messages_fts MATCH ? AND m.group_jid = ?
-  ORDER BY m.timestamp DESC LIMIT ?`;
+  ORDER BY m.timestamp DESC, m.rowid DESC LIMIT ?`;
 
 const COUNT_IN_WINDOW = `SELECT COUNT(*) as count FROM messages
   WHERE group_jid = ? AND is_from_self = 1 AND timestamp > ?`;
@@ -33,6 +36,7 @@ export function storeMessage(msg) {
     msg.messageType || 'text',
     msg.quotedId || null,
     msg.quotedContent || null,
+    msg.quotedParticipant || null,
     msg.isFromSelf ? 1 : 0,
     msg.timestamp,
     JSON.stringify(msg.metadata || {})

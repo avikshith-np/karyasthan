@@ -190,10 +190,12 @@ export function postProcess(text, fixatedWords = [], opts = null) {
     result = result.replace(pattern, '$1');
   }
 
-  // Strip system markers that should never appear in chat
-  result = result.replace(/\[(?:IMAGE|IMG|VOICE|SING|STICKER|STKR|GIF):[^\]]*\]/gi, '');
+  // Strip system markers that should never appear in chat.
+  // (SEARCH|BROWSE are consumed earlier in the re-prompt loop; included here purely as
+  // defense-in-depth so a leaked web marker can never reach the chat.)
+  result = result.replace(/\[(?:IMAGE|IMG|VOICE|SING|STICKER|STKR|GIF|SEARCH|BROWSE):[^\]]*\]/gi, '');
   // Also strip unclosed markers (LLM output truncated before `]`)
-  result = result.replace(/\[(?:IMAGE|IMG|VOICE|SING|STICKER|STKR|GIF):[\s\S]*$/i, '');
+  result = result.replace(/\[(?:IMAGE|IMG|VOICE|SING|STICKER|STKR|GIF|SEARCH|BROWSE):[\s\S]*$/i, '');
 
   // Trim whitespace
   result = result.trim();

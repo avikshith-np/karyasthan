@@ -19,8 +19,10 @@ export async function loadSkills() {
       const mod = await import(`./${file}`);
       const skill = mod.default;
       if (skill?.name && skill?.shouldHandle && skill?.handle) {
-        registry.push({ skill, enabled: true });
-        logger.info({ skill: skill.name }, 'Skill loaded');
+        // A skill may opt out of being enabled at boot via `enabledByDefault: false`
+        // (e.g. driven by an env flag). Absent → enabled, preserving prior behavior.
+        registry.push({ skill, enabled: skill.enabledByDefault !== false });
+        logger.info({ skill: skill.name, enabled: skill.enabledByDefault !== false }, 'Skill loaded');
       } else {
         logger.warn({ file }, 'Skill file missing required exports (name, shouldHandle, handle)');
       }
@@ -52,6 +54,17 @@ export function setSkillEnabled(name, enabled) {
   }
   logger.info({ skill: name, enabled: !!enabled }, 'Skill toggled');
   return true;
+}
+
+/**
+ * Whether a loaded skill is currently enabled. Returns false if the skill is not
+ * loaded (e.g. before loadSkills() runs). Used by capabilities like web search
+ * whose engine lives in the response pipeline but whose on/off switch is the
+ * Skills tab (a "manifest" skill — see src/skills/web-search.skill.js).
+ */
+export function isSkillEnabled(name) {
+  const entry = registry.find(e => e.skill.name === name);
+  return entry ? entry.enabled : false;
 }
 
 /**

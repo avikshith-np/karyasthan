@@ -106,8 +106,10 @@ export function decide(msg, context) {
   score = Math.max(0, Math.min(0.95, score));
   factors.finalScore = score;
 
-  // Roll the dice
+  // Roll the dice. Capture the roll so a skip can explain itself in the logs
+  // ("score 0.18, rolled 0.44") — it rides along in factors on both paths.
   const roll = Math.random();
+  factors.roll = roll;
   if (roll < score) {
     // Check burst AFTER deciding to respond
     if (checkBurst(msg.groupJid)) {

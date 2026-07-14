@@ -22,6 +22,7 @@ import billsRoutes from './routes/bills.js';
 import streamRoutes from './routes/stream.js';
 import loginRoutes from './routes/login.js';
 import configRoutes from './routes/config.js';
+import llmRoutes from './routes/llm.js';
 import identityRoutes from './routes/identity.js';
 import skillsRoutes from './routes/skills.js';
 import maintenanceRoutes from './routes/maintenance.js';
@@ -86,6 +87,7 @@ export async function startDashboard({ getSock }) {
   await app.register(streamRoutes);
   await app.register(loginRoutes);
   await app.register(configRoutes);
+  await app.register(llmRoutes);
   await app.register(identityRoutes);
   await app.register(skillsRoutes);
   await app.register(maintenanceRoutes);

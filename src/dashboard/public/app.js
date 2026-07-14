@@ -510,6 +510,11 @@ async function renderGroupDetail(jid) {
           <button id="gdSendSticker">▸ SEND STICKER</button>
           <button id="gdSendGif">▸ SEND GIF</button>
         </div>
+        <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+          <input type="text" id="gdForceVoiceText" placeholder="optional · text to speak (blank = LLM reply)" style="flex:1;min-width:200px" />
+          <label class="mono mute" style="display:flex;align-items:center;gap:4px"><input type="checkbox" id="gdVoiceSing" /> SING</label>
+          <button id="gdSendVoice">▸ SEND VOICE</button>
+        </div>
       `;
       ctrlSlot.querySelector('#gdSaveVibe')?.addEventListener('click', async () => {
         try { await api(`/api/groups/${encodeURIComponent(g.jid)}`, { method: 'PATCH', body: { vibe: ctrlSlot.querySelector('#gdVibe').value } });
@@ -539,6 +544,26 @@ async function renderGroupDetail(jid) {
       });
       mediaBtn('#gdSendSticker', 'sticker');
       mediaBtn('#gdSendGif', 'gif');
+      ctrlSlot.querySelector('#gdSendVoice')?.addEventListener('click', async (e) => {
+        const btn = e.currentTarget;
+        const label = btn.textContent;
+        const text = ctrlSlot.querySelector('#gdForceVoiceText').value.trim();
+        const sing = !!ctrlSlot.querySelector('#gdVoiceSing')?.checked;
+        const body = {}; if (text) body.text = text; if (sing) body.sing = true;
+        // Blank text => the server runs a full LLM generation + Gemini TTS + ffmpeg, which is
+        // slow; cap the wait so a stalled LLM can't leave the button stuck disabled forever.
+        const ctrl = new AbortController();
+        const timer = setTimeout(() => ctrl.abort(), 120000);
+        btn.disabled = true; btn.textContent = '▸ SENDING…';
+        try {
+          const res = await api(`/api/groups/${encodeURIComponent(g.jid)}/send-voice`, { method: 'POST', body, signal: ctrl.signal });
+          flash(`VOICE SENT · ${res.duration ?? '?'}s · ${(res.text || '').slice(0, 50)}`);
+        } catch (err) {
+          flash(ctrl.signal.aborted ? 'Voice send timed out — LLM/TTS too slow' : err.message, 'bad');
+        } finally {
+          clearTimeout(timer); btn.disabled = false; btn.textContent = label;
+        }
+      });
     }
 
     // Members
@@ -1032,6 +1057,149 @@ async function renderBills() {
 }
 
 // ── 08 LOGS ──
+// Human-readable rendering of the structured Pino stream. Each line shows a
+// category tag + the message sentence, an indented context line built from the
+// structured fields (the decision "why" / the error detail), and a click-to-expand
+// full dump. Nothing is hidden, but the default view is sentences + chips, never
+// raw JSON.
+
+const LOG_LEVELS = { 10: 'trace', 20: 'debug', 30: 'info', 40: 'warn', 50: 'error', 60: 'fatal' };
+function logLevelName(level) { return LOG_LEVELS[level] || 'info'; }
+
+const LOG_CATS = {
+  reply: { label: 'REPLY', cls: 'reply' },
+  react: { label: 'REACT', cls: 'react' },
+  skip:  { label: 'SKIP',  cls: 'skip' },
+  block: { label: 'BLOCK', cls: 'block' },
+  issue: { label: 'ISSUE', cls: 'issue' },
+  web:   { label: 'WEB',   cls: 'web' },
+  audio: { label: 'AUDIO', cls: 'audio' },
+  warn:  { label: 'WARN',  cls: 'warn' },
+  info:  { label: 'INFO',  cls: 'info' },
+  debug: { label: 'DEBUG', cls: 'debug' },
+  trace: { label: 'TRACE', cls: 'trace' },
+};
+// Backend `evt` tag wins; otherwise derive a category from the level so every line
+// gets a sensible tag (errors/fatals read as ISSUE).
+function logCategory(p) {
+  if (p.evt && LOG_CATS[p.evt]) return p.evt;
+  const lvl = logLevelName(p.level);
+  if (lvl === 'error' || lvl === 'fatal') return 'issue';
+  return lvl; // warn | info | debug | trace
+}
+// Broad buckets for the category filter dropdown.
+const CAT_BUCKET = {
+  reply: 'decisions', react: 'decisions', skip: 'decisions', block: 'decisions',
+  issue: 'issues', warn: 'issues',
+};
+
+// Group JID → name, fetched once per page load so context lines can say "#Family".
+let _groupNames = null;
+async function loadGroupNames() {
+  if (_groupNames) return _groupNames;
+  _groupNames = {};
+  try {
+    const groups = await api('/api/groups');
+    for (const g of (groups || [])) if (g && g.jid) _groupNames[g.jid] = g.name || g.jid;
+  } catch {}
+  return _groupNames;
+}
+function groupLabel(jid) {
+  if (!jid) return '';
+  const name = _groupNames && _groupNames[jid];
+  if (name) return name;
+  const local = String(jid).split('@')[0];
+  return local.length > 14 ? local.slice(0, 6) + '…' + local.slice(-4) : local;
+}
+function shortLogId(id) {
+  const s = String(id || '');
+  return s.length > 10 ? s.slice(0, 4) + '…' + s.slice(-4) : s;
+}
+
+const FACTOR_KEYS = ['mention', 'question', 'command', 'humor', 'momentum', 'recency', 'bs', 'conversation'];
+// Turn the decision-engine factor object into a readable formula, showing only the
+// factors that actually moved the score (≠ 1), then the final score and the roll.
+function formatFactors(f) {
+  if (!f || typeof f !== 'object') return '';
+  const parts = [];
+  for (const k of FACTOR_KEYS) {
+    const v = f[k];
+    if (typeof v === 'number' && v !== 1) parts.push(`${k}×${+v.toFixed(2)}`);
+  }
+  let s = parts.join(' · ');
+  if (typeof f.finalScore === 'number') s += `${s ? ' ' : ''}→ ${f.finalScore.toFixed(2)}`;
+  if (typeof f.roll === 'number') s += ` (rolled ${f.roll.toFixed(2)})`;
+  return s;
+}
+
+function errMessage(err) {
+  if (!err) return '';
+  if (typeof err === 'string') return err;
+  return err.message || err.msg || err.type || '';
+}
+function errStack(err) {
+  return (err && typeof err === 'object' && typeof err.stack === 'string') ? err.stack : '';
+}
+
+// Fields the context line handles explicitly, plus pure Pino noise — excluded from
+// the generic "key value" fallback below.
+const CTX_HANDLED = new Set([
+  'level', 'time', 'msg', 'pid', 'hostname', 'name', 'v', 'evt', 'factors', 'err',
+  'group', 'groupJid', 'chatJid', 'sender', 'score', 'provider', 'model',
+  'latencyMs', 'elapsedMs', 'reason', 'msgId',
+]);
+// Build the human context segments (the "why") from a parsed log object.
+function logContextSegments(p) {
+  const segs = [];
+  const grp = p.group || p.groupJid || p.chatJid;
+  if (grp) segs.push(`#${groupLabel(grp)}`);
+  if (p.sender) segs.push(String(p.sender));
+  if (typeof p.score === 'number') segs.push(`score ${p.score.toFixed(2)}`);
+  const fac = formatFactors(p.factors);
+  if (fac) segs.push(fac);
+  if (p.reason != null && typeof p.reason !== 'object') segs.push(String(p.reason));
+  if (p.provider) segs.push(p.provider + (p.model ? '/' + p.model : ''));
+  if (typeof p.latencyMs === 'number') segs.push(`${p.latencyMs}ms`);
+  if (typeof p.elapsedMs === 'number') segs.push(`${p.elapsedMs}ms`);
+  const em = errMessage(p.err);
+  if (em) segs.push(em);
+  if (p.msgId) segs.push(`#${shortLogId(p.msgId)}`);
+  for (const [k, v] of Object.entries(p)) {
+    if (CTX_HANDLED.has(k)) continue;
+    if (v == null || typeof v === 'object') continue;
+    segs.push(`${k} ${v}`);
+  }
+  return segs;
+}
+
+// Compose the renderable entry: level + category for filtering, a plain searchable
+// line for grep, and the two-row HTML card with an expandable full dump.
+function buildLogEntry(p, raw) {
+  const lvl = logLevelName(p.level);
+  const cat = logCategory(p);
+  const meta = LOG_CATS[cat] || LOG_CATS.info;
+  const time = p.time ? new Date(p.time).toLocaleTimeString() : '';
+  const msg = (p.msg || raw || '').toString();
+  const segs = logContextSegments(p);
+  const ctxText = segs.join('  ·  ');
+  const stack = errStack(p.err);
+  const dump = (stack ? stack + '\n\n' : '') + JSON.stringify(p, null, 2);
+
+  const html =
+    `<div class="logentry cat-${meta.cls}">` +
+      `<div class="ll-main">` +
+        `<span class="lt mono">${escapeHtml(time)}</span>` +
+        `<span class="lcat">${meta.label}</span>` +
+        `<span class="lm">${escapeHtml(msg)}</span>` +
+        `<span class="lx-toggle mono" title="Show raw">▸</span>` +
+      `</div>` +
+      (ctxText ? `<div class="ll-ctx mono">${escapeHtml(ctxText)}</div>` : '') +
+      `<pre class="ll-detail mono" hidden>${escapeHtml(dump)}</pre>` +
+    `</div>`;
+
+  return { lvl, cat, html, line: `${time} ${meta.label} ${lvl} ${msg} ${ctxText}` };
+}
+
 async function renderLogs() {
   const root = showShell('logs');
   const pane = root.querySelector('[data-slot="logs-pane"]');
@@ -1039,36 +1207,44 @@ async function renderLogs() {
   const tailBtn = root.querySelector('#logsTail');
   const clearBtn = root.querySelector('#logsClear');
   const levelSel = root.querySelector('#logsLevel');
+  const catSel = root.querySelector('#logsCat');
   const grepInp = root.querySelector('#logsGrep');
   const exportBtn = root.querySelector('#logsExport');
 
   let paused = false, tail = true;
   const buf = []; const MAX = 500;
 
-  function levelName(level) {
-    return ({ 10: 'debug', 20: 'debug', 30: 'info', 40: 'warn', 50: 'error', 60: 'fatal' })[level] || 'info';
-  }
+  await loadGroupNames();
+
   function levelMatches(name) {
     const f = levelSel.value;
     if (!f) return true;
-    const order = { debug: 0, info: 1, warn: 2, error: 3, fatal: 4 };
+    const order = { trace: 0, debug: 1, info: 2, warn: 3, error: 4, fatal: 5 };
     return (order[name] ?? 0) >= (order[f] ?? 0);
+  }
+  function catMatches(cat) {
+    const f = catSel ? catSel.value : '';
+    if (!f) return true;
+    return CAT_BUCKET[cat] === f;
+  }
+  function passesFilters(e) {
+    if (!levelMatches(e.lvl)) return false;
+    if (!catMatches(e.cat)) return false;
+    const grep = (grepInp.value || '').toLowerCase();
+    if (grep && !e.line.toLowerCase().includes(grep)) return false;
+    return true;
   }
   function appendLine(entry) {
     buf.push(entry); while (buf.length > MAX) buf.shift();
-    const grep = (grepInp.value || '').toLowerCase();
     if (paused) return;
-    if (grep && !entry.line.toLowerCase().includes(grep)) return;
-    if (!levelMatches(entry.lvl)) return;
-    pane.innerHTML += entry.html;
+    if (!passesFilters(entry)) return;
+    pane.insertAdjacentHTML('beforeend', entry.html);
     while (pane.children.length > MAX) pane.removeChild(pane.firstChild);
     if (tail) pane.scrollTop = pane.scrollHeight;
     setSlots(root, { 'logs-buffer': `${buf.length} / ${MAX}` });
   }
   function rerenderAll() {
-    const grep = (grepInp.value || '').toLowerCase();
-    pane.innerHTML = buf.filter(e => levelMatches(e.lvl) && (!grep || e.line.toLowerCase().includes(grep)))
-      .map(e => e.html).join('');
+    pane.innerHTML = buf.filter(passesFilters).map(e => e.html).join('');
     if (tail) pane.scrollTop = pane.scrollHeight;
   }
 
@@ -1078,16 +1254,22 @@ async function renderLogs() {
   es.addEventListener('log', (e) => {
     try {
       const entry = JSON.parse(e.data);
-      const p = entry.parsed || {};
-      const lvl = levelName(p.level);
-      const time = p.time ? new Date(p.time).toLocaleTimeString() : '';
-      const msg = (p.msg || entry.raw || '').toString();
-      const line = `${time} ${lvl.toUpperCase()} ${msg}`;
-      const html = `<div class="logline ${lvl}"><span class="lt mono">${escapeHtml(time)}</span><span class="ll">${lvl.toUpperCase().padEnd(5)}</span><span class="lm">${escapeHtml(msg)}</span></div>`;
-      appendLine({ lvl, line, html });
+      appendLine(buildLogEntry(entry.parsed || {}, entry.raw));
     } catch {}
   });
   es.onerror = () => setSlots(root, { 'logs-stream': 'DISCONNECTED' });
+
+  // Click a line to reveal its raw structured payload (delegated; lines churn).
+  pane.addEventListener('click', (e) => {
+    const main = e.target.closest('.ll-main');
+    if (!main) return;
+    const line = main.parentElement;
+    const detail = line.querySelector('.ll-detail');
+    if (!detail) return;
+    const show = detail.hasAttribute('hidden');
+    detail.toggleAttribute('hidden', !show);
+    line.classList.toggle('expanded', show);
+  });
 
   pauseBtn.addEventListener('click', () => {
     paused = !paused;
@@ -1098,6 +1280,7 @@ async function renderLogs() {
   tailBtn.addEventListener('click', () => { tail = !tail; tailBtn.classList.toggle('primary', tail); if (tail) pane.scrollTop = pane.scrollHeight; });
   clearBtn.addEventListener('click', () => { buf.length = 0; pane.innerHTML = ''; setSlots(root, { 'logs-buffer': `0 / ${MAX}` }); });
   levelSel.addEventListener('change', rerenderAll);
+  if (catSel) catSel.addEventListener('change', rerenderAll);
   grepInp.addEventListener('input', rerenderAll);
   exportBtn.addEventListener('click', () => {
     const blob = new Blob([buf.map(e => e.line).join('\n')], { type: 'text/plain' });
@@ -1114,6 +1297,8 @@ async function renderSettings() {
   try {
     const cfg = await getConfig(true);
     const { mutableKeys, values } = cfg;
+    // These six render in the bespoke LLM ROUTING panel below, not the generic table.
+    const LLM_ROUTING_KEYS = ['llm.provider', 'llm.model', 'llm.fallbackProvider', 'llm.fallbackModel', 'qualityGate.provider', 'qualityGate.model'];
     setSlots(root, {
       'settings-keycount': `${mutableKeys.length} KEYS`,
       'settings-stamp': values.dashboard?.readOnly ? 'READ-ONLY' : 'READ/WRITE',
@@ -1122,7 +1307,7 @@ async function renderSettings() {
     const getByPath = (obj, path) => path.split('.').reduce((o, p) => o?.[p], obj);
 
     const rowsBody = root.querySelector('[data-slot="settings-rows"]');
-    rowsBody.innerHTML = mutableKeys.map(key => {
+    rowsBody.innerHTML = mutableKeys.filter(key => !LLM_ROUTING_KEYS.includes(key)).map(key => {
       const v = getByPath(values, key);
       const isBool = typeof v === 'boolean';
       const isNum = typeof v === 'number';
@@ -1156,12 +1341,138 @@ async function renderSettings() {
       } catch (err) { flash(err.message, 'bad'); }
     });
 
+    // ── LLM ROUTING panel ──
+    const providers = cfg.providers || [];
+    const modelCatalog = cfg.models || {};
+    const ADD_SENTINEL = '__add_model__';
+    const keyConfigured = {
+      anthropic: values.llm?.apiKeyConfigured,
+      openai: values.llm?.apiKeyConfigured,
+      gemini: values.llm?.geminiKeyConfigured,
+      glm: values.llm?.glmKeyConfigured,
+      openrouter: values.llm?.openrouterKeyConfigured,
+    };
+    // ollama needs no key; local needs a base URL (LLM_BASE_URL); cloud needs its key.
+    const usable = (p) => p === 'ollama' ? true : p === 'local' ? !!values.llm?.baseUrlConfigured : !!keyConfigured[p];
+    const provOptions = (selected) => providers.map(p =>
+      `<option value="${p}" ${p === selected ? 'selected' : ''}>${p}${usable(p) ? '' : (p === 'local' ? ' (no url)' : ' (no key)')}</option>`).join('');
+    for (const sel of root.querySelectorAll('[data-llm-sel]')) {
+      sel.innerHTML = provOptions(getByPath(values, sel.dataset.llmSel));
+    }
+
+    function fillModelSelect(sel, provider, current) {
+      const list = [...(modelCatalog[provider] || [])];
+      if (current && !list.includes(current)) list.unshift(current);
+      const opts = list.map(m => `<option value="${escapeHtml(m)}" ${m === current ? 'selected' : ''}>${escapeHtml(m)}</option>`);
+      opts.push(`<option value="${ADD_SENTINEL}">+ add model…</option>`);
+      sel.innerHTML = opts.join('');
+      if (current && list.includes(current)) sel.value = current;
+    }
+    // Pair each provider <select> with its row's model <select>: repopulate the model
+    // list when the provider changes, and handle the "+ add model…" sentinel (prompt →
+    // POST /api/llm/models → persisted catalog).
+    for (const provSel of root.querySelectorAll('[data-llm-sel]')) {
+      const modelSel = provSel.closest('tr').querySelector('[data-llm-model]');
+      fillModelSelect(modelSel, provSel.value, getByPath(values, modelSel.dataset.llmModel) ?? '');
+      provSel.addEventListener('change', () => fillModelSelect(modelSel, provSel.value, ''));
+      modelSel.addEventListener('change', async () => {
+        if (modelSel.value !== ADD_SENTINEL) return;
+        const name = (window.prompt(`New model id for "${provSel.value}":`) || '').trim();
+        if (!name) { fillModelSelect(modelSel, provSel.value, ''); return; }
+        try {
+          const r = await api('/api/llm/models', { method: 'POST', body: { provider: provSel.value, model: name } });
+          modelCatalog[provSel.value] = r.models;
+          fillModelSelect(modelSel, provSel.value, name);
+          flash(`MODEL ADDED · ${name}`, 'ok');
+        } catch (err) { flash(err.message, 'bad'); fillModelSelect(modelSel, provSel.value, ''); }
+      });
+    }
+
+    root.querySelector('#llmApplyRouting')?.addEventListener('click', async () => {
+      const patch = {};
+      for (const sel of root.querySelectorAll('[data-llm-sel]')) {
+        const key = sel.dataset.llmSel;
+        if (sel.value !== getByPath(values, key)) patch[key] = sel.value;
+      }
+      for (const inp of root.querySelectorAll('[data-llm-model]')) {
+        const key = inp.dataset.llmModel;
+        const val = inp.value.trim();
+        if (val && val !== ADD_SENTINEL && val !== (getByPath(values, key) ?? '')) patch[key] = val;
+      }
+      // Guard provider/model drift: if a row's provider changed, it needs a real model
+      // (an empty-catalog provider would otherwise leave the old provider's model behind).
+      for (const provSel of root.querySelectorAll('[data-llm-sel]')) {
+        if (provSel.value === getByPath(values, provSel.dataset.llmSel)) continue;
+        const mv = (provSel.closest('tr').querySelector('[data-llm-model]')?.value || '').trim();
+        if (!mv || mv === ADD_SENTINEL) {
+          flash(`PICK/ADD A MODEL FOR ${provSel.value.toUpperCase()} BEFORE SWITCHING`, 'warn');
+          return;
+        }
+      }
+      if (!Object.keys(patch).length) { flash('NO ROUTING CHANGES', 'warn'); return; }
+      try {
+        const result = await api('/api/config', { method: 'PATCH', body: patch });
+        const aN = Object.keys(result.applied || {}).length;
+        const rej = Object.entries(result.rejected || {});
+        flash(`ROUTING APPLIED ${aN}${rej.length ? ' · REJECTED ' + rej.map(([k, v]) => `${k.split('.').pop()}:${v}`).join(', ') : ''}`, rej.length ? 'warn' : 'ok');
+        cachedConfig = null;
+      } catch (err) { flash(err.message, 'bad'); }
+    });
+
+    const testOut = root.querySelector('[data-slot="llm-test-result"]');
+    for (const btn of root.querySelectorAll('[data-llm-test]')) {
+      btn.addEventListener('click', async () => {
+        const [provKey, modelKey] = btn.dataset.llmTest.split('|');
+        const provider = root.querySelector(`[data-llm-sel="${provKey}"]`)?.value;
+        const rawModel = root.querySelector(`[data-llm-model="${modelKey}"]`)?.value || '';
+        const model = rawModel === ADD_SENTINEL ? '' : rawModel.trim();
+        if (testOut) testOut.innerHTML = `<span class="mute">TESTING ${escapeHtml(provider)}…</span>`;
+        try {
+          const r = await api('/api/llm/test', { method: 'POST', body: { provider, model } });
+          if (!testOut) return;
+          if (r.ok) {
+            testOut.innerHTML = `<span style="color:#8bc06b">✓ ${escapeHtml(provider)} OK · ${r.latencyMs}ms · "${escapeHtml(r.reply || '')}"</span>`;
+          } else {
+            const e = r.error;
+            const reason = typeof e === 'string' ? e : (e?.body || e?.message || (e?.status ? 'HTTP ' + e.status : 'no response'));
+            testOut.innerHTML = `<span style="color:var(--red-bright)">✗ ${escapeHtml(provider)} FAILED · ${r.latencyMs}ms · ${escapeHtml(reason)}</span>`;
+          }
+        } catch (err) { if (testOut) testOut.innerHTML = `<span style="color:var(--red-bright)">TEST ERR · ${escapeHtml(err.message)}</span>`; }
+      });
+    }
+
+    const keyRows = root.querySelector('[data-slot="llm-keys-rows"]');
+    if (keyRows) {
+      const keyFields = [
+        ['apiKey', 'LLM_API_KEY (anthropic/openai)', 'apiKeyConfigured'],
+        ['geminiApiKey', 'GEMINI_API_KEY', 'geminiKeyConfigured'],
+        ['glmApiKey', 'GLM_API_KEY', 'glmKeyConfigured'],
+        ['openrouterApiKey', 'OPENROUTER_API_KEY', 'openrouterKeyConfigured'],
+      ];
+      keyRows.innerHTML = keyFields.map(([field, label, flag]) => {
+        const set = values.llm?.[flag];
+        return `<tr><td class="mono mute" style="font-size:10px">${label}<br><span style="color:${set ? '#8bc06b' : 'var(--ink-3)'}">${set ? '✓ SET' : '· NOT SET'}</span></td><td><input type="password" data-llm-key="${field}" placeholder="${set ? '•••• replace' : 'paste key'}" autocomplete="off" style="width:180px" /></td><td><button type="button" data-llm-savekey="${field}">SAVE</button></td></tr>`;
+      }).join('');
+      for (const btn of keyRows.querySelectorAll('[data-llm-savekey]')) {
+        btn.addEventListener('click', async () => {
+          const field = btn.dataset.llmSavekey;
+          const inp = keyRows.querySelector(`[data-llm-key="${field}"]`);
+          if (!inp.value.trim()) { flash('ENTER A KEY', 'warn'); return; }
+          const persist = root.querySelector('#llmKeyPersist')?.checked === true;
+          try {
+            const r = await api('/api/llm/keys', { method: 'POST', body: { field, value: inp.value, persist } });
+            inp.value = '';
+            flash(`KEY SAVED · ${field}${r.persisted ? ' · PERSISTED .ENV' : ''}`, 'ok');
+            cachedConfig = null;
+          } catch (err) { flash(err.message, 'bad'); }
+        });
+      }
+    }
+
     // Static block
     const staticPre = root.querySelector('[data-slot="settings-static"]');
     if (staticPre) {
       const lines = [
-        ['LLM_PROVIDER', values.llm?.provider],
-        ['LLM_MODEL', values.llm?.model],
         ['SLEEP_START_HOUR', values.sleepStartHour],
         ['SLEEP_END_HOUR', values.sleepEndHour],
         ['TIMEZONE', values.timezone],

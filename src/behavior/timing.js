@@ -4,8 +4,13 @@ import { logger } from '../utils/logger.js';
 /**
  * Wait a random human-like delay before responding.
  * Returns the delay in ms actually waited.
+ *
+ * opts.alreadyElapsedMs — time already spent generating this turn (e.g. a web
+ * lookup). It is credited against the delay so a researched reply isn't double-
+ * penalized and the whole turn stays under the 60s in-flight budget (events.js).
+ * Default 0 → existing callers unchanged; can only ever reduce the delay.
  */
-export async function waitResponseDelay(context) {
+export async function waitResponseDelay(context, opts = {}) {
   let minMs, maxMs;
 
   if (context.isMention) {
@@ -25,8 +30,12 @@ export async function waitResponseDelay(context) {
     minMs = 10000; maxMs = 45000;
   }
 
-  const delay = randomBetween(minMs, maxMs);
-  logger.debug({ delayMs: delay }, 'Response delay');
+  let delay = randomBetween(minMs, maxMs);
+  const elapsed = Math.max(0, opts.alreadyElapsedMs || 0);
+  if (elapsed > 0) {
+    delay = Math.max(1500, delay - elapsed); // credit research time, keep a small floor
+  }
+  logger.debug({ delayMs: delay, elapsedMs: elapsed }, 'Response delay');
   await sleep(delay);
   return delay;
 }

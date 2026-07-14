@@ -453,7 +453,7 @@ logs: `
   </div>
 </div>
 
-<div style="display:grid;grid-template-columns:auto auto auto auto auto 1fr auto;gap:6px;margin-bottom:10px;align-items:center">
+<div style="display:grid;grid-template-columns:auto auto auto auto auto auto 1fr auto;gap:6px;margin-bottom:10px;align-items:center">
   <button class="danger" id="logsPause">⏸ PAUSE</button>
   <button id="logsTail">↓ TAIL</button>
   <button id="logsClear">⌫ CLEAR</button>
@@ -462,6 +462,12 @@ logs: `
     <option value="error">error+</option>
     <option value="warn">warn+</option>
     <option value="info">info+</option>
+    <option value="debug">debug+</option>
+  </select>
+  <select id="logsCat">
+    <option value="">ALL EVENTS</option>
+    <option value="decisions">DECISIONS</option>
+    <option value="issues">ISSUES</option>
   </select>
   <input type="search" id="logsGrep" placeholder="// GREP" />
   <span></span>
@@ -504,6 +510,30 @@ settings: `
   </div>
 
   <div>
+    <div class="panel" style="margin-bottom:14px">
+      <div class="panel-head"><span>// LLM · ROUTING</span><span class="mono mute">SWITCH LIVE</span></div>
+      <div class="panel-body">
+        <div class="mute mono" style="font-size:10px;margin-bottom:8px">⚠ SWITCHING PRIMARY ALSO RE-ROUTES VOICE TRANSCRIPTION + MEDIA DESCRIPTION</div>
+        <table class="data">
+          <tbody>
+            <tr><td class="mono mute">PRIMARY</td><td><select data-llm-sel="llm.provider" style="width:120px"></select></td><td><select data-llm-model="llm.model" style="width:160px"></select></td><td><button type="button" data-llm-test="llm.provider|llm.model">TEST</button></td></tr>
+            <tr><td class="mono mute">FALLBACK</td><td><select data-llm-sel="llm.fallbackProvider" style="width:120px"></select></td><td><select data-llm-model="llm.fallbackModel" style="width:160px"></select></td><td><button type="button" data-llm-test="llm.fallbackProvider|llm.fallbackModel">TEST</button></td></tr>
+            <tr><td class="mono mute">QUAL GATE</td><td><select data-llm-sel="qualityGate.provider" style="width:120px"></select></td><td><select data-llm-model="qualityGate.model" style="width:160px"></select></td><td><button type="button" data-llm-test="qualityGate.provider|qualityGate.model">TEST</button></td></tr>
+          </tbody>
+        </table>
+        <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">
+          <button class="primary" type="button" id="llmApplyRouting">APPLY ROUTING (IN-MEMORY)</button>
+        </div>
+        <div class="mono" data-slot="llm-test-result" style="font-size:11px;margin-top:10px;min-height:14px"></div>
+
+        <div class="cap mute" style="font-size:10px;margin-top:16px">API KEYS · SET IN-MEMORY (TICK TO ALSO WRITE .ENV)</div>
+        <table class="data" style="margin-top:6px">
+          <tbody data-slot="llm-keys-rows"></tbody>
+        </table>
+        <label class="mono mute" style="font-size:10px;display:inline-block;margin-top:8px"><input type="checkbox" id="llmKeyPersist" /> PERSIST KEY → .ENV (0600)</label>
+      </div>
+    </div>
+
     <div class="panel" style="margin-bottom:14px">
       <div class="panel-head"><span>// STATIC · REQUIRES .ENV + RESTART</span><span class="mono mute">VALUES</span></div>
       <div class="panel-body">
