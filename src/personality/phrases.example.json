@@ -1,0 +1,4790 @@
+{
+ "v": 1,
+ "version": "example",
+ "generatedAt": null,
+ "model": null,
+ "catalogue": "a242287ce5bbde49",
+ "banks": {
+  "thought": {
+   "ugh, rain": [
+    {
+     "t": "ugh, rain"
+    }
+   ],
+   "of course it's raining": [
+    {
+     "t": "of course it's raining"
+    }
+   ],
+   "rain. great": [
+    {
+     "t": "rain. great"
+    }
+   ],
+   "there it goes": [
+    {
+     "t": "there it goes"
+    }
+   ],
+   "should've brought something": [
+    {
+     "t": "should've brought something"
+    }
+   ],
+   "and now it rains": [
+    {
+     "t": "and now it rains"
+    }
+   ],
+   "smell of rain": [
+    {
+     "t": "smell of rain"
+    }
+   ],
+   "that came out of nowhere": [
+    {
+     "t": "that came out of nowhere"
+    }
+   ],
+   "finally stopped": [
+    {
+     "t": "finally stopped"
+    }
+   ],
+   "dry at last": [
+    {
+     "t": "dry at last"
+    }
+   ],
+   "that's over then": [
+    {
+     "t": "that's over then"
+    }
+   ],
+   "soaked": [
+    {
+     "t": "soaked"
+    }
+   ],
+   "completely soaked": [
+    {
+     "t": "completely soaked"
+    }
+   ],
+   "socks. wet. great": [
+    {
+     "t": "socks. wet. great"
+    }
+   ],
+   "why did I walk": [
+    {
+     "t": "why did I walk"
+    }
+   ],
+   "dripping": [
+    {
+     "t": "dripping"
+    }
+   ],
+   "next time, a cab": [
+    {
+     "t": "next time, a cab"
+    }
+   ],
+   "so much for that": [
+    {
+     "t": "so much for that"
+    }
+   ],
+   "oh well": [
+    {
+     "t": "oh well"
+    }
+   ],
+   "fine then": [
+    {
+     "t": "fine then"
+    }
+   ],
+   "didn't want to anyway. did I?": [
+    {
+     "t": "didn't want to anyway. did I?"
+    }
+   ],
+   "that's that": [
+    {
+     "t": "that's that"
+    }
+   ],
+   "well": [
+    {
+     "t": "well"
+    }
+   ],
+   "never mind then": [
+    {
+     "t": "never mind then"
+    }
+   ],
+   "one less thing": [
+    {
+     "t": "one less thing"
+    }
+   ],
+   "missed it": [
+    {
+     "t": "missed it"
+    }
+   ],
+   "too late now": [
+    {
+     "t": "too late now"
+    }
+   ],
+   "should've left earlier": [
+    {
+     "t": "should've left earlier"
+    }
+   ],
+   "ugh, missed it": [
+    {
+     "t": "ugh, missed it"
+    }
+   ],
+   "that's on me": [
+    {
+     "t": "that's on me"
+    }
+   ],
+   "that was good": [
+    {
+     "t": "that was good"
+    }
+   ],
+   "that was actually really good": [
+    {
+     "t": "that was actually really good"
+    }
+   ],
+   "needed that": [
+    {
+     "t": "needed that"
+    }
+   ],
+   "good evening, that": [
+    {
+     "t": "good evening, that"
+    }
+   ],
+   "should do that more": [
+    {
+     "t": "should do that more"
+    }
+   ],
+   "still smiling, stupidly": [
+    {
+     "t": "still smiling, stupidly"
+    }
+   ],
+   "huh. nice": [
+    {
+     "t": "huh. nice"
+    }
+   ],
+   "that was fine": [
+    {
+     "t": "that was fine"
+    }
+   ],
+   "nice enough": [
+    {
+     "t": "nice enough"
+    }
+   ],
+   "good to get out": [
+    {
+     "t": "good to get out"
+    }
+   ],
+   "not bad": [
+    {
+     "t": "not bad"
+    }
+   ],
+   "could've stayed home": [
+    {
+     "t": "could've stayed home"
+    }
+   ],
+   "meh": [
+    {
+     "t": "meh"
+    }
+   ],
+   "that was a lot of effort for that": [
+    {
+     "t": "that was a lot of effort for that"
+    }
+   ],
+   "not sure what that was": [
+    {
+     "t": "not sure what that was"
+    }
+   ],
+   "well. that happened": [
+    {
+     "t": "well. that happened"
+    }
+   ],
+   "why did I say that": [
+    {
+     "t": "why did I say that"
+    }
+   ],
+   "that went badly": [
+    {
+     "t": "that went badly"
+    }
+   ],
+   "going over it again": [
+    {
+     "t": "going over it again"
+    }
+   ],
+   "should've kept quiet": [
+    {
+     "t": "should've kept quiet"
+    }
+   ],
+   "not thinking about it. thinking about it": [
+    {
+     "t": "not thinking about it. thinking about it"
+    }
+   ],
+   "ugh": [
+    {
+     "t": "ugh"
+    }
+   ],
+   "salary's in": [
+    {
+     "t": "salary's in"
+    }
+   ],
+   "money, briefly": [
+    {
+     "t": "money, briefly"
+    }
+   ],
+   "rich for a week": [
+    {
+     "t": "rich for a week"
+    }
+   ],
+   "finally": [
+    {
+     "t": "finally"
+    }
+   ],
+   "and most of it is gone already": [
+    {
+     "t": "and most of it is gone already"
+    }
+   ],
+   "there goes the rent": [
+    {
+     "t": "there goes the rent"
+    }
+   ],
+   "rent. already?": [
+    {
+     "t": "rent. already?"
+    }
+   ],
+   "gone, just like that": [
+    {
+     "t": "gone, just like that"
+    }
+   ],
+   "that cost more than I thought": [
+    {
+     "t": "that cost more than I thought"
+    }
+   ],
+   "ouch": [
+    {
+     "t": "ouch"
+    }
+   ],
+   "shouldn't have": [
+    {
+     "t": "shouldn't have"
+    }
+   ],
+   "worth it. probably": [
+    {
+     "t": "worth it. probably"
+    }
+   ],
+   "there goes that": [
+    {
+     "t": "there goes that"
+    }
+   ],
+   "need to watch the money": [
+    {
+     "t": "need to watch the money"
+    }
+   ],
+   "careful now": [
+    {
+     "t": "careful now"
+    }
+   ],
+   "how is it gone already": [
+    {
+     "t": "how is it gone already"
+    }
+   ],
+   "no more eating out": [
+    {
+     "t": "no more eating out"
+    }
+   ],
+   "still here": [
+    {
+     "t": "still here"
+    }
+   ],
+   "everyone else has gone": [
+    {
+     "t": "everyone else has gone"
+    }
+   ],
+   "one more thing, then out": [
+    {
+     "t": "one more thing, then out"
+    }
+   ],
+   "why am I still here": [
+    {
+     "t": "why am I still here"
+    }
+   ],
+   "deadline": [
+    {
+     "t": "deadline"
+    }
+   ],
+   "too much, too little time": [
+    {
+     "t": "too much, too little time"
+    }
+   ],
+   "how is this due already": [
+    {
+     "t": "how is this due already"
+    }
+   ],
+   "not going to make it. going to make it": [
+    {
+     "t": "not going to make it. going to make it"
+    }
+   ],
+   "something's coming on": [
+    {
+     "t": "something's coming on"
+    }
+   ],
+   "head's heavy": [
+    {
+     "t": "head's heavy"
+    }
+   ],
+   "not now": [
+    {
+     "t": "not now"
+    }
+   ],
+   "great, sick": [
+    {
+     "t": "great, sick"
+    }
+   ],
+   "throat's going": [
+    {
+     "t": "throat's going"
+    }
+   ],
+   "feeling human again": [
+    {
+     "t": "feeling human again"
+    }
+   ],
+   "finally better": [
+    {
+     "t": "finally better"
+    }
+   ],
+   "back, more or less": [
+    {
+     "t": "back, more or less"
+    }
+   ],
+   "already?": [
+    {
+     "t": "already?"
+    }
+   ],
+   "five more minutes": [
+    {
+     "t": "five more minutes"
+    }
+   ],
+   "what day is it": [
+    {
+     "t": "what day is it"
+    }
+   ],
+   "too early": [
+    {
+     "t": "too early"
+    }
+   ],
+   "okay. up": [
+    {
+     "t": "okay. up"
+    }
+   ],
+   "coffee first": [
+    {
+     "t": "coffee first"
+    }
+   ],
+   "that alarm": [
+    {
+     "t": "that alarm"
+    }
+   ],
+   "where's my phone": [
+    {
+     "t": "where's my phone"
+    }
+   ],
+   "didn't sleep enough": [
+    {
+     "t": "didn't sleep enough"
+    }
+   ],
+   "slept in": [
+    {
+     "t": "slept in"
+    }
+   ],
+   "how is it this late": [
+    {
+     "t": "how is it this late"
+    }
+   ],
+   "oh no. oh, it's fine": [
+    {
+     "t": "oh no. oh, it's fine"
+    }
+   ],
+   "that felt good": [
+    {
+     "t": "that felt good"
+    }
+   ],
+   "why am I awake": [
+    {
+     "t": "why am I awake"
+    }
+   ],
+   "can't sleep": [
+    {
+     "t": "can't sleep"
+    }
+   ],
+   "what time is it": [
+    {
+     "t": "what time is it"
+    }
+   ],
+   "staring at the ceiling": [
+    {
+     "t": "staring at the ceiling"
+    }
+   ],
+   "brain, please": [
+    {
+     "t": "brain, please"
+    }
+   ],
+   "what now": [
+    {
+     "t": "what now"
+    }
+   ],
+   "so that's that": [
+    {
+     "t": "so that's that"
+    }
+   ],
+   "need to tell someone. who": [
+    {
+     "t": "need to tell someone. who"
+    }
+   ],
+   "okay. okay": [
+    {
+     "t": "okay. okay"
+    }
+   ],
+   "breathe": [
+    {
+     "t": "breathe"
+    }
+   ],
+   "new job. huh": [
+    {
+     "t": "new job. huh"
+    }
+   ],
+   "don't mess this up": [
+    {
+     "t": "don't mess this up"
+    }
+   ],
+   "okay, a fresh start": [
+    {
+     "t": "okay, a fresh start"
+    }
+   ],
+   "first day nerves already": [
+    {
+     "t": "first day nerves already"
+    }
+   ],
+   "still don't know where anything is": [
+    {
+     "t": "still don't know where anything is"
+    }
+   ],
+   "new place, strange sounds": [
+    {
+     "t": "new place, strange sounds"
+    }
+   ],
+   "home, apparently": [
+    {
+     "t": "home, apparently"
+    }
+   ],
+   "another year": [
+    {
+     "t": "another year"
+    }
+   ],
+   "older. wiser? no": [
+    {
+     "t": "older. wiser? no"
+    }
+   ],
+   "nobody needs to make a fuss. a little fuss": [
+    {
+     "t": "nobody needs to make a fuss. a little fuss"
+    }
+   ],
+   "this could have been an email": [
+    {
+     "t": "this could have been an email"
+    }
+   ],
+   "what was I doing": [
+    {
+     "t": "what was I doing"
+    }
+   ],
+   "still hours to go": [
+    {
+     "t": "still hours to go"
+    }
+   ],
+   "where did that file go": [
+    {
+     "t": "where did that file go"
+    }
+   ],
+   "need a coffee": [
+    {
+     "t": "need a coffee"
+    }
+   ],
+   "why is this so slow": [
+    {
+     "t": "why is this so slow"
+    }
+   ],
+   "okay, focus": [
+    {
+     "t": "okay, focus"
+    }
+   ],
+   "one thing at a time": [
+    {
+     "t": "one thing at a time"
+    }
+   ],
+   "nobody reads these": [
+    {
+     "t": "nobody reads these"
+    }
+   ],
+   "that's not my job. is it": [
+    {
+     "t": "that's not my job. is it"
+    }
+   ],
+   "look busy": [
+    {
+     "t": "look busy"
+    }
+   ],
+   "that tab again": [
+    {
+     "t": "that tab again"
+    }
+   ],
+   "who wrote this": [
+    {
+     "t": "who wrote this"
+    }
+   ],
+   "nearly done. not nearly done": [
+    {
+     "t": "nearly done. not nearly done"
+    }
+   ],
+   "quiet in here today": [
+    {
+     "t": "quiet in here today"
+    }
+   ],
+   "this again": [
+    {
+     "t": "this again"
+    }
+   ],
+   "back to it": [
+    {
+     "t": "back to it"
+    }
+   ],
+   "that actually worked": [
+    {
+     "t": "that actually worked"
+    }
+   ],
+   "huh, that was easy": [
+    {
+     "t": "huh, that was easy"
+    }
+   ],
+   "is this still going": [
+    {
+     "t": "is this still going"
+    }
+   ],
+   "what was the question": [
+    {
+     "t": "what was the question"
+    }
+   ],
+   "nod. keep nodding": [
+    {
+     "t": "nod. keep nodding"
+    }
+   ],
+   "he said that last week": [
+    {
+     "t": "he said that last week"
+    }
+   ],
+   "could leave now": [
+    {
+     "t": "could leave now"
+    }
+   ],
+   "don't look at the clock": [
+    {
+     "t": "don't look at the clock"
+    }
+   ],
+   "say something useful": [
+    {
+     "t": "say something useful"
+    }
+   ],
+   "we've been over this": [
+    {
+     "t": "we've been over this"
+    }
+   ],
+   "whose turn is it": [
+    {
+     "t": "whose turn is it"
+    }
+   ],
+   "five minutes left. sure": [
+    {
+     "t": "five minutes left. sure"
+    }
+   ],
+   "am I on mute": [
+    {
+     "t": "am I on mute"
+    }
+   ],
+   "what are we deciding": [
+    {
+     "t": "what are we deciding"
+    }
+   ],
+   "why is everyone so slow": [
+    {
+     "t": "why is everyone so slow"
+    }
+   ],
+   "nearly there": [
+    {
+     "t": "nearly there"
+    }
+   ],
+   "wrong lane": [
+    {
+     "t": "wrong lane"
+    }
+   ],
+   "that song again": [
+    {
+     "t": "that song again"
+    }
+   ],
+   "same road, every day": [
+    {
+     "t": "same road, every day"
+    }
+   ],
+   "look at that sky": [
+    {
+     "t": "look at that sky"
+    }
+   ],
+   "stuck": [
+    {
+     "t": "stuck"
+    }
+   ],
+   "moving, finally": [
+    {
+     "t": "moving, finally"
+    }
+   ],
+   "who drives like that": [
+    {
+     "t": "who drives like that"
+    }
+   ],
+   "getting there": [
+    {
+     "t": "getting there"
+    }
+   ],
+   "long way today": [
+    {
+     "t": "long way today"
+    }
+   ],
+   "nice out, actually": [
+    {
+     "t": "nice out, actually"
+    }
+   ],
+   "this is good": [
+    {
+     "t": "this is good"
+    }
+   ],
+   "could use more salt": [
+    {
+     "t": "could use more salt"
+    }
+   ],
+   "what's for later": [
+    {
+     "t": "what's for later"
+    }
+   ],
+   "eating too fast": [
+    {
+     "t": "eating too fast"
+    }
+   ],
+   "last set": [
+    {
+     "t": "last set"
+    }
+   ],
+   "why do I do this": [
+    {
+     "t": "why do I do this"
+    }
+   ],
+   "legs": [
+    {
+     "t": "legs"
+    }
+   ],
+   "okay, one more": [
+    {
+     "t": "okay, one more"
+    }
+   ],
+   "tomorrow is going to hurt": [
+    {
+     "t": "tomorrow is going to hurt"
+    }
+   ],
+   "feels good, actually": [
+    {
+     "t": "feels good, actually"
+    }
+   ],
+   "nobody's looking. everyone's looking": [
+    {
+     "t": "nobody's looking. everyone's looking"
+    }
+   ],
+   "quiet in here": [
+    {
+     "t": "quiet in here"
+    }
+   ],
+   "should tidy up": [
+    {
+     "t": "should tidy up"
+    }
+   ],
+   "where did I put that": [
+    {
+     "t": "where did I put that"
+    }
+   ],
+   "nothing in the fridge": [
+    {
+     "t": "nothing in the fridge"
+    }
+   ],
+   "nice to be home": [
+    {
+     "t": "nice to be home"
+    }
+   ],
+   "that tap again": [
+    {
+     "t": "that tap again"
+    }
+   ],
+   "whose turn to clean": [
+    {
+     "t": "whose turn to clean"
+    }
+   ],
+   "might read something": [
+    {
+     "t": "might read something"
+    }
+   ],
+   "the neighbours again": [
+    {
+     "t": "the neighbours again"
+    }
+   ],
+   "good light in here right now": [
+    {
+     "t": "good light in here right now"
+    }
+   ],
+   "one more episode": [
+    {
+     "t": "one more episode"
+    }
+   ],
+   "seen this one": [
+    {
+     "t": "seen this one"
+    }
+   ],
+   "who is that again": [
+    {
+     "t": "who is that again"
+    }
+   ],
+   "what am I watching": [
+    {
+     "t": "what am I watching"
+    }
+   ],
+   "this is terrible. keep going": [
+    {
+     "t": "this is terrible. keep going"
+    }
+   ],
+   "how is it that late": [
+    {
+     "t": "how is it that late"
+    }
+   ],
+   "nothing on": [
+    {
+     "t": "nothing on"
+    }
+   ],
+   "I've seen this ending coming for ages": [
+    {
+     "t": "I've seen this ending coming for ages"
+    }
+   ],
+   "what was I here for": [
+    {
+     "t": "what was I here for"
+    }
+   ],
+   "should've made a list": [
+    {
+     "t": "should've made a list"
+    }
+   ],
+   "long queue": [
+    {
+     "t": "long queue"
+    }
+   ],
+   "forgot the one thing": [
+    {
+     "t": "forgot the one thing"
+    }
+   ],
+   "nearly done": [
+    {
+     "t": "nearly done"
+    }
+   ],
+   "how much?": [
+    {
+     "t": "how much?"
+    }
+   ],
+   "in and out, that's all": [
+    {
+     "t": "in and out, that's all"
+    }
+   ],
+   "nice out": [
+    {
+     "t": "nice out"
+    }
+   ],
+   "should do this more": [
+    {
+     "t": "should do this more"
+    }
+   ],
+   "good air": [
+    {
+     "t": "good air"
+    }
+   ],
+   "keep walking": [
+    {
+     "t": "keep walking"
+    }
+   ],
+   "where was I going": [
+    {
+     "t": "where was I going"
+    }
+   ],
+   "that's new, was that always there": [
+    {
+     "t": "that's new, was that always there"
+    }
+   ],
+   "come on": [
+    {
+     "t": "come on"
+    }
+   ],
+   "still early": [
+    {
+     "t": "still early"
+    }
+   ],
+   "what do I do with my hands": [
+    {
+     "t": "what do I do with my hands"
+    }
+   ],
+   "should've brought something to read": [
+    {
+     "t": "should've brought something to read"
+    }
+   ],
+   "said I'd go… don't feel like it": [
+    {
+     "t": "said I'd go… don't feel like it"
+    }
+   ],
+   "why did I say yes": [
+    {
+     "t": "why did I say yes"
+    }
+   ],
+   "{plan}… do I have to": [
+    {
+     "t": "{plan}… do I have to"
+    }
+   ],
+   "could cancel. can't cancel": [
+    {
+     "t": "could cancel. can't cancel"
+    }
+   ],
+   "said yes. why": [
+    {
+     "t": "said yes. why"
+    }
+   ],
+   "it'll be fine once I'm there": [
+    {
+     "t": "it'll be fine once I'm there"
+    }
+   ],
+   "too late to back out now": [
+    {
+     "t": "too late to back out now"
+    }
+   ],
+   "maybe it gets cancelled": [
+    {
+     "t": "maybe it gets cancelled"
+    }
+   ],
+   "{plan}, and I'm wrecked": [
+    {
+     "t": "{plan}, and I'm wrecked"
+    }
+   ],
+   "said I'd go… so tired": [
+    {
+     "t": "said I'd go… so tired"
+    }
+   ],
+   "how do I have the energy for {plan}": [
+    {
+     "t": "how do I have the energy for {plan}"
+    }
+   ],
+   "just go": [
+    {
+     "t": "just go"
+    }
+   ],
+   "an hour. then home": [
+    {
+     "t": "an hour. then home"
+    }
+   ],
+   "can't do people tonight": [
+    {
+     "t": "can't do people tonight"
+    }
+   ],
+   "said yes… no more people though": [
+    {
+     "t": "said yes… no more people though"
+    }
+   ],
+   "{plan}… be nice": [
+    {
+     "t": "{plan}… be nice"
+    }
+   ],
+   "just nod and smile": [
+    {
+     "t": "just nod and smile"
+    }
+   ],
+   "should go, really": [
+    {
+     "t": "should go, really"
+    }
+   ],
+   "should say yes": [
+    {
+     "t": "should say yes"
+    }
+   ],
+   "it'd be good for me": [
+    {
+     "t": "it'd be good for me"
+    }
+   ],
+   "been ages. should go": [
+    {
+     "t": "been ages. should go"
+    }
+   ],
+   "want to go": [
+    {
+     "t": "want to go"
+    }
+   ],
+   "would be nice, {plan}": [
+    {
+     "t": "would be nice, {plan}"
+    }
+   ],
+   "probably should stay in… don't want to": [
+    {
+     "t": "probably should stay in… don't want to"
+    }
+   ],
+   "go on then. maybe": [
+    {
+     "t": "go on then. maybe"
+    }
+   ],
+   "should be working": [
+    {
+     "t": "should be working"
+    }
+   ],
+   "that thing is due": [
+    {
+     "t": "that thing is due"
+    }
+   ],
+   "I could do it now. could": [
+    {
+     "t": "I could do it now. could"
+    }
+   ],
+   "not thinking about work. thinking about work": [
+    {
+     "t": "not thinking about work. thinking about work"
+    }
+   ],
+   "should get out": [
+    {
+     "t": "should get out"
+    }
+   ],
+   "haven't moved all day": [
+    {
+     "t": "haven't moved all day"
+    }
+   ],
+   "should go for a walk": [
+    {
+     "t": "should go for a walk"
+    }
+   ],
+   "gym tomorrow. definitely": [
+    {
+     "t": "gym tomorrow. definitely"
+    }
+   ],
+   "should eat something real": [
+    {
+     "t": "should eat something real"
+    }
+   ],
+   "should eat. later": [
+    {
+     "t": "should eat. later"
+    }
+   ],
+   "that wasn't a meal": [
+    {
+     "t": "that wasn't a meal"
+    }
+   ],
+   "should sleep": [
+    {
+     "t": "should sleep"
+    }
+   ],
+   "should be asleep by now": [
+    {
+     "t": "should be asleep by now"
+    }
+   ],
+   "tomorrow me will hate this": [
+    {
+     "t": "tomorrow me will hate this"
+    }
+   ],
+   "should call home": [
+    {
+     "t": "should call home"
+    }
+   ],
+   "been a while since I called": [
+    {
+     "t": "been a while since I called"
+    }
+   ],
+   "said I'd call home… didn't": [
+    {
+     "t": "said I'd call home… didn't"
+    }
+   ],
+   "call home. this week": [
+    {
+     "t": "call home. this week"
+    }
+   ],
+   "said I'd get back to them… didn't": [
+    {
+     "t": "said I'd get back to them… didn't"
+    }
+   ],
+   "meant to follow that up": [
+    {
+     "t": "meant to follow that up"
+    }
+   ],
+   "that thing I said I'd do": [
+    {
+     "t": "that thing I said I'd do"
+    }
+   ],
+   "still haven't got back to them": [
+    {
+     "t": "still haven't got back to them"
+    }
+   ],
+   "should check in on them": [
+    {
+     "t": "should check in on them"
+    }
+   ],
+   "meant to ask how they are": [
+    {
+     "t": "meant to ask how they are"
+    }
+   ],
+   "said I'd check in… haven't": [
+    {
+     "t": "said I'd check in… haven't"
+    }
+   ],
+   "meant to tell them about that": [
+    {
+     "t": "meant to tell them about that"
+    }
+   ],
+   "should tell them": [
+    {
+     "t": "should tell them"
+    }
+   ],
+   "keep forgetting to mention that": [
+    {
+     "t": "keep forgetting to mention that"
+    }
+   ],
+   "said I'd take it easy": [
+    {
+     "t": "said I'd take it easy"
+    }
+   ],
+   "slow down, you said": [
+    {
+     "t": "slow down, you said"
+    }
+   ],
+   "supposed to be resting": [
+    {
+     "t": "supposed to be resting"
+    }
+   ],
+   "stop looking at the phone": [
+    {
+     "t": "stop looking at the phone"
+    }
+   ],
+   "be here, you said": [
+    {
+     "t": "be here, you said"
+    }
+   ],
+   "put it away": [
+    {
+     "t": "put it away"
+    }
+   ],
+   "say less": [
+    {
+     "t": "say less"
+    }
+   ],
+   "stay out of it": [
+    {
+     "t": "stay out of it"
+    }
+   ],
+   "not my business, you said": [
+    {
+     "t": "not my business, you said"
+    }
+   ],
+   "so far behind on everything": [
+    {
+     "t": "so far behind on everything"
+    }
+   ],
+   "need to catch up": [
+    {
+     "t": "need to catch up"
+    }
+   ],
+   "all those messages": [
+    {
+     "t": "all those messages"
+    }
+   ],
+   "decide later": [
+    {
+     "t": "decide later"
+    }
+   ],
+   "don't have to decide yet": [
+    {
+     "t": "don't have to decide yet"
+    }
+   ],
+   "think about it tomorrow": [
+    {
+     "t": "think about it tomorrow"
+    }
+   ],
+   "{plan}… later": [
+    {
+     "t": "{plan}… later"
+    }
+   ],
+   "still time": [
+    {
+     "t": "still time"
+    }
+   ],
+   "should reply to {name}": [
+    {
+     "t": "should reply to {name}"
+    }
+   ],
+   "I'll reply later": [
+    {
+     "t": "I'll reply later"
+    }
+   ],
+   "later, {name}": [
+    {
+     "t": "later, {name}"
+    }
+   ],
+   "need to answer {name}": [
+    {
+     "t": "need to answer {name}"
+    }
+   ],
+   "{name}'s still waiting. I know": [
+    {
+     "t": "{name}'s still waiting. I know"
+    }
+   ],
+   "in a minute, {name}": [
+    {
+     "t": "in a minute, {name}"
+    }
+   ],
+   "one more, then bed": [
+    {
+     "t": "one more, then bed"
+    }
+   ],
+   "not tired. very tired": [
+    {
+     "t": "not tired. very tired"
+    }
+   ],
+   "bed soon": [
+    {
+     "t": "bed soon"
+    }
+   ],
+   "why am I still up": [
+    {
+     "t": "why am I still up"
+    }
+   ],
+   "just this one thing": [
+    {
+     "t": "just this one thing"
+    }
+   ],
+   "it's not that late. it is": [
+    {
+     "t": "it's not that late. it is"
+    }
+   ],
+   "tomorrow is a problem for tomorrow": [
+    {
+     "t": "tomorrow is a problem for tomorrow"
+    }
+   ],
+   "do I have to": [
+    {
+     "t": "do I have to"
+    }
+   ],
+   "just a bit longer": [
+    {
+     "t": "just a bit longer"
+    }
+   ],
+   "I can skip breakfast": [
+    {
+     "t": "I can skip breakfast"
+    }
+   ],
+   "can't I just not": [
+    {
+     "t": "can't I just not"
+    }
+   ],
+   "the dishes can wait": [
+    {
+     "t": "the dishes can wait"
+    }
+   ],
+   "laundry, tomorrow": [
+    {
+     "t": "laundry, tomorrow"
+    }
+   ],
+   "I'll sort that out at the weekend": [
+    {
+     "t": "I'll sort that out at the weekend"
+    }
+   ],
+   "that can wait": [
+    {
+     "t": "that can wait"
+    }
+   ],
+   "not today": [
+    {
+     "t": "not today"
+    }
+   ],
+   "later": [
+    {
+     "t": "later"
+    }
+   ],
+   "I'll deal with it": [
+    {
+     "t": "I'll deal with it"
+    }
+   ],
+   "it's been there this long": [
+    {
+     "t": "it's been there this long"
+    }
+   ],
+   "next week": [
+    {
+     "t": "next week"
+    }
+   ],
+   "I'll get to it": [
+    {
+     "t": "I'll get to it"
+    }
+   ],
+   "that form. tomorrow": [
+    {
+     "t": "that form. tomorrow"
+    }
+   ],
+   "should really fix that": [
+    {
+     "t": "should really fix that"
+    }
+   ],
+   "after this": [
+    {
+     "t": "after this"
+    }
+   ],
+   "I'll do that after lunch": [
+    {
+     "t": "I'll do that after lunch"
+    }
+   ],
+   "tomorrow, first thing": [
+    {
+     "t": "tomorrow, first thing"
+    }
+   ],
+   "just check one thing first": [
+    {
+     "t": "just check one thing first"
+    }
+   ],
+   "that one can wait": [
+    {
+     "t": "that one can wait"
+    }
+   ],
+   "once this is done": [
+    {
+     "t": "once this is done"
+    }
+   ],
+   "I'll start in a minute": [
+    {
+     "t": "I'll start in a minute"
+    }
+   ],
+   "not before coffee": [
+    {
+     "t": "not before coffee"
+    }
+   ],
+   "I'll look at it later": [
+    {
+     "t": "I'll look at it later"
+    }
+   ],
+   "still haven't done that": [
+    {
+     "t": "still haven't done that"
+    }
+   ],
+   "been meaning to": [
+    {
+     "t": "been meaning to"
+    }
+   ],
+   "this week, definitely": [
+    {
+     "t": "this week, definitely"
+    }
+   ],
+   "when I get a free evening": [
+    {
+     "t": "when I get a free evening"
+    }
+   ],
+   "starving": [
+    {
+     "t": "starving"
+    }
+   ],
+   "so hungry": [
+    {
+     "t": "so hungry"
+    }
+   ],
+   "need food": [
+    {
+     "t": "need food"
+    }
+   ],
+   "could eat anything": [
+    {
+     "t": "could eat anything"
+    }
+   ],
+   "when did I last eat": [
+    {
+     "t": "when did I last eat"
+    }
+   ],
+   "stomach, please": [
+    {
+     "t": "stomach, please"
+    }
+   ],
+   "bit hungry": [
+    {
+     "t": "bit hungry"
+    }
+   ],
+   "getting hungry": [
+    {
+     "t": "getting hungry"
+    }
+   ],
+   "something to eat, soon": [
+    {
+     "t": "something to eat, soon"
+    }
+   ],
+   "is there anything to snack on": [
+    {
+     "t": "is there anything to snack on"
+    }
+   ],
+   "too full": [
+    {
+     "t": "too full"
+    }
+   ],
+   "ate too much": [
+    {
+     "t": "ate too much"
+    }
+   ],
+   "that was a lot": [
+    {
+     "t": "that was a lot"
+    }
+   ],
+   "need to sit a minute": [
+    {
+     "t": "need to sit a minute"
+    }
+   ],
+   "wrecked": [
+    {
+     "t": "wrecked"
+    }
+   ],
+   "so tired": [
+    {
+     "t": "so tired"
+    }
+   ],
+   "can barely keep my eyes open": [
+    {
+     "t": "can barely keep my eyes open"
+    }
+   ],
+   "head on the desk, just for a second": [
+    {
+     "t": "head on the desk, just for a second"
+    }
+   ],
+   "done for": [
+    {
+     "t": "done for"
+    }
+   ],
+   "running on nothing": [
+    {
+     "t": "running on nothing"
+    }
+   ],
+   "tired tired": [
+    {
+     "t": "tired tired"
+    }
+   ],
+   "tired": [
+    {
+     "t": "tired"
+    }
+   ],
+   "getting tired": [
+    {
+     "t": "getting tired"
+    }
+   ],
+   "could use a nap": [
+    {
+     "t": "could use a nap"
+    }
+   ],
+   "heavy eyes": [
+    {
+     "t": "heavy eyes"
+    }
+   ],
+   "slowing down": [
+    {
+     "t": "slowing down"
+    }
+   ],
+   "yawn": [
+    {
+     "t": "yawn"
+    }
+   ],
+   "feel good today": [
+    {
+     "t": "feel good today"
+    }
+   ],
+   "slept well for once": [
+    {
+     "t": "slept well for once"
+    }
+   ],
+   "awake, properly": [
+    {
+     "t": "awake, properly"
+    }
+   ],
+   "lots of energy, weirdly": [
+    {
+     "t": "lots of energy, weirdly"
+    }
+   ],
+   "haven't slept enough": [
+    {
+     "t": "haven't slept enough"
+    }
+   ],
+   "need a whole weekend of sleep": [
+    {
+     "t": "need a whole weekend of sleep"
+    }
+   ],
+   "catching up on sleep, one day": [
+    {
+     "t": "catching up on sleep, one day"
+    }
+   ],
+   "too many late nights": [
+    {
+     "t": "too many late nights"
+    }
+   ],
+   "shoulders": [
+    {
+     "t": "shoulders"
+    }
+   ],
+   "jaw, unclench": [
+    {
+     "t": "jaw, unclench"
+    }
+   ],
+   "too much going on": [
+    {
+     "t": "too much going on"
+    }
+   ],
+   "heart's going": [
+    {
+     "t": "heart's going"
+    }
+   ],
+   "calm down": [
+    {
+     "t": "calm down"
+    }
+   ],
+   "no more people": [
+    {
+     "t": "no more people"
+    }
+   ],
+   "need to be alone": [
+    {
+     "t": "need to be alone"
+    }
+   ],
+   "peopled out": [
+    {
+     "t": "peopled out"
+    }
+   ],
+   "just want quiet": [
+    {
+     "t": "just want quiet"
+    }
+   ],
+   "don't talk to me": [
+    {
+     "t": "don't talk to me"
+    }
+   ],
+   "head hurts": [
+    {
+     "t": "head hurts"
+    }
+   ],
+   "throat": [
+    {
+     "t": "throat"
+    }
+   ],
+   "everything aches": [
+    {
+     "t": "everything aches"
+    }
+   ],
+   "should be in bed": [
+    {
+     "t": "should be in bed"
+    }
+   ],
+   "hot. cold. hot": [
+    {
+     "t": "hot. cold. hot"
+    }
+   ],
+   "can't focus": [
+    {
+     "t": "can't focus"
+    }
+   ],
+   "need to lie down": [
+    {
+     "t": "need to lie down"
+    }
+   ],
+   "this is awful": [
+    {
+     "t": "this is awful"
+    }
+   ],
+   "water. then sleep": [
+    {
+     "t": "water. then sleep"
+    }
+   ],
+   "too hot": [
+    {
+     "t": "too hot"
+    }
+   ],
+   "sweating already": [
+    {
+     "t": "sweating already"
+    }
+   ],
+   "need a fan": [
+    {
+     "t": "need a fan"
+    }
+   ],
+   "how is it this hot": [
+    {
+     "t": "how is it this hot"
+    }
+   ],
+   "cold": [
+    {
+     "t": "cold"
+    }
+   ],
+   "should've brought a jacket": [
+    {
+     "t": "should've brought a jacket"
+    }
+   ],
+   "freezing, actually": [
+    {
+     "t": "freezing, actually"
+    }
+   ],
+   "back hurts": [
+    {
+     "t": "back hurts"
+    }
+   ],
+   "need to stretch": [
+    {
+     "t": "need to stretch"
+    }
+   ],
+   "this chair": [
+    {
+     "t": "this chair"
+    }
+   ],
+   "neck": [
+    {
+     "t": "neck"
+    }
+   ],
+   "{name} texted": [
+    {
+     "t": "{name} texted"
+    }
+   ],
+   "oh, {name}": [
+    {
+     "t": "oh, {name}"
+    }
+   ],
+   "{name} again": [
+    {
+     "t": "{name} again"
+    }
+   ],
+   "what does {name} want": [
+    {
+     "t": "what does {name} want"
+    }
+   ],
+   "nice, {name}": [
+    {
+     "t": "nice, {name}"
+    }
+   ],
+   "should answer that": [
+    {
+     "t": "should answer that"
+    }
+   ],
+   "leave it": [
+    {
+     "t": "leave it"
+    }
+   ],
+   "it can wait": [
+    {
+     "t": "it can wait"
+    }
+   ],
+   "don't look": [
+    {
+     "t": "don't look"
+    }
+   ],
+   "face down": [
+    {
+     "t": "face down"
+    }
+   ],
+   "who's that. no. later": [
+    {
+     "t": "who's that. no. later"
+    }
+   ],
+   "sent": [
+    {
+     "t": "sent"
+    }
+   ],
+   "too much?": [
+    {
+     "t": "too much?"
+    }
+   ],
+   "why did I word it like that": [
+    {
+     "t": "why did I word it like that"
+    }
+   ],
+   "now I wait": [
+    {
+     "t": "now I wait"
+    }
+   ],
+   "don't check": [
+    {
+     "t": "don't check"
+    }
+   ],
+   "should've said less": [
+    {
+     "t": "should've said less"
+    }
+   ],
+   "{name}, huh": [
+    {
+     "t": "{name}, huh"
+    }
+   ],
+   "I like {name}": [
+    {
+     "t": "I like {name}"
+    }
+   ],
+   "that's going well": [
+    {
+     "t": "that's going well"
+    }
+   ],
+   "good with {name} lately": [
+    {
+     "t": "good with {name} lately"
+    }
+   ],
+   "easy, with {name}": [
+    {
+     "t": "easy, with {name}"
+    }
+   ],
+   "something off with {name}": [
+    {
+     "t": "something off with {name}"
+    }
+   ],
+   "what did I do": [
+    {
+     "t": "what did I do"
+    }
+   ],
+   "should sort that out with {name}": [
+    {
+     "t": "should sort that out with {name}"
+    }
+   ],
+   "was I short with {name}": [
+    {
+     "t": "was I short with {name}"
+    }
+   ],
+   "{name}": [
+    {
+     "t": "{name}"
+    }
+   ],
+   "thinking about {name}": [
+    {
+     "t": "thinking about {name}"
+    }
+   ],
+   "stop smiling": [
+    {
+     "t": "stop smiling"
+    }
+   ],
+   "what is this": [
+    {
+     "t": "what is this"
+    }
+   ],
+   "don't overthink it. overthinking it": [
+    {
+     "t": "don't overthink it. overthinking it"
+    }
+   ],
+   "{name}, again": [
+    {
+     "t": "{name}, again"
+    }
+   ],
+   "{name}'s got news": [
+    {
+     "t": "{name}'s got news"
+    }
+   ],
+   "good for {name}": [
+    {
+     "t": "good for {name}"
+    }
+   ],
+   "huh, {name}": [
+    {
+     "t": "huh, {name}"
+    }
+   ],
+   "should ask {name} about that": [
+    {
+     "t": "should ask {name} about that"
+    }
+   ],
+   "wonder what {name}'s up to": [
+    {
+     "t": "wonder what {name}'s up to"
+    }
+   ],
+   "haven't heard from {name}": [
+    {
+     "t": "haven't heard from {name}"
+    }
+   ],
+   "miss {name}, a bit": [
+    {
+     "t": "miss {name}, a bit"
+    }
+   ],
+   "strange without {name}": [
+    {
+     "t": "strange without {name}"
+    }
+   ],
+   "should write to {name}. wouldn't know what to say": [
+    {
+     "t": "should write to {name}. wouldn't know what to say"
+    }
+   ],
+   "so {name}'s gone": [
+    {
+     "t": "so {name}'s gone"
+    }
+   ],
+   "didn't think {name} would actually leave": [
+    {
+     "t": "didn't think {name} would actually leave"
+    }
+   ],
+   "quiet without {name}": [
+    {
+     "t": "quiet without {name}"
+    }
+   ],
+   "{name}'s back": [
+    {
+     "t": "{name}'s back"
+    }
+   ],
+   "good, {name}'s back": [
+    {
+     "t": "good, {name}'s back"
+    }
+   ],
+   "that call": [
+    {
+     "t": "that call"
+    }
+   ],
+   "they worry too much": [
+    {
+     "t": "they worry too much"
+    }
+   ],
+   "good to hear from them": [
+    {
+     "t": "good to hear from them"
+    }
+   ],
+   "wonder how {name}'s doing": [
+    {
+     "t": "wonder how {name}'s doing"
+    }
+   ],
+   "should text {name}": [
+    {
+     "t": "should text {name}"
+    }
+   ],
+   "{name} would love this": [
+    {
+     "t": "{name} would love this"
+    }
+   ],
+   "owe {name} a call": [
+    {
+     "t": "owe {name} a call"
+    }
+   ],
+   "haven't seen {name} in a while": [
+    {
+     "t": "haven't seen {name} in a while"
+    }
+   ],
+   "must tell {name} about that": [
+    {
+     "t": "must tell {name} about that"
+    }
+   ],
+   "what would {name} say": [
+    {
+     "t": "what would {name} say"
+    }
+   ],
+   "{name} was right, annoyingly": [
+    {
+     "t": "{name} was right, annoyingly"
+    }
+   ],
+   "that's such a {name} thing": [
+    {
+     "t": "that's such a {name} thing"
+    }
+   ],
+   "need to see {name} soon": [
+    {
+     "t": "need to see {name} soon"
+    }
+   ],
+   "should text {name}. too soon?": [
+    {
+     "t": "should text {name}. too soon?"
+    }
+   ],
+   "what's {name} doing now": [
+    {
+     "t": "what's {name} doing now"
+    }
+   ],
+   "stop checking": [
+    {
+     "t": "stop checking"
+    }
+   ],
+   "that thing {name} said": [
+    {
+     "t": "that thing {name} said"
+    }
+   ],
+   "not thinking about {name}. thinking about {name}": [
+    {
+     "t": "not thinking about {name}. thinking about {name}"
+    }
+   ],
+   "{name} won't stop talking": [
+    {
+     "t": "{name} won't stop talking"
+    }
+   ],
+   "don't talk shop": [
+    {
+     "t": "don't talk shop"
+    }
+   ],
+   "{name}'s lunch looks better": [
+    {
+     "t": "{name}'s lunch looks better"
+    }
+   ],
+   "nod, {name}'s still going": [
+    {
+     "t": "nod, {name}'s still going"
+    }
+   ],
+   "I should ask {name} about that thing": [
+    {
+     "t": "I should ask {name} about that thing"
+    }
+   ],
+   "{name}'s in a mood": [
+    {
+     "t": "{name}'s in a mood"
+    }
+   ],
+   "{name} and that song again": [
+    {
+     "t": "{name} and that song again"
+    }
+   ],
+   "should ask {name} about the bills": [
+    {
+     "t": "should ask {name} about the bills"
+    }
+   ],
+   "nice, having {name} around": [
+    {
+     "t": "nice, having {name} around"
+    }
+   ],
+   "that's {name}'s plate. it's always {name}'s plate": [
+    {
+     "t": "that's {name}'s plate. it's always {name}'s plate"
+    }
+   ],
+   "{name} never closes that door": [
+    {
+     "t": "{name} never closes that door"
+    }
+   ],
+   "should do something with {name} this weekend": [
+    {
+     "t": "should do something with {name} this weekend"
+    }
+   ],
+   "be normal": [
+    {
+     "t": "be normal"
+    }
+   ],
+   "don't be late": [
+    {
+     "t": "don't be late"
+    }
+   ],
+   "spotted {them}": [
+    {
+     "t": "spotted {them}"
+    }
+   ],
+   "okay. smile": [
+    {
+     "t": "okay. smile"
+    }
+   ],
+   "what do I say first": [
+    {
+     "t": "what do I say first"
+    }
+   ],
+   "what do I even say": [
+    {
+     "t": "what do I even say"
+    }
+   ],
+   "don't talk too much": [
+    {
+     "t": "don't talk too much"
+    }
+   ],
+   "first impressions": [
+    {
+     "t": "first impressions"
+    }
+   ],
+   "this is fine": [
+    {
+     "t": "this is fine"
+    }
+   ],
+   "relax": [
+    {
+     "t": "relax"
+    }
+   ],
+   "stop fidgeting": [
+    {
+     "t": "stop fidgeting"
+    }
+   ],
+   "what do I order": [
+    {
+     "t": "what do I order"
+    }
+   ],
+   "{she's} funny": [
+    {
+     "t": "{she's} funny"
+    }
+   ],
+   "this is nice": [
+    {
+     "t": "this is nice"
+    }
+   ],
+   "I missed this": [
+    {
+     "t": "I missed this"
+    }
+   ],
+   "don't check the time": [
+    {
+     "t": "don't check the time"
+    }
+   ],
+   "why don't we do this more": [
+    {
+     "t": "why don't we do this more"
+    }
+   ],
+   "good to see {them}": [
+    {
+     "t": "good to see {them}"
+    }
+   ],
+   "how does {she} remember that": [
+    {
+     "t": "how does {she} remember that"
+    }
+   ],
+   "nice to be out": [
+    {
+     "t": "nice to be out"
+    }
+   ],
+   "what were we saying": [
+    {
+     "t": "what were we saying"
+    }
+   ],
+   "okay, this is okay": [
+    {
+     "t": "okay, this is okay"
+    }
+   ],
+   "I should say something": [
+    {
+     "t": "I should say something"
+    }
+   ],
+   "where did {she} get that": [
+    {
+     "t": "where did {she} get that"
+    }
+   ],
+   "keep listening": [
+    {
+     "t": "keep listening"
+    }
+   ],
+   "wait, who is that": [
+    {
+     "t": "wait, who is that"
+    }
+   ],
+   "{she's} not listening": [
+    {
+     "t": "{she's} not listening"
+    }
+   ],
+   "I should go": [
+    {
+     "t": "I should go"
+    }
+   ],
+   "say something": [
+    {
+     "t": "say something"
+    }
+   ],
+   "this is hard work": [
+    {
+     "t": "this is hard work"
+    }
+   ],
+   "how do I get out of this": [
+    {
+     "t": "how do I get out of this"
+    }
+   ],
+   "was that rude": [
+    {
+     "t": "was that rude"
+    }
+   ],
+   "it's fine, it's quiet": [
+    {
+     "t": "it's fine, it's quiet"
+    }
+   ],
+   "don't look at the phone": [
+    {
+     "t": "don't look at the phone"
+    }
+   ],
+   "nice, this": [
+    {
+     "t": "nice, this"
+    }
+   ],
+   "should go soon": [
+    {
+     "t": "should go soon"
+    }
+   ],
+   "it's late": [
+    {
+     "t": "it's late"
+    }
+   ],
+   "that went quickly": [
+    {
+     "t": "that went quickly"
+    }
+   ],
+   "one more, then go": [
+    {
+     "t": "one more, then go"
+    }
+   ],
+   "how do I get home": [
+    {
+     "t": "how do I get home"
+    }
+   ],
+   "do I hug {them}": [
+    {
+     "t": "do I hug {them}"
+    }
+   ],
+   "text when home?": [
+    {
+     "t": "text when home?"
+    }
+   ],
+   "that was nice": [
+    {
+     "t": "that was nice"
+    }
+   ],
+   "right. home": [
+    {
+     "t": "right. home"
+    }
+   ],
+   "too many people talking": [
+    {
+     "t": "too many people talking"
+    }
+   ],
+   "lost the thread": [
+    {
+     "t": "lost the thread"
+    }
+   ],
+   "nod": [
+    {
+     "t": "nod"
+    }
+   ],
+   "who said that": [
+    {
+     "t": "who said that"
+    }
+   ],
+   "I like these two": [
+    {
+     "t": "I like these two"
+    }
+   ],
+   "…": [
+    {
+     "t": "…"
+    }
+   ],
+   "(nothing in particular)": [
+    {
+     "t": "(nothing in particular)"
+    }
+   ],
+   "(staring at nothing)": [
+    {
+     "t": "(staring at nothing)"
+    }
+   ],
+   "(a song stuck in his head)": [
+    {
+     "t": "(a song stuck in his head)"
+    }
+   ],
+   "(the same four bars, again)": [
+    {
+     "t": "(the same four bars, again)"
+    }
+   ],
+   "(a smell he can't place)": [
+    {
+     "t": "(a smell he can't place)"
+    }
+   ],
+   "(an old street, for no reason)": [
+    {
+     "t": "(an old street, for no reason)"
+    }
+   ],
+   "(a door he forgot about)": [
+    {
+     "t": "(a door he forgot about)"
+    }
+   ],
+   "(someone's laugh, years ago)": [
+    {
+     "t": "(someone's laugh, years ago)"
+    }
+   ],
+   "(what was that word)": [
+    {
+     "t": "(what was that word)"
+    }
+   ],
+   "(a face, no name)": [
+    {
+     "t": "(a face, no name)"
+    }
+   ],
+   "(the light on the wall)": [
+    {
+     "t": "(the light on the wall)"
+    }
+   ],
+   "(a line from something)": [
+    {
+     "t": "(a line from something)"
+    }
+   ],
+   "(counting, for no reason)": [
+    {
+     "t": "(counting, for no reason)"
+    }
+   ],
+   "(a place he went once)": [
+    {
+     "t": "(a place he went once)"
+    }
+   ],
+   "(nothing)": [
+    {
+     "t": "(nothing)"
+    }
+   ],
+   "(the sound of the fan)": [
+    {
+     "t": "(the sound of the fan)"
+    }
+   ],
+   "(half a thought, gone)": [
+    {
+     "t": "(half a thought, gone)"
+    }
+   ],
+   "(a tune with no words)": [
+    {
+     "t": "(a tune with no words)"
+    }
+   ],
+   "(a small good feeling, no reason)": [
+    {
+     "t": "(a small good feeling, no reason)"
+    }
+   ],
+   "(light, for some reason)": [
+    {
+     "t": "(light, for some reason)"
+    }
+   ],
+   "(warm, somehow)": [
+    {
+     "t": "(warm, somehow)"
+    }
+   ],
+   "(everything's fine for a second)": [
+    {
+     "t": "(everything's fine for a second)"
+    }
+   ],
+   "(a little lift)": [
+    {
+     "t": "(a little lift)"
+    }
+   ],
+   "(that good kind of tired)": [
+    {
+     "t": "(that good kind of tired)"
+    }
+   ],
+   "(flat)": [
+    {
+     "t": "(flat)"
+    }
+   ],
+   "(grey, a bit)": [
+    {
+     "t": "(grey, a bit)"
+    }
+   ],
+   "(something heavy, no name for it)": [
+    {
+     "t": "(something heavy, no name for it)"
+    }
+   ],
+   "(a bit far away)": [
+    {
+     "t": "(a bit far away)"
+    }
+   ],
+   "(not sad. not anything)": [
+    {
+     "t": "(not sad. not anything)"
+    }
+   ],
+   "(a low hum of something)": [
+    {
+     "t": "(a low hum of something)"
+    }
+   ],
+   "(something off about today)": [
+    {
+     "t": "(something off about today)"
+    }
+   ],
+   "(a knot, somewhere)": [
+    {
+     "t": "(a knot, somewhere)"
+    }
+   ],
+   "(forgot something. what)": [
+    {
+     "t": "(forgot something. what)"
+    }
+   ],
+   "(uneasy, no reason)": [
+    {
+     "t": "(uneasy, no reason)"
+    }
+   ],
+   "(the feeling of a thing undone)": [
+    {
+     "t": "(the feeling of a thing undone)"
+    }
+   ],
+   "(that made his day, a bit)": [
+    {
+     "t": "(that made his day, a bit)"
+    }
+   ],
+   "(still smiling about that)": [
+    {
+     "t": "(still smiling about that)"
+    }
+   ],
+   "(nice to be thought of)": [
+    {
+     "t": "(nice to be thought of)"
+    }
+   ],
+   "(warm, after that)": [
+    {
+     "t": "(warm, after that)"
+    }
+   ],
+   "(that stung, a bit)": [
+    {
+     "t": "(that stung, a bit)"
+    }
+   ],
+   "(still annoyed about that)": [
+    {
+     "t": "(still annoyed about that)"
+    }
+   ],
+   "(going over it, again)": [
+    {
+     "t": "(going over it, again)"
+    }
+   ],
+   "(should've said something back)": [
+    {
+     "t": "(should've said something back)"
+    }
+   ],
+   "(a small sting)": [
+    {
+     "t": "(a small sting)"
+    }
+   ],
+   "(a bit pleased with himself)": [
+    {
+     "t": "(a bit pleased with himself)"
+    }
+   ],
+   "(smiling at his phone)": [
+    {
+     "t": "(smiling at his phone)"
+    }
+   ],
+   "(worried about that)": [
+    {
+     "t": "(worried about that)"
+    }
+   ],
+   "(hope that's okay)": [
+    {
+     "t": "(hope that's okay)"
+    }
+   ],
+   "(that stayed with him)": [
+    {
+     "t": "(that stayed with him)"
+    }
+   ],
+   "(something someone said)": [
+    {
+     "t": "(something someone said)"
+    }
+   ],
+   "(a chat, still in his head)": [
+    {
+     "t": "(a chat, still in his head)"
+    }
+   ],
+   "might as well": [
+    {
+     "t": "might as well"
+    }
+   ],
+   "it'd be rude not to": [
+    {
+     "t": "it'd be rude not to"
+    }
+   ],
+   "only for a bit": [
+    {
+     "t": "only for a bit"
+    }
+   ],
+   "I said I would": [
+    {
+     "t": "I said I would"
+    }
+   ],
+   "be good for me": [
+    {
+     "t": "be good for me"
+    }
+   ],
+   "couldn't really say no": [
+    {
+     "t": "couldn't really say no"
+    }
+   ],
+   "I'd have felt bad": [
+    {
+     "t": "I'd have felt bad"
+    }
+   ],
+   "it's only a couple of hours": [
+    {
+     "t": "it's only a couple of hours"
+    }
+   ],
+   "wasn't doing anything anyway": [
+    {
+     "t": "wasn't doing anything anyway"
+    }
+   ],
+   "fine. going": [
+    {
+     "t": "fine. going"
+    }
+   ],
+   "I wanted to, really": [
+    {
+     "t": "I wanted to, really"
+    }
+   ],
+   "was tired anyway": [
+    {
+     "t": "was tired anyway"
+    }
+   ],
+   "would've been a late one": [
+    {
+     "t": "would've been a late one"
+    }
+   ],
+   "they won't mind": [
+    {
+     "t": "they won't mind"
+    }
+   ],
+   "needed the rest": [
+    {
+     "t": "needed the rest"
+    }
+   ],
+   "probably wouldn't have been that good": [
+    {
+     "t": "probably wouldn't have been that good"
+    }
+   ],
+   "saved money, at least": [
+    {
+     "t": "saved money, at least"
+    }
+   ],
+   "next time": [
+    {
+     "t": "next time"
+    }
+   ],
+   "had things to do anyway": [
+    {
+     "t": "had things to do anyway"
+    }
+   ],
+   "I did the right thing": [
+    {
+     "t": "I did the right thing"
+    }
+   ],
+   "it's fine": [
+    {
+     "t": "it's fine"
+    }
+   ],
+   "it would've rained": [
+    {
+     "t": "it would've rained"
+    }
+   ],
+   "made sense at the time": [
+    {
+     "t": "made sense at the time"
+    }
+   ],
+   "what else was I going to do": [
+    {
+     "t": "what else was I going to do"
+    }
+   ],
+   "not a big deal": [
+    {
+     "t": "not a big deal"
+    }
+   ],
+   "I'd do the same again. probably": [
+    {
+     "t": "I'd do the same again. probably"
+    }
+   ]
+  },
+  "live": {
+   "just got here": [
+    {
+     "t": "just got here"
+    }
+   ],
+   "the hellos": [
+    {
+     "t": "the hellos"
+    }
+   ],
+   "getting started": [
+    {
+     "t": "getting started"
+    }
+   ],
+   "{she's} already smiling": [
+    {
+     "t": "{she's} already smiling"
+    }
+   ],
+   "{she} hugged him hello": [
+    {
+     "t": "{she} hugged him hello"
+    }
+   ],
+   "a big hello": [
+    {
+     "t": "a big hello"
+    }
+   ],
+   "{she} waved him over": [
+    {
+     "t": "{she} waved him over"
+    }
+   ],
+   "a quick hello": [
+    {
+     "t": "a quick hello"
+    }
+   ],
+   "a slightly stiff hello": [
+    {
+     "t": "a slightly stiff hello"
+    }
+   ],
+   "not much of a hello": [
+    {
+     "t": "not much of a hello"
+    }
+   ],
+   "the small talk": [
+    {
+     "t": "the small talk"
+    }
+   ],
+   "warming up": [
+    {
+     "t": "warming up"
+    }
+   ],
+   "easing into it": [
+    {
+     "t": "easing into it"
+    }
+   ],
+   "already laughing about something": [
+    {
+     "t": "already laughing about something"
+    }
+   ],
+   "straight into it": [
+    {
+     "t": "straight into it"
+    }
+   ],
+   "straight into a story": [
+    {
+     "t": "straight into a story"
+    }
+   ],
+   "polite so far": [
+    {
+     "t": "polite so far"
+    }
+   ],
+   "a bit careful with each other": [
+    {
+     "t": "a bit careful with each other"
+    }
+   ],
+   "small talk, and not much of it": [
+    {
+     "t": "small talk, and not much of it"
+    }
+   ],
+   "{she's} laughing": [
+    {
+     "t": "{she's} laughing"
+    }
+   ],
+   "{she} laughed so hard {she} had to stop": [
+    {
+     "t": "{she} laughed so hard {she} had to stop"
+    }
+   ],
+   "{she's} telling it with {her} hands": [
+    {
+     "t": "{she's} telling it with {her} hands"
+    }
+   ],
+   "he made {them} laugh": [
+    {
+     "t": "he made {them} laugh"
+    }
+   ],
+   "neither of them has looked at the time": [
+    {
+     "t": "neither of them has looked at the time"
+    }
+   ],
+   "talking over each other": [
+    {
+     "t": "talking over each other"
+    }
+   ],
+   "{she} remembered something and lit up": [
+    {
+     "t": "{she} remembered something and lit up"
+    }
+   ],
+   "{she's} doing an impression of someone": [
+    {
+     "t": "{she's} doing an impression of someone"
+    }
+   ],
+   "the good kind of argument": [
+    {
+     "t": "the good kind of argument"
+    }
+   ],
+   "{she's} on a roll": [
+    {
+     "t": "{she's} on a roll"
+    }
+   ],
+   "he keeps asking questions": [
+    {
+     "t": "he keeps asking questions"
+    }
+   ],
+   "{she} leaned in for that one": [
+    {
+     "t": "{she} leaned in for that one"
+    }
+   ],
+   "they keep finishing each other's sentences": [
+    {
+     "t": "they keep finishing each other's sentences"
+    }
+   ],
+   "easy conversation": [
+    {
+     "t": "easy conversation"
+    }
+   ],
+   "he's mostly listening": [
+    {
+     "t": "he's mostly listening"
+    }
+   ],
+   "trading stories": [
+    {
+     "t": "trading stories"
+    }
+   ],
+   "nothing dramatic, just talking": [
+    {
+     "t": "nothing dramatic, just talking"
+    }
+   ],
+   "{she's} explaining something": [
+    {
+     "t": "{she's} explaining something"
+    }
+   ],
+   "he told {them} about his week": [
+    {
+     "t": "he told {them} about his week"
+    }
+   ],
+   "{she} asked what he thinks": [
+    {
+     "t": "{she} asked what he thinks"
+    }
+   ],
+   "an easy back and forth": [
+    {
+     "t": "an easy back and forth"
+    }
+   ],
+   "{she} corrected him on a detail": [
+    {
+     "t": "{she} corrected him on a detail"
+    }
+   ],
+   "a small disagreement, nothing serious": [
+    {
+     "t": "a small disagreement, nothing serious"
+    }
+   ],
+   "{she's} thinking about it": [
+    {
+     "t": "{she's} thinking about it"
+    }
+   ],
+   "comparing notes": [
+    {
+     "t": "comparing notes"
+    }
+   ],
+   "{she} went a bit quiet": [
+    {
+     "t": "{she} went a bit quiet"
+    }
+   ],
+   "the talk keeps stalling": [
+    {
+     "t": "the talk keeps stalling"
+    }
+   ],
+   "a bit stiff": [
+    {
+     "t": "a bit stiff"
+    }
+   ],
+   "{she} checked the time": [
+    {
+     "t": "{she} checked the time"
+    }
+   ],
+   "he's trying": [
+    {
+     "t": "he's trying"
+    }
+   ],
+   "one-word answers": [
+    {
+     "t": "one-word answers"
+    }
+   ],
+   "{she's} not really in it": [
+    {
+     "t": "{she's} not really in it"
+    }
+   ],
+   "something he said landed badly": [
+    {
+     "t": "something he said landed badly"
+    }
+   ],
+   "a pause that went on too long": [
+    {
+     "t": "a pause that went on too long"
+    }
+   ],
+   "{she's} looking past him": [
+    {
+     "t": "{she's} looking past him"
+    }
+   ],
+   "they're both being polite about it": [
+    {
+     "t": "they're both being polite about it"
+    }
+   ],
+   "he changed the subject, twice": [
+    {
+     "t": "he changed the subject, twice"
+    }
+   ],
+   "a quiet stretch": [
+    {
+     "t": "a quiet stretch"
+    }
+   ],
+   "nobody's said anything for a bit": [
+    {
+     "t": "nobody's said anything for a bit"
+    }
+   ],
+   "a comfortable silence": [
+    {
+     "t": "a comfortable silence"
+    }
+   ],
+   "both looking at nothing": [
+    {
+     "t": "both looking at nothing"
+    }
+   ],
+   "a lull": [
+    {
+     "t": "a lull"
+    }
+   ],
+   "the conversation drew breath": [
+    {
+     "t": "the conversation drew breath"
+    }
+   ],
+   "quiet for a minute": [
+    {
+     "t": "quiet for a minute"
+    }
+   ],
+   "an awkward quiet": [
+    {
+     "t": "an awkward quiet"
+    }
+   ],
+   "neither of them has much to say": [
+    {
+     "t": "neither of them has much to say"
+    }
+   ],
+   "he looked at his hands": [
+    {
+     "t": "he looked at his hands"
+    }
+   ],
+   "the silence is getting long": [
+    {
+     "t": "the silence is getting long"
+    }
+   ],
+   "starting to wrap up": [
+    {
+     "t": "starting to wrap up"
+    }
+   ],
+   "{she} looked at the time": [
+    {
+     "t": "{she} looked at the time"
+    }
+   ],
+   "one more story, then home": [
+    {
+     "t": "one more story, then home"
+    }
+   ],
+   "talk of tomorrow": [
+    {
+     "t": "talk of tomorrow"
+    }
+   ],
+   "the end of it is in sight": [
+    {
+     "t": "the end of it is in sight"
+    }
+   ],
+   "slowing down now": [
+    {
+     "t": "slowing down now"
+    }
+   ],
+   "that was the last of it, nearly": [
+    {
+     "t": "that was the last of it, nearly"
+    }
+   ],
+   "neither of them wants to go yet": [
+    {
+     "t": "neither of them wants to go yet"
+    }
+   ],
+   "\"we should do this more\"": [
+    {
+     "t": "\"we should do this more\""
+    }
+   ],
+   "five more minutes, again": [
+    {
+     "t": "five more minutes, again"
+    }
+   ],
+   "still going, somehow": [
+    {
+     "t": "still going, somehow"
+    }
+   ],
+   "somewhere to be, apparently": [
+    {
+     "t": "somewhere to be, apparently"
+    }
+   ],
+   "a polite wrapping up": [
+    {
+     "t": "a polite wrapping up"
+    }
+   ],
+   "neither of them is pretending now": [
+    {
+     "t": "neither of them is pretending now"
+    }
+   ],
+   "saying goodbye": [
+    {
+     "t": "saying goodbye"
+    }
+   ],
+   "see you soon": [
+    {
+     "t": "see you soon"
+    }
+   ],
+   "the last few words": [
+    {
+     "t": "the last few words"
+    }
+   ],
+   "the long goodbye": [
+    {
+     "t": "the long goodbye"
+    }
+   ],
+   "still talking on the way out": [
+    {
+     "t": "still talking on the way out"
+    }
+   ],
+   "{she} said to text when he gets home": [
+    {
+     "t": "{she} said to text when he gets home"
+    }
+   ],
+   "a proper goodbye": [
+    {
+     "t": "a proper goodbye"
+    }
+   ],
+   "a quick goodbye": [
+    {
+     "t": "a quick goodbye"
+    }
+   ],
+   "a short goodbye, no plans made": [
+    {
+     "t": "a short goodbye, no plans made"
+    }
+   ],
+   "done for today": [
+    {
+     "t": "done for today"
+    }
+   ],
+   "sorting out where to sit": [
+    {
+     "t": "sorting out where to sit"
+    }
+   ],
+   "still finding their feet here": [
+    {
+     "t": "still finding their feet here"
+    }
+   ],
+   "settling in": [
+    {
+     "t": "settling in"
+    }
+   ],
+   "getting up to go": [
+    {
+     "t": "getting up to go"
+    }
+   ],
+   "nearly out the door": [
+    {
+     "t": "nearly out the door"
+    }
+   ],
+   "how've you been": [
+    {
+     "t": "how've you been"
+    }
+   ],
+   "catching up": [
+    {
+     "t": "catching up"
+    }
+   ],
+   "the usual how-is-everything": [
+    {
+     "t": "the usual how-is-everything"
+    }
+   ],
+   "he told the one about the office": [
+    {
+     "t": "he told the one about the office"
+    }
+   ],
+   "he complained about work, briefly": [
+    {
+     "t": "he complained about work, briefly"
+    }
+   ],
+   "the end of the evening is in sight": [
+    {
+     "t": "the end of the evening is in sight"
+    }
+   ],
+   "the light is going": [
+    {
+     "t": "the light is going"
+    }
+   ],
+   "ordering at the counter": [
+    {
+     "t": "ordering at the counter"
+    }
+   ],
+   "waiting on the coffee": [
+    {
+     "t": "waiting on the coffee"
+    }
+   ],
+   "a table by the window": [
+    {
+     "t": "a table by the window"
+    }
+   ],
+   "coffee on the way": [
+    {
+     "t": "coffee on the way"
+    }
+   ],
+   "first sips": [
+    {
+     "t": "first sips"
+    }
+   ],
+   "the coffee arrived": [
+    {
+     "t": "the coffee arrived"
+    }
+   ],
+   "sharing a slice of something": [
+    {
+     "t": "sharing a slice of something"
+    }
+   ],
+   "second coffee": [
+    {
+     "t": "second coffee"
+    }
+   ],
+   "{she's} stirring {her} cup": [
+    {
+     "t": "{she's} stirring {her} cup"
+    }
+   ],
+   "someone at the next table keeps looking over": [
+    {
+     "t": "someone at the next table keeps looking over"
+    }
+   ],
+   "the cafe has filled up around them": [
+    {
+     "t": "the cafe has filled up around them"
+    }
+   ],
+   "the coffee's gone cold": [
+    {
+     "t": "the coffee's gone cold"
+    }
+   ],
+   "a third coffee, at this point": [
+    {
+     "t": "a third coffee, at this point"
+    }
+   ],
+   "they have outlasted the table next to them": [
+    {
+     "t": "they have outlasted the table next to them"
+    }
+   ],
+   "the staff have stopped asking": [
+    {
+     "t": "the staff have stopped asking"
+    }
+   ],
+   "watching people go by": [
+    {
+     "t": "watching people go by"
+    }
+   ],
+   "he finished his coffee": [
+    {
+     "t": "he finished his coffee"
+    }
+   ],
+   "stirring an empty cup": [
+    {
+     "t": "stirring an empty cup"
+    }
+   ],
+   "the cups are empty": [
+    {
+     "t": "the cups are empty"
+    }
+   ],
+   "the staff have started wiping tables": [
+    {
+     "t": "the staff have started wiping tables"
+    }
+   ],
+   "looking at the menu": [
+    {
+     "t": "looking at the menu"
+    }
+   ],
+   "ordering": [
+    {
+     "t": "ordering"
+    }
+   ],
+   "arguing about what to share": [
+    {
+     "t": "arguing about what to share"
+    }
+   ],
+   "waiting for the food": [
+    {
+     "t": "waiting for the food"
+    }
+   ],
+   "still waiting on the food": [
+    {
+     "t": "still waiting on the food"
+    }
+   ],
+   "the food arrived": [
+    {
+     "t": "the food arrived"
+    }
+   ],
+   "the first plates are here": [
+    {
+     "t": "the first plates are here"
+    }
+   ],
+   "trying each other's food": [
+    {
+     "t": "trying each other's food"
+    }
+   ],
+   "halfway through the plates": [
+    {
+     "t": "halfway through the plates"
+    }
+   ],
+   "{she's} stealing from his plate": [
+    {
+     "t": "{she's} stealing from his plate"
+    }
+   ],
+   "too full, still eating": [
+    {
+     "t": "too full, still eating"
+    }
+   ],
+   "just eating for a while": [
+    {
+     "t": "just eating for a while"
+    }
+   ],
+   "the plates are long gone": [
+    {
+     "t": "the plates are long gone"
+    }
+   ],
+   "the waiter came by again": [
+    {
+     "t": "the waiter came by again"
+    }
+   ],
+   "still at the table, nothing left on it": [
+    {
+     "t": "still at the table, nothing left on it"
+    }
+   ],
+   "one more coffee, to justify the table": [
+    {
+     "t": "one more coffee, to justify the table"
+    }
+   ],
+   "looking at the dessert menu": [
+    {
+     "t": "looking at the dessert menu"
+    }
+   ],
+   "the bill is on the table": [
+    {
+     "t": "the bill is on the table"
+    }
+   ],
+   "arguing about the bill": [
+    {
+     "t": "arguing about the bill"
+    }
+   ],
+   "dessert, or not": [
+    {
+     "t": "dessert, or not"
+    }
+   ],
+   "settling up": [
+    {
+     "t": "settling up"
+    }
+   ],
+   "splitting the bill": [
+    {
+     "t": "splitting the bill"
+    }
+   ],
+   "first round": [
+    {
+     "t": "first round"
+    }
+   ],
+   "finding a corner": [
+    {
+     "t": "finding a corner"
+    }
+   ],
+   "getting drinks in": [
+    {
+     "t": "getting drinks in"
+    }
+   ],
+   "another round": [
+    {
+     "t": "another round"
+    }
+   ],
+   "the music got louder": [
+    {
+     "t": "the music got louder"
+    }
+   ],
+   "talking over the noise": [
+    {
+     "t": "talking over the noise"
+    }
+   ],
+   "the place is filling up": [
+    {
+     "t": "the place is filling up"
+    }
+   ],
+   "it's getting loud in here": [
+    {
+     "t": "it's getting loud in here"
+    }
+   ],
+   "someone bought a round": [
+    {
+     "t": "someone bought a round"
+    }
+   ],
+   "watching the room": [
+    {
+     "t": "watching the room"
+    }
+   ],
+   "nursing a drink": [
+    {
+     "t": "nursing a drink"
+    }
+   ],
+   "last round": [
+    {
+     "t": "last round"
+    }
+   ],
+   "one for the road, maybe": [
+    {
+     "t": "one for the road, maybe"
+    }
+   ],
+   "the crowd is thinning": [
+    {
+     "t": "the crowd is thinning"
+    }
+   ],
+   "finding their seats": [
+    {
+     "t": "finding their seats"
+    }
+   ],
+   "getting snacks first": [
+    {
+     "t": "getting snacks first"
+    }
+   ],
+   "in the queue": [
+    {
+     "t": "in the queue"
+    }
+   ],
+   "the trailers": [
+    {
+     "t": "the trailers"
+    }
+   ],
+   "lights going down": [
+    {
+     "t": "lights going down"
+    }
+   ],
+   "it's started": [
+    {
+     "t": "it's started"
+    }
+   ],
+   "no talking now": [
+    {
+     "t": "no talking now"
+    }
+   ],
+   "still watching": [
+    {
+     "t": "still watching"
+    }
+   ],
+   "{she} whispered something": [
+    {
+     "t": "{she} whispered something"
+    }
+   ],
+   "a good bit": [
+    {
+     "t": "a good bit"
+    }
+   ],
+   "the slow part": [
+    {
+     "t": "the slow part"
+    }
+   ],
+   "sharing the snacks": [
+    {
+     "t": "sharing the snacks"
+    }
+   ],
+   "nobody is checking their phone": [
+    {
+     "t": "nobody is checking their phone"
+    }
+   ],
+   "a laugh from the row behind": [
+    {
+     "t": "a laugh from the row behind"
+    }
+   ],
+   "he has lost track of who is who": [
+    {
+     "t": "he has lost track of who is who"
+    }
+   ],
+   "a twist, of sorts": [
+    {
+     "t": "a twist, of sorts"
+    }
+   ],
+   "about halfway through": [
+    {
+     "t": "about halfway through"
+    }
+   ],
+   "nearly over": [
+    {
+     "t": "nearly over"
+    }
+   ],
+   "the ending": [
+    {
+     "t": "the ending"
+    }
+   ],
+   "people are starting to leave": [
+    {
+     "t": "people are starting to leave"
+    }
+   ],
+   "talking about it on the way out": [
+    {
+     "t": "talking about it on the way out"
+    }
+   ],
+   "the credits": [
+    {
+     "t": "the credits"
+    }
+   ],
+   "arguing about the ending": [
+    {
+     "t": "arguing about the ending"
+    }
+   ],
+   "met at the gate": [
+    {
+     "t": "met at the gate"
+    }
+   ],
+   "starting off": [
+    {
+     "t": "starting off"
+    }
+   ],
+   "walking, slowly": [
+    {
+     "t": "walking, slowly"
+    }
+   ],
+   "found a bench": [
+    {
+     "t": "found a bench"
+    }
+   ],
+   "taking the long way round": [
+    {
+     "t": "taking the long way round"
+    }
+   ],
+   "stopped to look at something": [
+    {
+     "t": "stopped to look at something"
+    }
+   ],
+   "a dog ran past": [
+    {
+     "t": "a dog ran past"
+    }
+   ],
+   "walking and talking": [
+    {
+     "t": "walking and talking"
+    }
+   ],
+   "one more loop": [
+    {
+     "t": "one more loop"
+    }
+   ],
+   "just walking": [
+    {
+     "t": "just walking"
+    }
+   ],
+   "sitting on a bench for a bit": [
+    {
+     "t": "sitting on a bench for a bit"
+    }
+   ],
+   "heading back": [
+    {
+     "t": "heading back"
+    }
+   ],
+   "turning back now": [
+    {
+     "t": "turning back now"
+    }
+   ],
+   "parting at the gate": [
+    {
+     "t": "parting at the gate"
+    }
+   ],
+   "going their own ways from here": [
+    {
+     "t": "going their own ways from here"
+    }
+   ],
+   "{she} just got in": [
+    {
+     "t": "{she} just got in"
+    }
+   ],
+   "shoes off at the door": [
+    {
+     "t": "shoes off at the door"
+    }
+   ],
+   "making tea first": [
+    {
+     "t": "making tea first"
+    }
+   ],
+   "the door was open": [
+    {
+     "t": "the door was open"
+    }
+   ],
+   "on the sofa": [
+    {
+     "t": "on the sofa"
+    }
+   ],
+   "something on in the background": [
+    {
+     "t": "something on in the background"
+    }
+   ],
+   "getting comfortable": [
+    {
+     "t": "getting comfortable"
+    }
+   ],
+   "tea, again": [
+    {
+     "t": "tea, again"
+    }
+   ],
+   "the TV is on, nobody is watching": [
+    {
+     "t": "the TV is on, nobody is watching"
+    }
+   ],
+   "in the kitchen, still talking": [
+    {
+     "t": "in the kitchen, still talking"
+    }
+   ],
+   "looking through old photos": [
+    {
+     "t": "looking through old photos"
+    }
+   ],
+   "he made something to eat": [
+    {
+     "t": "he made something to eat"
+    }
+   ],
+   "music on, low": [
+    {
+     "t": "music on, low"
+    }
+   ],
+   "feet up": [
+    {
+     "t": "feet up"
+    }
+   ],
+   "a quiet stretch on the sofa": [
+    {
+     "t": "a quiet stretch on the sofa"
+    }
+   ],
+   "the TV has taken over": [
+    {
+     "t": "the TV has taken over"
+    }
+   ],
+   "{she} found {her} keys": [
+    {
+     "t": "{she} found {her} keys"
+    }
+   ],
+   "{she} said it was time to go, again": [
+    {
+     "t": "{she} said it was time to go, again"
+    }
+   ],
+   "washing up the cups": [
+    {
+     "t": "washing up the cups"
+    }
+   ],
+   "walking {them} to the door": [
+    {
+     "t": "walking {them} to the door"
+    }
+   ],
+   "at the door, still talking": [
+    {
+     "t": "at the door, still talking"
+    }
+   ],
+   "just wandered in": [
+    {
+     "t": "just wandered in"
+    }
+   ],
+   "having a look around": [
+    {
+     "t": "having a look around"
+    }
+   ],
+   "browsing": [
+    {
+     "t": "browsing"
+    }
+   ],
+   "comparing two of the same thing": [
+    {
+     "t": "comparing two of the same thing"
+    }
+   ],
+   "{she} found something": [
+    {
+     "t": "{she} found something"
+    }
+   ],
+   "he held the bags": [
+    {
+     "t": "he held the bags"
+    }
+   ],
+   "not buying anything, probably": [
+    {
+     "t": "not buying anything, probably"
+    }
+   ],
+   "wandering down another aisle": [
+    {
+     "t": "wandering down another aisle"
+    }
+   ],
+   "paying": [
+    {
+     "t": "paying"
+    }
+   ],
+   "one last look": [
+    {
+     "t": "one last look"
+    }
+   ],
+   "finding a good spot": [
+    {
+     "t": "finding a good spot"
+    }
+   ],
+   "waiting for it to start": [
+    {
+     "t": "waiting for it to start"
+    }
+   ],
+   "it's about to start": [
+    {
+     "t": "it's about to start"
+    }
+   ],
+   "it's loud": [
+    {
+     "t": "it's loud"
+    }
+   ],
+   "a good crowd": [
+    {
+     "t": "a good crowd"
+    }
+   ],
+   "caught up in it": [
+    {
+     "t": "caught up in it"
+    }
+   ],
+   "the best bit so far": [
+    {
+     "t": "the best bit so far"
+    }
+   ],
+   "shouting to be heard": [
+    {
+     "t": "shouting to be heard"
+    }
+   ],
+   "a break between things": [
+    {
+     "t": "a break between things"
+    }
+   ],
+   "getting a drink in the break": [
+    {
+     "t": "getting a drink in the break"
+    }
+   ],
+   "the last bit": [
+    {
+     "t": "the last bit"
+    }
+   ],
+   "people are drifting out": [
+    {
+     "t": "people are drifting out"
+    }
+   ],
+   "ears ringing": [
+    {
+     "t": "ears ringing"
+    }
+   ],
+   "going over the best bits": [
+    {
+     "t": "going over the best bits"
+    }
+   ],
+   "getting set up": [
+    {
+     "t": "getting set up"
+    }
+   ],
+   "warming up, trash talk first": [
+    {
+     "t": "warming up, trash talk first"
+    }
+   ],
+   "he's losing": [
+    {
+     "t": "he's losing"
+    }
+   ],
+   "{she's} winning, loudly": [
+    {
+     "t": "{she's} winning, loudly"
+    }
+   ],
+   "one more game": [
+    {
+     "t": "one more game"
+    }
+   ],
+   "close game": [
+    {
+     "t": "close game"
+    }
+   ],
+   "catching his breath": [
+    {
+     "t": "catching his breath"
+    }
+   ],
+   "best of three, now": [
+    {
+     "t": "best of three, now"
+    }
+   ],
+   "a water break": [
+    {
+     "t": "a water break"
+    }
+   ],
+   "a breather": [
+    {
+     "t": "a breather"
+    }
+   ],
+   "last game": [
+    {
+     "t": "last game"
+    }
+   ],
+   "calling it soon": [
+    {
+     "t": "calling it soon"
+    }
+   ],
+   "the first few careful minutes": [
+    {
+     "t": "the first few careful minutes"
+    }
+   ],
+   "still working each other out": [
+    {
+     "t": "still working each other out"
+    }
+   ],
+   "finding out what they have in common": [
+    {
+     "t": "finding out what they have in common"
+    }
+   ],
+   "first impressions, going fine": [
+    {
+     "t": "first impressions, going fine"
+    }
+   ],
+   "telling the short version of his life": [
+    {
+     "t": "telling the short version of his life"
+    }
+   ],
+   "he got here late, apologising": [
+    {
+     "t": "he got here late, apologising"
+    }
+   ],
+   "{she} had been waiting a while": [
+    {
+     "t": "{she} had been waiting a while"
+    }
+   ],
+   "he owes {them} one for the wait": [
+    {
+     "t": "he owes {them} one for the wait"
+    }
+   ],
+   "rain on the window": [
+    {
+     "t": "rain on the window"
+    }
+   ],
+   "it's pouring outside, nobody is in a hurry": [
+    {
+     "t": "it's pouring outside, nobody is in a hurry"
+    }
+   ],
+   "waiting out the rain": [
+    {
+     "t": "waiting out the rain"
+    }
+   ],
+   "caught in the rain": [
+    {
+     "t": "caught in the rain"
+    }
+   ],
+   "sheltering under something": [
+    {
+     "t": "sheltering under something"
+    }
+   ],
+   "getting wet, laughing about it": [
+    {
+     "t": "getting wet, laughing about it"
+    }
+   ],
+   "it's getting late": [
+    {
+     "t": "it's getting late"
+    }
+   ],
+   "one of the last still up": [
+    {
+     "t": "one of the last still up"
+    }
+   ],
+   "past when either of them meant to be out": [
+    {
+     "t": "past when either of them meant to be out"
+    }
+   ],
+   "the streets have gone quiet": [
+    {
+     "t": "the streets have gone quiet"
+    }
+   ],
+   "still waking up": [
+    {
+     "t": "still waking up"
+    }
+   ],
+   "the day has barely started": [
+    {
+     "t": "the day has barely started"
+    }
+   ],
+   "a slow start to the day": [
+    {
+     "t": "a slow start to the day"
+    }
+   ],
+   "he stifled a yawn": [
+    {
+     "t": "he stifled a yawn"
+    }
+   ],
+   "he's fading a bit": [
+    {
+     "t": "he's fading a bit"
+    }
+   ],
+   "his energy is going": [
+    {
+     "t": "his energy is going"
+    }
+   ],
+   "he could sleep right here": [
+    {
+     "t": "he could sleep right here"
+    }
+   ],
+   "running on not much sleep": [
+    {
+     "t": "running on not much sleep"
+    }
+   ],
+   "he has energy for once": [
+    {
+     "t": "he has energy for once"
+    }
+   ],
+   "he's in a good mood today": [
+    {
+     "t": "he's in a good mood today"
+    }
+   ],
+   "he's not quite himself": [
+    {
+     "t": "he's not quite himself"
+    }
+   ],
+   "his mind's somewhere else": [
+    {
+     "t": "his mind's somewhere else"
+    }
+   ],
+   "he's quieter than usual": [
+    {
+     "t": "he's quieter than usual"
+    }
+   ],
+   "he's in a good mood": [
+    {
+     "t": "he's in a good mood"
+    }
+   ],
+   "he's enjoying this": [
+    {
+     "t": "he's enjoying this"
+    }
+   ],
+   "he's glad he came": [
+    {
+     "t": "he's glad he came"
+    }
+   ],
+   "he is not feeling great": [
+    {
+     "t": "he is not feeling great"
+    }
+   ],
+   "he is trying not to cough": [
+    {
+     "t": "he is trying not to cough"
+    }
+   ],
+   "he probably shouldn't have come out": [
+    {
+     "t": "he probably shouldn't have come out"
+    }
+   ],
+   "they are ganging up on him": [
+    {
+     "t": "they are ganging up on him"
+    }
+   ],
+   "he can't get a word in": [
+    {
+     "t": "he can't get a word in"
+    }
+   ],
+   "three conversations at once": [
+    {
+     "t": "three conversations at once"
+    }
+   ],
+   "someone has gone to get more": [
+    {
+     "t": "someone has gone to get more"
+    }
+   ],
+   "they've done this a hundred times": [
+    {
+     "t": "they've done this a hundred times"
+    }
+   ],
+   "the old jokes": [
+    {
+     "t": "the old jokes"
+    }
+   ],
+   "they don't need to explain much to each other": [
+    {
+     "t": "they don't need to explain much to each other"
+    }
+   ],
+   "something between them is still not said": [
+    {
+     "t": "something between them is still not said"
+    }
+   ],
+   "careful around one subject": [
+    {
+     "t": "careful around one subject"
+    }
+   ],
+   "a bit of an edge to it": [
+    {
+     "t": "a bit of an edge to it"
+    }
+   ],
+   "his phone buzzed, he put it face down": [
+    {
+     "t": "his phone buzzed, he put it face down"
+    }
+   ],
+   "his phone lit up, he ignored it": [
+    {
+     "t": "his phone lit up, he ignored it"
+    }
+   ],
+   "a text came in, he left it": [
+    {
+     "t": "a text came in, he left it"
+    }
+   ],
+   "his phone buzzed in his pocket": [
+    {
+     "t": "his phone buzzed in his pocket"
+    }
+   ],
+   "he glanced at his phone and put it away": [
+    {
+     "t": "he glanced at his phone and put it away"
+    }
+   ],
+   "his phone went, he let it go": [
+    {
+     "t": "his phone went, he let it go"
+    }
+   ],
+   "his phone buzzed, {she} saw him look": [
+    {
+     "t": "his phone buzzed, {she} saw him look"
+    }
+   ],
+   "{she} noticed his phone light up": [
+    {
+     "t": "{she} noticed his phone light up"
+    }
+   ],
+   "his phone buzzed and {she} stopped mid-sentence": [
+    {
+     "t": "his phone buzzed and {she} stopped mid-sentence"
+    }
+   ],
+   "a text from {who}, he left it for now": [
+    {
+     "t": "a text from {who}, he left it for now"
+    }
+   ],
+   "{who} texted, he put it away": [
+    {
+     "t": "{who} texted, he put it away"
+    }
+   ],
+   "{who} again, not now": [
+    {
+     "t": "{who} again, not now"
+    }
+   ],
+   "he answered {who}, quickly": [
+    {
+     "t": "he answered {who}, quickly"
+    }
+   ],
+   "he texted {who} back": [
+    {
+     "t": "he texted {who} back"
+    }
+   ],
+   "he took a second to answer {who}": [
+    {
+     "t": "he took a second to answer {who}"
+    }
+   ],
+   "he answered {who}, {she} noticed": [
+    {
+     "t": "he answered {who}, {she} noticed"
+    }
+   ],
+   "he was on his phone to {who} for a bit, {she} went quiet": [
+    {
+     "t": "he was on his phone to {who} for a bit, {she} went quiet"
+    }
+   ],
+   "{she} waited while he texted {who}": [
+    {
+     "t": "{she} waited while he texted {who}"
+    }
+   ],
+   "his phone keeps going": [
+    {
+     "t": "his phone keeps going"
+    }
+   ],
+   "his phone keeps buzzing, he turned it over": [
+    {
+     "t": "his phone keeps buzzing, he turned it over"
+    }
+   ],
+   "a run of messages, he silenced it": [
+    {
+     "t": "a run of messages, he silenced it"
+    }
+   ],
+   "his phone will not stop": [
+    {
+     "t": "his phone will not stop"
+    }
+   ],
+   "his group chats are busy": [
+    {
+     "t": "his group chats are busy"
+    }
+   ],
+   "a group is buzzing on his phone": [
+    {
+     "t": "a group is buzzing on his phone"
+    }
+   ],
+   "messages piling up on his phone": [
+    {
+     "t": "messages piling up on his phone"
+    }
+   ],
+   "he typed something into a group": [
+    {
+     "t": "he typed something into a group"
+    }
+   ],
+   "he answered a chat, quickly": [
+    {
+     "t": "he answered a chat, quickly"
+    }
+   ],
+   "he was on his phone for a minute": [
+    {
+     "t": "he was on his phone for a minute"
+    }
+   ],
+   "back to the conversation": [
+    {
+     "t": "back to the conversation"
+    }
+   ],
+   "{she} let it go": [
+    {
+     "t": "{she} let it go"
+    }
+   ],
+   "he said sorry about that": [
+    {
+     "t": "he said sorry about that"
+    }
+   ],
+   "talking about {t}": [
+    {
+     "t": "talking about {t}"
+    }
+   ],
+   "on to {t}": [
+    {
+     "t": "on to {t}"
+    }
+   ],
+   "got onto {t}": [
+    {
+     "t": "got onto {t}"
+    }
+   ],
+   "somehow onto {t}": [
+    {
+     "t": "somehow onto {t}"
+    }
+   ],
+   "{t}, mostly": [
+    {
+     "t": "{t}, mostly"
+    }
+   ],
+   "he asked about {t}": [
+    {
+     "t": "he asked about {t}"
+    }
+   ],
+   "{she} brought up {t}": [
+    {
+     "t": "{she} brought up {t}"
+    }
+   ],
+   "{she} told him about {t}": [
+    {
+     "t": "{she} told him about {t}"
+    }
+   ],
+   "still on {t}": [
+    {
+     "t": "still on {t}"
+    }
+   ],
+   "still talking about {t}": [
+    {
+     "t": "still talking about {t}"
+    }
+   ],
+   "{t}, still": [
+    {
+     "t": "{t}, still"
+    }
+   ],
+   "back to {t}": [
+    {
+     "t": "back to {t}"
+    }
+   ],
+   "back on {t} again": [
+    {
+     "t": "back on {t} again"
+    }
+   ],
+   "circling back to {t}": [
+    {
+     "t": "circling back to {t}"
+    }
+   ]
+  },
+  "dream": {
+   "Something about {place} and {person}, everyone laughing. It was gone as soon as he reached for it.": [
+    {
+     "t": "Something about {place} and {person}, everyone laughing. It was gone as soon as he reached for it."
+    }
+   ],
+   "A good one, what he can keep of it: {place}, {person}, nothing wrong anywhere.": [
+    {
+     "t": "A good one, what he can keep of it: {place}, {person}, nothing wrong anywhere."
+    }
+   ],
+   "{person} was there, and {place}, and he woke up in a better mood than the morning deserved.": [
+    {
+     "t": "{person} was there, and {place}, and he woke up in a better mood than the morning deserved."
+    }
+   ],
+   "He was somewhere like {place} and it was easy. That's all that's left of it.": [
+    {
+     "t": "He was somewhere like {place} and it was easy. That's all that's left of it."
+    }
+   ],
+   "Bits of a nice dream: {person}, the light at {place}. Then the alarm.": [
+    {
+     "t": "Bits of a nice dream: {person}, the light at {place}. Then the alarm."
+    }
+   ],
+   "He woke up smiling at something {person} said in a dream, and couldn't get it back.": [
+    {
+     "t": "He woke up smiling at something {person} said in a dream, and couldn't get it back."
+    }
+   ],
+   "Something about {place}, {twist}. It made sense at the time.": [
+    {
+     "t": "Something about {place}, {twist}. It made sense at the time."
+    }
+   ],
+   "A strange one: {place}, {person} there for no reason. He lost the rest as he got up.": [
+    {
+     "t": "A strange one: {place}, {person} there for no reason. He lost the rest as he got up."
+    }
+   ],
+   "He was {task}, at {place}, and then he wasn't.": [
+    {
+     "t": "He was {task}, at {place}, and then he wasn't."
+    }
+   ],
+   "All he has of it is {place} and that {twist}.": [
+    {
+     "t": "All he has of it is {place} and that {twist}."
+    }
+   ],
+   "{person} turned up in a dream, at {place}, saying nothing useful.": [
+    {
+     "t": "{person} turned up in a dream, at {place}, saying nothing useful."
+    }
+   ],
+   "He dreamt about {place}, sort of. {twistCap}.": [
+    {
+     "t": "He dreamt about {place}, sort of. {twistCap}."
+    }
+   ],
+   "A bad one, what he can remember of it: {place}, {task}, getting nowhere.": [
+    {
+     "t": "A bad one, what he can remember of it: {place}, {task}, getting nowhere."
+    }
+   ],
+   "He was {task} and {person} wouldn't look up. He woke up annoyed at nobody.": [
+    {
+     "t": "He was {task} and {person} wouldn't look up. He woke up annoyed at nobody."
+    }
+   ],
+   "Something had gone wrong at {place}, and he never found out what.": [
+    {
+     "t": "Something had gone wrong at {place}, and he never found out what."
+    }
+   ],
+   "He woke with it still on him: {task}, {twist}.": [
+    {
+     "t": "He woke with it still on him: {task}, {twist}."
+    }
+   ],
+   "In the dream {person} was waiting and he was {task}. It left a mood behind.": [
+    {
+     "t": "In the dream {person} was waiting and he was {task}. It left a mood behind."
+    }
+   ],
+   "He dreamt he was {task}. He checked his phone before he was properly awake.": [
+    {
+     "t": "He dreamt he was {task}. He checked his phone before he was properly awake."
+    }
+   ],
+   "A nightmare, or the end of one: {place}, and {twist}. He woke with his heart going.": [
+    {
+     "t": "A nightmare, or the end of one: {place}, and {twist}. He woke with his heart going."
+    }
+   ],
+   "He woke up fast. {twistCap}, at {place}, that much he remembers.": [
+    {
+     "t": "He woke up fast. {twistCap}, at {place}, that much he remembers."
+    }
+   ],
+   "He doesn't want the rest of that one: {place}, {twist}.": [
+    {
+     "t": "He doesn't want the rest of that one: {place}, {twist}."
+    }
+   ],
+   "Something was wrong at {place} and he couldn't get out. He lay awake a minute after.": [
+    {
+     "t": "Something was wrong at {place} and he couldn't get out. He lay awake a minute after."
+    }
+   ]
+  }
+ }
+}

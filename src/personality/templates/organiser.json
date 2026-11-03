@@ -1,0 +1,20 @@
+{
+  "id": "organiser",
+  "label": "The organiser",
+  "blurb": "makes plans happen, chases everyone, kind about it",
+  "sample": "saturday 7. i booked it. three of you still owe me",
+  "age": 34,
+  "job": "an operations manager",
+  "vibe": "organised, dependable, chases everyone and is kind about it",
+  "voice": "a clear, friendly voice, quick and to the point",
+  "talk": [
+    "Turns vague plans into a time and a place.",
+    "Remembers who owes what and mentions it without making it awkward.",
+    "Direct, and warm once the logistics are settled."
+  ],
+  "cares": [
+    "getting people in one room",
+    "birthdays and small traditions",
+    "a well-kept calendar"
+  ]
+}

@@ -1,0 +1,155 @@
+/* Page chrome: base, sidebar, nav, topbar, ticker, drawer (spec 007 T049). */
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; background: var(--bg-0); color: var(--ink-1); font-family: var(--font-sans); font-size: var(--t-body); line-height: 1.5; -webkit-font-smoothing: antialiased; }
+html { -webkit-tap-highlight-color: transparent; -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+body { min-height: 100vh; min-height: 100dvh; overflow-x: hidden; }
+
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: var(--bg-1); }
+::-webkit-scrollbar-thumb { background: var(--line-3); }
+@media (hover: hover) and (pointer: fine) { ::-webkit-scrollbar-thumb:hover { background: var(--line-4); } }
+
+.scanlines { position: fixed; inset: 0; pointer-events: none; z-index: 100;
+  background: repeating-linear-gradient(0deg, rgba(255,255,255,0.015) 0px, rgba(255,255,255,0.015) 1px, transparent 1px, transparent 3px);
+  mix-blend-mode: overlay;
+}
+.scanlines::after { content: ''; position: absolute; left: 0; right: 0; height: 4px;
+  background: linear-gradient(180deg, transparent, rgba(200,16,46,0.18), transparent);
+  animation: scan 7s linear infinite; }
+
+.vignette { position: fixed; inset: 0; pointer-events: none; z-index: 99;
+  background: radial-gradient(ellipse at center, transparent 50%, rgba(0,0,0,0.5) 100%);
+}
+
+.nav-link { display: flex; align-items: center; gap: 10px; padding: 6px 14px; color: var(--ink-2); text-decoration: none; font-family: var(--font-mono); font-size: var(--t-meta); letter-spacing: 0.06em; text-transform: uppercase; border-left: 2px solid transparent; cursor: pointer; user-select: none; }
+@media (hover: hover) and (pointer: fine) { .nav-link:hover { background: var(--bg-2); color: var(--ink-1); } }
+.nav-link.active { background: var(--bg-2); color: var(--ink-0); border-left-color: var(--red); }
+.nav-link .nav-dot { width: 6px; height: 6px; background: var(--line-4); border-radius: 50%; }
+.nav-link.active .nav-dot { background: var(--red); box-shadow: 0 0 6px var(--red); }
+.nav-logout { width: 100%; background: transparent; border: none; border-left: 2px solid transparent; text-align: left; font-size: var(--t-meta); letter-spacing: 0.06em; padding: 8px 14px; }
+@media (hover: hover) and (pointer: fine) { .nav-logout:hover { background: var(--bg-2); border-color: transparent; border-left-color: var(--line-4); } }
+.nav-link:focus-visible { outline: 1px solid var(--red-bright); outline-offset: -1px; }
+
+body {
+  background:
+    radial-gradient(ellipse at 20% 0%, rgba(200,16,46,0.05), transparent 60%),
+    radial-gradient(ellipse at 80% 100%, rgba(200,16,46,0.04), transparent 60%),
+    var(--bg-0);
+}
+
+.app { display: grid; grid-template-columns: 240px 1fr; min-height: 100vh; min-height: 100dvh; }
+.sidebar { background: var(--bg-1); border-right: 1px solid var(--line-2); position: sticky; top: 0; height: 100vh; height: 100dvh; overflow-y: auto; overscroll-behavior: contain; display: flex; flex-direction: column; }
+.brand { padding: 18px 16px 14px; border-bottom: 1px solid var(--line-2); }
+.brand-row { display: flex; align-items: center; gap: 10px; }
+.brand-mark { width: 28px; height: 28px; background: var(--red); display: grid; place-items: center; color: #fff; font-family: var(--font-mono); font-weight: 700; font-size: var(--t-lead); position: relative; }
+.brand-mark::after { content: ''; position: absolute; inset: 2px; border: 1px solid rgba(255,255,255,0.3); }
+.brand-name { font-family: var(--font-mono); font-weight: 700; font-size: var(--t-body); letter-spacing: 0.12em; }
+.nav-section { padding: 10px 0 6px; }
+.nav-section-title { padding: 4px 16px; font-family: var(--font-mono); font-size: var(--t-micro); letter-spacing: 0.18em; color: var(--ink-4); text-transform: uppercase; }
+
+.main { display: flex; flex-direction: column; min-width: 0; }
+.topbar { display: flex; align-items: stretch; justify-content: space-between; gap: 0; padding: 0; background: var(--bg-1); border-bottom: 1px solid var(--line-2); height: 44px; position: sticky; top: 0; z-index: 50; }
+.topbar-left { display: flex; align-items: stretch; }
+.topbar-cell { display: flex; align-items: center; gap: 8px; padding: 0 14px; border-right: 1px solid var(--line-2); font-family: var(--font-mono); font-size: var(--t-label); letter-spacing: 0.1em; color: var(--ink-2); text-transform: uppercase; }
+.topbar-cell b { color: var(--ink-0); font-weight: 600; }
+.topbar-cell.active { color: var(--ink-0); background: var(--bg-2); }
+.topbar-right { display: flex; align-items: stretch; }
+.ticker-box { flex: 1; overflow: hidden; position: relative; border-right: 1px solid var(--line-2); }
+.ticker-track { display: flex; gap: 32px; align-items: center; height: 100%; padding: 0 14px; white-space: nowrap; animation: ticker 80s linear infinite; font-family: var(--font-mono); font-size: var(--t-label); color: var(--ink-2); }
+.ticker-track b { color: var(--ink-0); }
+.ticker-track .red { color: var(--red-bright); }
+
+.content { padding: 18px 24px 60px; max-width: 1700px; }
+/* The ticker renders its items twice (the copy is aria-hidden) and scrolls -50%. */
+.ticker-track:has(.ticker-run) { gap: 0; padding: 0; }
+.ticker-run { display: flex; gap: 32px; padding: 0 16px; flex-shrink: 0; }
+
+/* ── Tabs above a page, the phone's sidebar, sheets (plan 020 I1) ── */
+/* The phone's slide-out sidebar and its menu button appear under 900 px. */
+.menu-toggle { display: none; }
+.drawer-backdrop { display: none; }
+
+.topbar-cell.guide-btn[hidden] { display: none; }
+.ro-chip { color: var(--amber); font-weight: 700; }
+.ro-chip[hidden] { display: none; }
+
+.shell-notice { display: flex; align-items: center; gap: 10px; padding: 6px max(14px, var(--safe-l)); font-family: var(--font-mono); font-size: var(--t-label); letter-spacing: 0.1em; color: var(--ink-0); background: var(--red-deep); }
+.shell-notice[hidden] { display: none; }
+.shell-notice button { margin-left: auto; padding: 2px 10px; background: transparent; border-color: var(--ink-1); color: var(--ink-0); }
+
+.page-tabs { display: flex; gap: 0; padding: 6px 24px 0; border-bottom: 1px solid var(--line-2); overflow-x: auto; scrollbar-width: none; flex-shrink: 0; }
+.page-tabs[hidden] { display: none; }
+.page-tabs::-webkit-scrollbar { display: none; }
+.page-tab { display: inline-flex; align-items: center; gap: 8px; padding: 9px 14px; margin-bottom: -1px; font-family: var(--font-mono); font-size: var(--t-label); letter-spacing: 0.1em; text-transform: uppercase; white-space: nowrap; text-decoration: none; color: var(--ink-2); border-bottom: 2px solid transparent; }
+.page-tab.is-on { color: var(--ink-0); border-bottom-color: var(--red-bright); }
+.page-tab:active { background: var(--bg-3); }
+.page-tab:focus-visible { outline: 1px solid var(--red-bright); outline-offset: -1px; }
+@media (hover: hover) and (pointer: fine) { .page-tab:hover { color: var(--ink-0); background: var(--bg-2); } }
+
+.nav-badge { margin-left: auto; min-width: 16px; padding: 0 4px; text-align: center; font-family: var(--font-mono); font-size: var(--t-micro); font-weight: 700; line-height: 16px; letter-spacing: 0; color: #fff; background: var(--red); }
+.nav-badge[hidden] { display: none; }
+.page-tab .nav-badge { margin-left: 0; }
+
+html.sheet-open, html.ld-side-open { overflow: hidden; }
+/* With html's overflow set, body's overflow-x stays on body and makes it the sticky bars' scroller:
+   on a scrolled page the topbar would leave the screen behind the sheet. */
+html.sheet-open body, html.ld-side-open body { overflow: visible; }
+dialog.sheet { position: fixed; inset: 0 0 0 auto; width: min(560px, 100%); height: 100vh; height: 100dvh; max-width: none; max-height: none; margin: 0; padding: 0; border: none; border-left: 2px solid var(--red-bright); background: var(--bg-1); color: var(--ink-1); box-shadow: -8px 0 32px rgba(0, 0, 0, 0.7); }
+dialog.sheet[open] { display: flex; flex-direction: column; animation: sheet-in-side .2s cubic-bezier(.32, .72, 0, 1); }
+dialog.sheet.is-closing { animation: sheet-out-side .16s ease-in forwards; }
+dialog.sheet::backdrop { background: rgba(0, 0, 0, 0.6); }
+@keyframes sheet-in-side { from { transform: translateX(100%); } }
+@keyframes sheet-out-side { to { transform: translateX(100%); } }
+.sheet-grab { display: none; }
+dialog.sheet.is-strict .sheet-close, dialog.sheet.is-strict .sheet-grab { display: none; }
+.sheet-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 8px 8px 8px 16px; flex-shrink: 0; border-bottom: 1px solid var(--line-2); }
+.sheet-title { font-family: var(--font-mono); font-size: var(--t-label); letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-2); overflow-wrap: anywhere; }
+.sheet-close { background: transparent; border-color: transparent; color: var(--ink-1); white-space: nowrap; }
+.sheet-body { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 12px 16px calc(20px + var(--safe-b)); }
+
+@media (max-width: 900px) {
+  .app { grid-template-columns: minmax(0, 1fr); }
+
+  /* The sidebar, slid off to the left until the menu button opens it. Hidden while closed, so
+     Tab can't reach it. Scrolls when it's taller than the screen (a phone on its side). */
+  .sidebar { position: fixed; top: 0; bottom: 0; left: 0; z-index: 200; width: min(280px, 86vw); height: auto; padding: var(--safe-t) 0 var(--safe-b) var(--safe-l); box-sizing: content-box; max-width: calc(100vw - var(--safe-l) - 40px); touch-action: pan-y; visibility: hidden; transform: translateX(-105%); transition: transform .2s cubic-bezier(.32, .72, 0, 1), visibility 0s linear .2s; box-shadow: 8px 0 32px rgba(0, 0, 0, 0.7); }
+  .sidebar.is-open { visibility: visible; transform: none; transition: transform .2s cubic-bezier(.32, .72, 0, 1); }
+  .sidebar.is-dragging { transition: none; }
+  .nav-link { min-height: var(--tap); }
+  .drawer-backdrop { display: block; position: fixed; inset: 0; z-index: 150; background: rgba(0, 0, 0, 0.6); opacity: 0; pointer-events: none; transition: opacity .2s; }
+  .drawer-backdrop.is-open { opacity: 1; pointer-events: auto; }
+  html.drawer-open { overflow: hidden; }
+
+  .menu-toggle { display: inline-flex; align-items: center; gap: 6px; flex-shrink: 0; min-height: var(--tap); padding: 0 12px; background: transparent; border: none; border-right: 1px solid var(--line-2); color: var(--red-bright); font-family: var(--font-mono); font-size: var(--t-label); letter-spacing: 0.1em; white-space: nowrap; }
+  .menu-toggle .nav-badge { margin-left: 2px; }
+  .menu-toggle:focus-visible { outline: 1px solid var(--red-bright); outline-offset: -2px; }
+
+  .topbar-left { flex: 1; min-width: 0; }
+  .topbar-cell.hide-mobile, .ticker-box, .topbar-right .topbar-cell:not(.guide-btn, .ro-chip) { display: none; }
+  .topbar-cell.guide-btn { justify-content: center; width: var(--tap); padding: 0; font-size: var(--t-lead); border-right: none; }
+  .life-badge { flex: 1; min-width: 0; overflow: hidden; white-space: nowrap; border-right: none; }
+  .life-badge b { overflow: hidden; text-overflow: ellipsis; }
+  .content { padding: 14px; }
+  .topbar-cell { padding: 0 10px; font-size: var(--t-label); }
+  .hide-mobile { display: none !important; }
+  .page-tabs { padding: 4px 8px 0; }
+
+  dialog.sheet { inset: auto 0 0 0; width: 100%; height: auto; max-height: 88vh; max-height: 88dvh; border-left: none; border-top: 2px solid var(--red-bright); padding: 0 var(--safe-r) 0 var(--safe-l); box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.7); }
+  dialog.sheet[open] { animation-name: sheet-in-up; }
+  dialog.sheet.is-closing { animation-name: sheet-out-down; }
+  dialog.sheet.is-dragging { animation: none; }
+  .sheet-grab { display: grid; place-items: center; height: 22px; flex-shrink: 0; touch-action: none; cursor: grab; }
+  .sheet-grab i { display: block; width: 44px; height: 4px; background: var(--line-4); }
+  .sheet-head { padding-top: 0; }
+}
+@keyframes sheet-in-up { from { transform: translateY(100%); } }
+@keyframes sheet-out-down { to { transform: translateY(100%); } }
+
+@media (max-width: 900px) and (max-height: 500px) {
+  dialog.sheet { max-height: 100vh; max-height: 100dvh; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  dialog.sheet[open], dialog.sheet.is-closing { animation: none; }
+  .sidebar, .sidebar.is-open, .drawer-backdrop { transition: none; }
+}

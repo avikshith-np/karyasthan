@@ -1,0 +1,74 @@
+{
+  "name": "karyasthan",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Karyasthan — WhatsApp group chat AI agent",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "node src/index.js | pino-pretty",
+    "migrate": "node scripts/migrate.js",
+    "test": "node scripts/run-all-tests.js",
+    "gen:phrases": "node scripts/gen-phrases.js",
+    "test:llm": "node scripts/test-llm.js",
+    "test:decision": "node scripts/test-decision.js",
+    "test:search": "node scripts/test-search.js",
+    "test:imitate": "node scripts/test-imitate.js",
+    "test:voice": "node scripts/test-voice.js",
+    "test:instagram": "node scripts/test-instagram.js",
+    "test:pipeline": "node scripts/test-pipeline.js",
+    "test:install": "node scripts/test-install.js",
+    "test:cap-catchup": "node scripts/test-cap-catchup.js",
+    "test:llm-offline": "node scripts/test-llm-offline.js",
+    "test:review": "node scripts/test-review.js",
+    "test:privacy": "node scripts/test-privacy.js",
+    "test:life": "node scripts/test-life.js",
+    "test:mind": "node scripts/test-mind.js",
+    "test:arcs": "node scripts/test-arcs.js",
+    "test:chat-influence": "node scripts/test-chat-influence.js",
+    "test:migrate": "node scripts/test-migrate.js",
+    "test:memory": "node scripts/test-memory.js",
+    "test:roles": "node scripts/test-roles.js",
+    "test:dashboard": "node scripts/test-dashboard.js",
+    "test:public": "node scripts/test-public.js",
+    "test:public-scan": "node scripts/test-public-scan.js",
+    "test:property": "node scripts/property-tests/run.js",
+    "gen:env": "node scripts/gen-env-example.js",
+    "inspect": "node scripts/inspect-memory.js",
+    "setup": "node scripts/setup.js",
+    "doctor": "node scripts/doctor.js"
+  },
+  "private": true,
+  "license": "Apache-2.0",
+  "author": "Karyasthan contributors",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/avikshith-np/karyasthan.git"
+  },
+  "homepage": "https://github.com/avikshith-np/karyasthan#readme",
+  "bugs": {
+    "url": "https://github.com/avikshith-np/karyasthan/issues"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "@fastify/basic-auth": "^6.2.0",
+    "@fastify/cookie": "^11.0.2",
+    "@fastify/rate-limit": "^10.3.0",
+    "@fastify/static": "^9.1.3",
+    "@whiskeysockets/baileys": "^7.0.0-rc.9",
+    "bcryptjs": "^3.0.3",
+    "better-sqlite3": "^12.8.0",
+    "dotenv": "^17.3.1",
+    "fastify": "^5.8.5",
+    "node-cache": "^5.1.2",
+    "pino": "^10.3.1",
+    "playwright": "^1.49.0",
+    "qrcode-terminal": "^0.12.0",
+    "ws": "^8.22.0"
+  },
+  "devDependencies": {
+    "pino-pretty": "^13.1.3"
+  }
+}

@@ -1,0 +1,23 @@
+#!/bin/sh
+# Scans what a push adds with scripts/public-scan.js; a hit, or anything it can't check, stops the push.
+# Install: cp scripts/hooks/pre-push "$(git rev-parse --git-common-dir)/hooks/pre-push"
+#
+# It reads this install's gitignored persona, world and arcs files and its database, read only, from
+# the main checkout, so a push from a worktree is checked the same way. A repo that holds none of them
+# names the install they live in, and then every one of them must be there:
+#   git config publicScan.home /path/to/install     (or PUBLIC_SCAN_HOME=/path/to/install for one push)
+stop() { echo "pre-push: $1: nothing checked, push stopped" >&2; exit 1; }
+
+HOME_DIR="${PUBLIC_SCAN_HOME:-$(git config --get publicScan.home)}"
+ROOT="${HOME_DIR:-$(cd "$(git rev-parse --git-common-dir)/.." && pwd)}"
+SCAN="$ROOT/scripts/public-scan.js"
+DB="$ROOT/data/karyasthan.db"
+WORDS="$ROOT/data/private-words.txt"
+
+[ -f "$SCAN" ] || stop "no scripts/public-scan.js in the install"
+if [ -n "$HOME_DIR" ]; then
+  [ -f "$DB" ] || stop "no data/karyasthan.db in the install"
+  [ -f "$WORDS" ] || stop "no data/private-words.txt in the install"
+fi
+if [ -f "$DB" ]; then set -- --db "$DB"; else set --; fi
+exec node "$SCAN" --pre-push --strict --sources "$ROOT/src/personality" --words "$WORDS" "$@"

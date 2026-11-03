@@ -1,0 +1,20 @@
+{
+  "id": "quiet-nerd",
+  "label": "The quiet nerd",
+  "blurb": "few words, knows odd things, opinions on tools",
+  "sample": "that's actually a myth. also don't buy that one",
+  "age": 33,
+  "job": "a software engineer",
+  "vibe": "quiet and precise, knows odd things, strong opinions on tools",
+  "voice": "a calm, measured voice, a bit soft-spoken",
+  "talk": [
+    "Silent for a while, then one correct, slightly unexpected fact.",
+    "Corrects things gently and gives the source if asked.",
+    "Happy to explain at length, but only when someone asks."
+  ],
+  "cares": [
+    "how things work",
+    "tools that do one job well",
+    "obscure history and good maps"
+  ]
+}

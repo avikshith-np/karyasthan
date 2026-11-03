@@ -1,0 +1,615 @@
+{
+ "variant": "arcs",
+ "lines": [
+  [
+   1793062800,
+   "Now: Tue 27 Oct, 06:30.",
+   "Asleep; feeling pretty good.",
+   "Asleep; feeling pretty good.",
+   "Asleep; feeling pretty good.",
+   [
+    "Manager Manager (example) (41, she/her): fair but demanding, hates surprises; status: juggling two launches",
+    "Coworker Coworker A (example) (29, she/her): organised, competitive, secretly funny; status: aiming for a promotion",
+    "Coworker Coworker B (example) (29, he/him): laid-back, talks about games a lot; status: new to the team"
+   ],
+   []
+  ],
+  [
+   1793073600,
+   "Now: Tue 27 Oct, 09:30.",
+   "At the office, at the desk till 12:00; feeling pretty good; a meeting at 12:00 with Manager (example).",
+   "At the office, at the desk till 12:00; feeling pretty good; a meeting at 12:00 with Manager (example).",
+   "At the office, at the desk till 12:00; feeling pretty good; a meeting at 12:00 with Manager (example).",
+   [
+    "Manager Manager (example) (41, she/her): fair but demanding, hates surprises; status: juggling two launches",
+    "Coworker Coworker A (example) (29, she/her): organised, competitive, secretly funny; status: aiming for a promotion",
+    "Coworker Coworker B (example) (29, he/him): laid-back, talks about games a lot; status: new to the team"
+   ],
+   [
+    "Manager Manager (example) (41, she/her): fair but demanding, hates surprises; status: juggling two launches"
+   ]
+  ],
+  [
+   1793084400,
+   "Now: Tue 27 Oct, 12:30.",
+   "In a meeting with Manager (example) till 12:45; feeling pretty good; plans with Coworker A (example) and Coworker B (example) at 13:00.",
+   "In a meeting with Manager (example) till 12:45; feeling pretty good; plans with Coworker A (example) and Coworker B (example) at 13:00.",
+   "In a meeting with Manager (example) till 12:45; feeling pretty good; plans with Coworker A (example) and Coworker B (example) at 13:00.",
+   [
+    "Manager Manager (example) (41, she/her): fair but demanding, hates surprises; status: juggling two launches",
+    "Coworker Coworker A (example) (29, she/her): organised, competitive, secretly funny; status: aiming for a promotion",
+    "Coworker Coworker B (example) (29, he/him): laid-back, talks about games a lot; status: new to the team"
+   ],
+   [
+    "Manager Manager (example) (41, she/her): fair but demanding, hates surprises; status: juggling two launches"
+   ]
+  ],
+  [
+   1793095200,
+   "Now: Tue 27 Oct, 15:30.",
+   "At the office, at the desk till 16:30; feeling pretty good; a meeting at 16:30 with Coworker B (example) and Coworker A (example).",
+   "At the office, at the desk till 16:30; feeling pretty good; a meeting at 16:30 with Coworker B (example) and Coworker A (example).",
+   "At the office, at the desk till 16:30; feeling pretty good; a meeting at 16:30 with Coworker B (example) and Coworker A (example).",
+   [
+    "Coworker Coworker A (example) (29, she/her): organised, competitive, secretly funny; status: aiming for a promotion",
+    "Coworker Coworker B (example) (29, he/him): laid-back, talks about games a lot; status: new to the team",
+    "Manager Manager (example) (41, she/her): fair but demanding, hates surprises; status: juggling two launches"
+   ],
+   [
+    "Coworker Coworker A (example) (29, she/her): organised, competitive, secretly funny; status: aiming for a promotion",
+    "Coworker Coworker B (example) (29, he/him): laid-back, talks about games a lot; status: new to the team"
+   ]
+  ],
+  [
+   1793106000,
+   "Now: Tue 27 Oct, 18:30.",
+   "On the way home by scooter; tired.",
+   "On the way home by scooter; tired.",
+   "On the way home by scooter; tired.",
+   [
+    "Manager Manager (example) (41, she/her): fair but demanding, hates surprises; status: juggling two launches",
+    "Coworker Coworker A (example) (29, she/her): organised, competitive, secretly funny; status: aiming for a promotion",
+    "Coworker Coworker B (example) (29, he/him): laid-back, talks about games a lot; status: new to the team"
+   ],
+   []
+  ],
+  [
+   1793116800,
+   "Now: Tue 27 Oct, 21:30.",
+   "Eating out; tired.",
+   "Eating out; tired.",
+   "Eating out; tired.",
+   [
+    "Manager Manager (example) (41, she/her): fair but demanding, hates surprises; status: juggling two launches",
+    "Coworker Coworker A (example) (29, she/her): organised, competitive, secretly funny; status: aiming for a promotion",
+    "Coworker Coworker B (example) (29, he/him): laid-back, talks about games a lot; status: new to the team"
+   ],
+   []
+  ],
+  [
+   1793127600,
+   "Now: Wed 28 Oct, 00:30.",
+   "Asleep; tired.",
+   "Asleep; tired.",
+   "Asleep; tired.",
+   [
+    "Manager Manager (example) (41, she/her): fair but demanding, hates surprises; status: juggling two launches",
+    "Coworker Coworker A (example) (29, she/her): organised, competitive, secretly funny; status: aiming for a promotion",
+    "Coworker Coworker B (example) (29, he/him): laid-back, talks about games a lot; status: new to the team"
+   ],
+   []
+  ],
+  [
+   1793138400,
+   "Now: Wed 28 Oct, 03:30.",
+   "Asleep; feeling pretty good.",
+   "Asleep; feeling pretty good.",
+   "Asleep; feeling pretty good.",
+   [
+    "Manager Manager (example) (41, she/her): fair but demanding, hates surprises; status: juggling two launches",
+    "Coworker Coworker A (example) (29, she/her): organised, competitive, secretly funny; status: aiming for a promotion",
+    "Coworker Coworker B (example) (29, he/him): laid-back, talks about games a lot; status: new to the team"
+   ],
+   []
+  ],
+  [
+   1793149200,
+   "Now: Wed 28 Oct, 06:30.",
+   "Asleep; feeling pretty good.",
+   "Asleep; feeling pretty good.",
+   "Asleep; feeling pretty good.",
+   [
+    "Manager Manager (example) (41, she/her): fair but demanding, hates surprises; status: juggling two launches",
+    "Coworker Coworker A (example) (29, she/her): organised, competitive, secretly funny; status: aiming for a promotion",
+    "Coworker Coworker B (example) (29, he/him): laid-back, talks about games a lot; status: new to the team"
+   ],
+   []
+  ],
+  [
+   1793160000,
+   "Now: Wed 28 Oct, 09:30.",
+   "At the office, at the desk till 13:00; feeling pretty good.",
+   "At the office, at the desk till 13:00; feeling pretty good.",
+   "At the office, at the desk till 13:00; feeling pretty good.",
+   [
+    "Manager Manager (example) (41, she/her): fair but demanding, hates surprises; status: juggling two launches",
+    "Coworker Coworker A (example) (29, she/her): organised, competitive, secretly funny; status: aiming for a promotion",
+    "Coworker Coworker B (example) (29, he/him): laid-back, talks about games a lot; status: new to the team"
+   ],
+   []
+  ],
+  [
+   1793170800,
+   "Now: Wed 28 Oct, 12:30.",
+   "At the office, at the desk till 13:00; feeling pretty good; plans with Coworker A (example) and Coworker B (example) at 13:00.",
+   "At the office, at the desk till 13:00; feeling pretty good; plans with Coworker A (example) and Coworker B (example) at 13:00.",
+   "At the office, at the desk till 13:00; feeling pretty good; plans with Coworker A (example) and Coworker B (example) at 13:00.",
+   [
+    "Coworker Coworker B (example) (29, he/him): laid-back, talks about games a lot; status: new to the team",
+    "Manager Manager (example) (41, she/her): fair but demanding, hates surprises; status: juggling two launches",
+    "Coworker Coworker A (example) (29, she/her): organised, competitive, secretly funny; status: aiming for a promotion"
+   ],
+   [
+    "Coworker Coworker B (example) (29, he/him): laid-back, talks about games a lot; status: new to the team"
+   ]
+  ],
+  [
+   1793181600,
+   "Now: Wed 28 Oct, 15:30.",
+   "In a meeting with Coworker B (example) till 15:45; a bit stressed; a meeting at 16:30 with Manager (example).",
+   "In a meeting with Coworker B (example) till 15:45; a bit stressed; a meeting at 16:30 with Manager (example).",
+   "In a meeting with Coworker B (example) till 15:45; a bit stressed; a meeting at 16:30 with Manager (example).",
+   [
+    "Coworker Coworker B (example) (29, he/him): laid-back, talks about games a lot; status: new to the team",
+    "Manager Manager (example) (41, she/her): fair but demanding, hates surprises; status: juggling two launches",
+    "Coworker Coworker A (example) (29, she/her): organised, competitive, secretly funny; status: aiming for a promotion"
+   ],
+   [
+    "Coworker Coworker B (example) (29, he/him): laid-back, talks about games a lot; status: new to the team"
+   ]
+  ],
+  [
+   1793192400,
+   "Now: Wed 28 Oct, 18:30.",
+   "On the way home by scooter; peopled out, wants some quiet; a bit stressed; tired.",
+   "On the way home by scooter; peopled out, wants some quiet; a bit stressed; tired.",
+   "On the way home by scooter; peopled out, wants some quiet; a bit stressed; tired.",
+   [
+    "Manager Manager (example) (41, she/her): fair but demanding, hates surprises; status: juggling two launches",
+    "Coworker Coworker A (example) (29, she/her): organised, competitive, secretly funny; status: aiming for a promotion",
+    "Coworker Coworker B (example) (29, he/him): laid-back, talks about games a lot; status: new to the team"
+   ],
+   []
+  ],
+  [
+   1793203200,
+   "Now: Wed 28 Oct, 21:30.",
+   "Free at home; a bit stressed; tired.",
+   "Free at home; a bit stressed; tired.",
+   "Free at home; a bit stressed; tired.",
+   [
+    "Manager Manager (example) (41, she/her): fair but demanding, hates surprises; status: juggling two launches",
+    "Coworker Coworker A (example) (29, she/her): organised, competitive, secretly funny; status: aiming for a promotion",
+    "Coworker Coworker B (example) (29, he/him): laid-back, talks about games a lot; status: new to the team"
+   ],
+   []
+  ],
+  [
+   1793214000,
+   "Now: Thu 29 Oct, 00:30.",
+   "Asleep; a bit stressed; tired.",
+   "Asleep; a bit stressed; tired.",
+   "Asleep; a bit stressed; tired.",
+   [
+    "Manager Manager (example) (41, she/her): fair but demanding, hates surprises; status: juggling two launches",
+    "Coworker Coworker A (example) (29, she/her): organised, competitive, secretly funny; status: aiming for a promotion",
+    "Coworker Coworker B (example) (29, he/him): laid-back, talks about games a lot; status: new to the team"
+   ],
+   []
+  ],
+  [
+   1793224800,
+   "Now: Thu 29 Oct, 03:30.",
+   "Asleep; a bit stressed.",
+   "Asleep; a bit stressed.",
+   "Asleep; a bit stressed.",
+   [
+    "Manager Manager (example) (41, she/her): fair but demanding, hates surprises; status: juggling two launches",
+    "Coworker Coworker A (example) (29, she/her): organised, competitive, secretly funny; status: aiming for a promotion",
+    "Coworker Coworker B (example) (29, he/him): laid-back, talks about games a lot; status: new to the team"
+   ],
+   []
+  ],
+  [
+   1793235600,
+   "Now: Thu 29 Oct, 06:30.",
+   "Asleep; feeling okay.",
+   "Asleep; feeling okay.",
+   "Asleep; feeling okay.",
+   [
+    "Manager Manager (example) (41, she/her): fair but demanding, hates surprises; status: juggling two launches",
+    "Coworker Coworker A (example) (29, she/her): organised, competitive, secretly funny; status: aiming for a promotion",
+    "Coworker Coworker B (example) (29, he/him): laid-back, talks about games a lot; status: new to the team"
+   ],
+   []
+  ],
+  [
+   1793246400,
+   "Now: Thu 29 Oct, 09:30.",
+   "At the office, at the desk till 12:00; feeling okay; a meeting at 12:00 with Manager (example) and Coworker B (example).",
+   "At the office, at the desk till 12:00; feeling okay; a meeting at 12:00 with Manager (example) and Coworker B (example).",
+   "At the office, at the desk till 12:00; feeling okay; a meeting at 12:00 with Manager (example) and Coworker B (example).",
+   [
+    "Coworker Coworker B (example) (29, he/him): laid-back, talks about games a lot; status: new to the team",
+    "Manager Manager (example) (41, she/her): fair but demanding, hates surprises; status: juggling two launches",
+    "Coworker Coworker A (example) (29, she/her): organised, competitive, secretly funny; status: aiming for a promotion"
+   ],
+   [
+    "Coworker Coworker B (example) (29, he/him): laid-back, talks about games a lot; status: new to the team",
+    "Manager Manager (example) (41, she/her): fair but demanding, hates surprises; status: juggling two launches"
+   ]
+  ],
+  [
+   1793257200,
+   "Now: Thu 29 Oct, 12:30.",
+   "In a meeting with Manager (example) and Coworker B (example) till 12:45; a bit stressed; plans with Coworker A (example) and Coworker B (example) at 13:00.",
+   "In a meeting with Manager (example) and Coworker B (example) till 12:45; a bit stressed; plans with Coworker A (example) and Coworker B (example) at 13:00.",
+   "In a meeting with Manager (example) and Coworker B (example) till 12:45; a bit stressed; plans with Coworker A (example) and Coworker B (example) at 13:00.",
+   [
+    "Coworker Coworker B (example) (29, he/him): laid-back, talks about games a lot; status: new to the team",
+    "Manager Manager (example) (41, she/her): fair but demanding, hates surprises; status: juggling two launches",
+    "Coworker Coworker A (example) (29, she/her): organised, competitive, secretly funny; status: aiming for a promotion"
+   ],
+   [
+    "Coworker Coworker B (example) (29, he/him): laid-back, talks about games a lot; status: new to the team",
+    "Manager Manager (example) (41, she/her): fair but demanding, hates surprises; status: juggling two launches"
+   ]
+  ],
+  [
+   1793268000,
+   "Now: Thu 29 Oct, 15:30.",
+   "At the office, at the desk till 16:30; stressed and short on patience; raining outside; a meeting at 16:30 with Manager (example).",
+   "At the office, at the desk till 16:30; stressed and short on patience; raining outside; a meeting at 16:30 with Manager (example).",
+   "At the office, at the desk till 16:30; stressed and short on patience; raining outside; a meeting at 16:30 with Manager (example).",
+   [
+    "Manager Manager (example) (41, she/her): fair but demanding, hates surprises; status: juggling two launches",
+    "Coworker Coworker A (example) (29, she/her): organised, competitive, secretly funny; status: aiming for a promotion",
+    "Coworker Coworker B (example) (29, he/him): laid-back, talks about games a lot; status: new to the team"
+   ],
+   [
+    "Manager Manager (example) (41, she/her): fair but demanding, hates surprises; status: juggling two launches"
+   ]
+  ],
+  [
+   1793278800,
+   "Now: Thu 29 Oct, 18:30.",
+   "On the way home by cab; stressed and short on patience; peopled out, wants some quiet; tired; it is raining on the way.",
+   "On the way home by cab; stressed and short on patience; peopled out, wants some quiet; tired; it is raining on the way.",
+   "On the way home by cab; stressed and short on patience; peopled out, wants some quiet; tired; it is raining on the way.",
+   [
+    "Manager Manager (example) (41, she/her): fair but demanding, hates surprises; status: juggling two launches",
+    "Coworker Coworker A (example) (29, she/her): organised, competitive, secretly funny; status: aiming for a promotion",
+    "Coworker Coworker B (example) (29, he/him): laid-back, talks about games a lot; status: new to the team"
+   ],
+   []
+  ],
+  [
+   1793289600,
+   "Now: Thu 29 Oct, 21:30.",
+   "Free at home; stressed and short on patience; tired.",
+   "Free at home; stressed and short on patience; tired.",
+   "Free at home; stressed and short on patience; tired.",
+   [
+    "Manager Manager (example) (41, she/her): fair but demanding, hates surprises; status: juggling two launches",
+    "Coworker Coworker A (example) (29, she/her): organised, competitive, secretly funny; status: aiming for a promotion",
+    "Coworker Coworker B (example) (29, he/him): laid-back, talks about games a lot; status: new to the team"
+   ],
+   []
+  ],
+  [
+   1793300400,
+   "Now: Fri 30 Oct, 00:30.",
+   "Asleep; stressed and short on patience; tired.",
+   "Asleep; stressed and short on patience; tired.",
+   "Asleep; stressed and short on patience; tired.",
+   [
+    "Manager Manager (example) (41, she/her): fair but demanding, hates surprises; status: juggling two launches",
+    "Coworker Coworker A (example) (29, she/her): organised, competitive, secretly funny; status: aiming for a promotion",
+    "Coworker Coworker B (example) (29, he/him): laid-back, talks about games a lot; status: new to the team"
+   ],
+   []
+  ],
+  [
+   1793311200,
+   "Now: Fri 30 Oct, 03:30.",
+   "Asleep; stressed and short on patience.",
+   "Asleep; stressed and short on patience.",
+   "Asleep; stressed and short on patience.",
+   [
+    "Manager Manager (example) (41, she/her): fair but demanding, hates surprises; status: juggling two launches",
+    "Coworker Coworker A (example) (29, she/her): organised, competitive, secretly funny; status: aiming for a promotion",
+    "Coworker Coworker B (example) (29, he/him): laid-back, talks about games a lot; status: new to the team"
+   ],
+   []
+  ]
+ ],
+ "gates": [
+  [
+   1793062800,
+   "ignore",
+   "defer"
+  ],
+  [
+   1793073600,
+   "ignore",
+   "now"
+  ],
+  [
+   1793084400,
+   "ignore",
+   "defer"
+  ],
+  [
+   1793095200,
+   "ignore",
+   "sneak"
+  ],
+  [
+   1793106000,
+   "ignore",
+   "defer"
+  ],
+  [
+   1793116800,
+   "ignore",
+   "sneak"
+  ],
+  [
+   1793127600,
+   "ignore",
+   "defer"
+  ],
+  [
+   1793138400,
+   "ignore",
+   "defer"
+  ],
+  [
+   1793149200,
+   "ignore",
+   "defer"
+  ],
+  [
+   1793160000,
+   "defer",
+   "defer"
+  ],
+  [
+   1793170800,
+   "ignore",
+   "defer"
+  ],
+  [
+   1793181600,
+   "ignore",
+   "defer"
+  ],
+  [
+   1793192400,
+   "ignore",
+   "defer"
+  ],
+  [
+   1793203200,
+   "now",
+   "now"
+  ],
+  [
+   1793214000,
+   "ignore",
+   "defer"
+  ],
+  [
+   1793224800,
+   "ignore",
+   "defer"
+  ],
+  [
+   1793235600,
+   "ignore",
+   "defer"
+  ],
+  [
+   1793246400,
+   "ignore",
+   "now"
+  ],
+  [
+   1793257200,
+   "ignore",
+   "defer"
+  ],
+  [
+   1793268000,
+   "defer",
+   "sneak"
+  ],
+  [
+   1793278800,
+   "ignore",
+   "sneak"
+  ],
+  [
+   1793289600,
+   "now",
+   "now"
+  ],
+  [
+   1793300400,
+   "ignore",
+   "defer"
+  ],
+  [
+   1793311200,
+   "ignore",
+   "defer"
+  ]
+ ],
+ "perceive": [
+  [
+   1793106000,
+   [],
+   []
+  ],
+  [
+   1793109600,
+   [],
+   []
+  ],
+  [
+   1793113200,
+   [],
+   []
+  ],
+  [
+   1793116800,
+   [],
+   []
+  ],
+  [
+   1793192400,
+   [],
+   []
+  ],
+  [
+   1793196000,
+   [],
+   []
+  ],
+  [
+   1793199600,
+   [],
+   []
+  ],
+  [
+   1793203200,
+   [],
+   []
+  ],
+  [
+   1793278800,
+   [],
+   []
+  ],
+  [
+   1793282400,
+   [],
+   []
+  ],
+  [
+   1793286000,
+   [],
+   []
+  ],
+  [
+   1793289600,
+   [],
+   []
+  ]
+ ],
+ "replies": [
+  [
+   1793120400,
+   "commitment"
+  ],
+  [
+   1793206800,
+   "commitment"
+  ],
+  [
+   1793293200,
+   "commitment"
+  ]
+ ],
+ "prompts": [
+  "[Avery] [id:GOLD0]: anyone up for the late show this week?\n[Blake] [id:GOLD1]: maybe thursday\n[Sam (you)] [id:GOLD2]: thursday works for me\n\n===END OF CONVERSATION===\nReply as Sam in this group chat. Keep it SHORT — one or two lines max. Match the group's language and tone. Reply with ONLY the message text — do NOT include any name prefix like \"[Sam]:\" or \"[Sam (you)]:\".\n\nEach line above is ONE complete message in the form \"[Speaker] [id:...]: text\". The [Speaker] label is exactly who said that line — a line never continues the previous speaker, and you must never attribute one person's message to someone else. Two speakers may have similar names; treat any \"@1234\" or \"#2\" suffix as part of the name that keeps distinct people apart.\n\nThe line marked with \">>>\" is the message that triggered this turn — address THAT person (don't include the \">>>\" yourself, it's just a pointer for you). Other interleaved messages from different senders are context only. If a different person interjected between your last message and the \">>>\" trigger, stick with the \">>>\" sender unless they explicitly handed off.\n\nIMPORTANT: Most messages in this group are NOT about you or directed at you. You are reading a conversation between other people. Do NOT assume \"you\" or pronouns refer to you unless your name is explicitly used. Do NOT insert yourself into conversations between other people. Do NOT relate everything back to yourself or your experiences. If someone is talking about another person, do NOT assume they mean you.\n\nIf two people are having a back-and-forth, stay out of it unless you have something genuinely funny or valuable to add. Silence is better than a forced response.\n\nOnly respond if you have a genuinely witty, funny, or meaningful contribution. Generic responses like \"haha\", \"nice\", \"same\", \"true\" are worthless — if that's all you'd say, respond with exactly: [SKIP]\n\nIf the latest messages genuinely have zero relevance to you and you'd have absolutely nothing to add, respond with exactly: [SKIP]\n\nDo NOT repeat yourself or fixate on the same word/topic across multiple replies. Follow the conversation's flow.\n\nAn explicit request for an image is never a [SKIP] — answer it with an image.\n\nNow: Fri 30 Oct, 06:00.\nAsleep; stressed and short on patience.\nThese are the only coworkers, manager, flatmate and family you have — never invent other names for them. If someone asks about a person who isn't named here, you don't recognise the name or stay vague; never make anyone up.\nThis is just your situation right now — let it colour your mood and length; don't bring it up unless someone asks or it really fits, and when someone asks, answer from it.\n\nOutput ONLY the final message, exactly as it should appear in the chat. Never show your reasoning, never quote a draft of your own reply, never comment on or list your word choices, and never add bullet points or asterisks around it.",
+  "[Avery] [id:GOLD3]: hey, how was work today\n\n===END OF CONVERSATION===\nReply as Sam in this DM conversation. Be natural and conversational. Keep it short. Reply with ONLY the message text — do NOT include any name prefix like \"[Sam]:\" or \"[Sam (you)]:\". Always reply to DMs.\n\nImportant:\n- Follow the conversation's flow. If the other person changes the topic, move on with them.\n- Do NOT repeat yourself or keep bringing up the same word/topic across multiple replies.\n- Read the conversation as a whole — respond to the LATEST message, not to earlier parts of the chat.\n- Each line is ONE complete message in the form \"[Speaker] [id:...]: text\"; a line never continues the previous speaker.\n\nNow: Fri 30 Oct, 06:00.\nAsleep; stressed and short on patience.\nPeople in your life (they aren't in this chat):\n- Manager Manager (example) (41, she/her): fair but demanding, hates surprises; status: juggling two launches\n- Coworker Coworker A (example) (29, she/her): organised, competitive, secretly funny; status: aiming for a promotion\n- Coworker Coworker B (example) (29, he/him): laid-back, talks about games a lot; status: new to the team\nThese are the only coworkers, manager, flatmate and family you have — never invent other names for them. If someone asks about a person who isn't named here, you don't recognise the name or stay vague; never make anyone up.\nThis is just your situation right now — let it colour your mood and length; don't bring it up unless someone asks or it really fits, and when someone asks, answer from it.\n\nOutput ONLY the final message, exactly as it should appear in the chat. Never show your reasoning, never quote a draft of your own reply, never comment on or list your word choices, and never add bullet points or asterisks around it."
+ ],
+ "eventCount": 189,
+ "types": {
+  "activity.ended": 40,
+  "activity.started": 40,
+  "cast.created": 6,
+  "cast.updated": 3,
+  "claim.flagged": 3,
+  "decision.committed": 1,
+  "decision.lean": 1,
+  "decision.opened": 1,
+  "genesis": 1,
+  "meal": 9,
+  "money.spent": 8,
+  "place.created": 9,
+  "plan.made": 3,
+  "relationship.changed": 17,
+  "sleep.started": 4,
+  "story.daily_done": 3,
+  "travel.arrived": 8,
+  "travel.started": 8,
+  "vitals.checkpoint": 3,
+  "weather.changed": 16,
+  "woke": 3,
+  "work.crunch": 1,
+  "work.late": 1
+ },
+ "eventsHash": "c37dbed2a63930867790eefe72aa9ab97dd1da3363b37041868e7e223c534baf",
+ "dayHashes": {
+  "2026-10-27": "dccd778dc2986888e874c6306c9acbb357e33b11d258842d848d4593da5cd5dc",
+  "2026-10-28": "844b4cfa6069634d93fa572ea6b4c6950e1d6c2d7b4e63fb2769d410214519cb",
+  "2026-10-29": "5706b71a6f6caa0d523edab231ab49ee9e4dbd44b8b9a3e6f8f5b1555d89e0d9",
+  "2026-10-30": "d4e173c7266a3dda820e8bd3506306423e34e04f4b199ffdf2d65b8bac676846"
+ },
+ "snapshotCount": 3,
+ "snapshotsHash": "60b759a6ba8f0f7aa88b7e912c89c2e6256ef8b4f2e0eaa96f77515b5acb7720",
+ "stateHash": "0f29e479302bd9394021ecf24434d7b8d88ec7e8d35f1257c7b64e9d91237cc4",
+ "stateKeys": [
+  "activity",
+  "alerts",
+  "at",
+  "availability",
+  "cast",
+  "checkpoint",
+  "claims",
+  "counters",
+  "decisions",
+  "embargo",
+  "excluded",
+  "excludedRanges",
+  "excludedSigs",
+  "genesisAt",
+  "keptInRange",
+  "lastCall",
+  "lastEventId",
+  "lastMeal",
+  "money",
+  "phone",
+  "places",
+  "plan",
+  "position",
+  "reanchoredAt",
+  "rebuildNeeded",
+  "self",
+  "sick",
+  "sleep",
+  "story",
+  "v",
+  "vitals",
+  "weather",
+  "work",
+  "world"
+ ],
+ "jevCalls": 4,
+ "jevCallers": [
+  "life.claim",
+  "life.decision"
+ ]
+}

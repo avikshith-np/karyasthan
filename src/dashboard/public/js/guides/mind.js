@@ -1,0 +1,216 @@
+// Guide: Mind (pages/mind.js). Plain data, see components/guide.js.
+export default {
+  title: 'Mind',
+  intro: [
+    'On a phone every section after SELF-STATE folds away, and remembers if you open it; on desktop they are open.',
+    'The mind is a slow layer above his replies. It notices which chats are active, thinks a few times a day, "sleeps" on each day (writing a short diary entry per chat), keeps a short note about how he has been lately, can gently turn a few behaviour knobs, and can draft messages where he texts someone first. This page shows all of that and gives you the brakes.',
+    'It does nothing until the mind skill is on (Skills page; MIND_ENABLED is only its boot default). It also stays "not initialised" while DRY_RUN is on: its first live day starts on the first pass with the skill on and DRY_RUN off.',
+    'A day in the mind: a GLANCE about every 45 minutes while he is awake (a cheap Jev call that sees only activity counts per chat, no text or names); a THINK when a glance wants one, something happens in his simulated life, or on schedule (the mind model reads short per-chat digests; capped per day with a minimum gap); one SLEEP per night (episodes, mood for the morning, sometimes a self-model proposal). It never reads old history in bulk: it starts from the moment it is switched on.',
+    'Every button here needs the dashboard to be writable (DASHBOARD_READONLY=false). Writes are audited and limited to 10 a minute (THINK NOW: 2 a minute), also over an SSH tunnel.',
+  ],
+  sections: [
+    {
+      id: 'status',
+      title: 'Status',
+      where: 'STATUS panel',
+      text: ['Refreshes every 30 seconds. The other panels load when you open the page and after your own changes.'],
+      items: [
+        ['STATE', 'ON, OFF (skill off), PAUSED, or NOT INITIALISED (the mind is not loaded in this process, so the page has no data).'],
+        ['PROACTIVE / REVIEW', 'The proactive mode (see Proactive) and the self-model review mode (see Review).'],
+        ['Reminders', 'Things that need you: not initialised yet, OWNER_JIDS not set (no live mode), degraded (a deletion hook failed; his self-state line and sends are off until the next pulse recovers, also across a restart), unpriced (the mind model has no price, so mind runs are skipped), global cap (thinks and drafts paused for the month), no key, a run that fell back to another model (its nudges and self-model text were refused), 14 days in shadow, review window ending.'],
+        ['MIND SPEND · MONTH', 'This month\'s spend of every mind call, against the mind role budget (LLM_MIND_BUDGET_USD). STOPPED means the budget blocks it. Thinks and drafts stop early, keeping MIND_SLEEP_RESERVE_PCT of the budget for sleep.'],
+        ['GLOBAL CAP', 'The global monthly cap and how much headroom is left. Thinks and drafts stop at 70% of it, sleep and self-model at 90%.'],
+        ['TODAY', 'Thinks used of the daily cap (MIND_THINK_MAX_PER_DAY), plus glances, sleeps, drafts and sends today.'],
+        ['LAST RUN', 'The latest glance, think, sleep, self-model or draft run, with its status and skip reason.'],
+        ['NEXT GLANCE / THINK / SLEEP', 'When the next glance is due, any scheduled think, and which night the next sleep is for.'],
+        ['LIFE', 'Whether the life simulation is on and how available he is. With life on, "awake" means awake in his simulated day; otherwise outside the sleep hours.'],
+        ['BY CALLER', 'Calls and cost per kind of mind call this month (think, sleep, digests, glances, drafts…).'],
+      ],
+    },
+    {
+      id: 'controls',
+      title: 'Pause and think now',
+      where: 'Buttons under the status',
+      items: [
+        ['PAUSE / RESUME', 'Pause stops glances, thinks, sleep and drafts, and cancels queued proactive sends. The knobs go back to your own values. The background counting keeps going and "don\'t text me first" requests are still detected. It survives restarts. His self-state line, recent episodes and self-model are still used in replies while paused: switch the skill off to remove them.'],
+        ['THINK NOW', 'Asks for one think right away. It still obeys every rule and is refused (with a reason) when the skill is off, it is not initialised, paused or degraded, he is asleep, the daily cap or the minimum gap is hit, or a budget stops it. It skips the "only if something is new" check. If it takes longer than about 20 seconds the page says it was queued; the run appears in the timeline.'],
+      ],
+    },
+    {
+      id: 'review',
+      title: 'Self-model review',
+      where: 'Review buttons',
+      text: [
+        'The mind can propose changes to his self-model (see Self-model). The first time it goes live a review window opens (MIND_REVIEW_DAYS, 14 days): during it every proposal waits for you. In the default mode, "window", proposals start to apply on their own at sleep once the window is over.',
+      ],
+      items: [
+        ['EXTEND REVIEW 7 DAYS', 'Pushes the end of the window 7 days further (from now, if it already ended).'],
+        ['REVIEW WINDOW (DEFAULT)', 'Back to the default "window" mode: proposals wait for you until the window ends, then apply on their own at sleep. The window keeps its end date (if it already ended, proposals can apply at the next sleep); if no window was ever opened, a new one of MIND_REVIEW_DAYS starts now.'],
+        ['ALWAYS REVIEW', 'Proposals never apply on their own; you approve each one.'],
+        ['AUTO-APPLY NOW', 'Valid proposals may apply on their own from now on, at sleep, after passing the harm check and at most once every 3 days.'],
+      ],
+    },
+    {
+      id: 'selfstate',
+      title: 'Self-state',
+      where: 'SELF-STATE panel',
+      text: [
+        'His current state of mind, as small pieces: a mood, up to 3 things from today\'s chats, up to 3 intentions. In a reply these become one short line at the end of his prompt ("How you are today: …", at most 160 characters). It is left out while imitating someone, during a heavy-event embargo, while degraded or with the skill off, and with the life simulation on it has no mood word (life\'s own inner-state line covers feelings).',
+        'Every piece remembers which chats it came from and is checked again on every reply with the same privacy rule as memories, so something from one chat never leaks into a chat that may not hear it.',
+      ],
+      items: [
+        ['KIND', 'base_mood (from a glance, lasts 6 h), mood (from a think or sleep, 12 h), today (a note picked from a chat digest, until the morning reset), intention (something he means to do, with its target chat, for a few hours).'],
+        ['STATE', 'The mood word and intensity, the intention kind, or the text.'],
+        ['ORIGINS', 'The chats it came from; "self" means it is about himself only.'],
+        ['EXPIRES', 'When it lapses.'],
+        ['RENDER AS CHAT', 'Pick a group or person to see the exact line that chat would get right now, and a USABLE HERE column saying which pieces pass the privacy rule there.'],
+      ],
+      tips: ['Mood and intentions from the night\'s sleep may already be listed but only take effect at the first glance of the morning (the mood at half strength).'],
+    },
+    {
+      id: 'timeline',
+      title: 'Timeline of runs',
+      where: 'TIMELINE panel',
+      text: ['Every mind run, newest first, 30 at a time. KIND filters it; OLDER shows the next older page in place of this one. Click a row to see its input summary, its output and any actions it proposed that code dropped.'],
+      items: [
+        ['KIND', 'pulse (code-only counting), glance, think, sleep, selfmodel, draft (a proactive message), digest (a chat summary), with what triggered it.'],
+        ['STATUS', 'ok, skipped (with the reason: disabled, not_initialised, paused, cap, gap, nothing_new, budget, global_cap, unpriced, no_key…), partial, invalid (output failed validation), failed, running. "fell back" means another model answered; such a run may not change knobs or the self-model.'],
+        ['MODEL / TOKENS / COST', 'What it ran on and what it cost.'],
+      ],
+    },
+    {
+      id: 'digests',
+      title: 'Digests',
+      where: 'DIGESTS panel',
+      text: [
+        'Before a think, a cheap model summarises each active chat\'s new lines (never messages marked not-to-learn, reactions or disappearing messages): a tone, a short summary, a "today" note and the open threads. The think reads these, never the raw chat. The latest 30 are listed with their chat and the time they cover.',
+      ],
+    },
+    {
+      id: 'episodes',
+      title: 'Episodes',
+      where: 'EPISODES panel',
+      text: [
+        'At sleep he writes one short episode per chat for that day (DAY shows "day:" and the night\'s date), and once a week a compressed weekly one that replaces the dailies (shown as superseded). Episodes are memories that belong to that chat: in replies he sees at most two under "Recently:", and only where the privacy rule allows. EVID. is how many chat lines it is based on.',
+        'If a message is deleted or edited, that night\'s episode is rebuilt; if someone asks him to forget something, that night is never rebuilt.',
+      ],
+    },
+    {
+      id: 'selfmodel',
+      title: 'Self-model',
+      where: 'SELF-MODEL panel',
+      text: [
+        'A short note (up to 1500 characters) about how he has been lately, placed in the stable part of his prompt under "How you\'ve been lately". It changes only when a new version is activated.',
+        'Every few nights (MIND_SELF_MODEL_EVERY_NIGHTS, default 3) the mind may propose a change. That call sees only counts and categories, no chat text or names. Code then checks the proposal: at most 400 characters changed, no forbidden topics, no fixations ("always mention…"), no phone numbers, ids, links or names, nothing copied from recent digests, plus a harm check. A proposal that fails is stored as invalid with no text, only the check report.',
+      ],
+      items: [
+        ['ACTIVE', 'The text he uses now.'],
+        ['PENDING PROPOSALS', 'Proposals waiting for you, with the check report, a summary, the mind\'s rationale and a line diff. A newer proposal replaces older pending ones.'],
+        ['APPROVE', 'Activates it at once. Refused (and marked superseded) if the active version changed since it was proposed.'],
+        ['REJECT', 'Marks it rejected. The page asks for an optional reason (≤ 200 characters); it is kept with that version and shown under it in VERSIONS. It is only for you: never logged, never in the audit trail, never shown to the mind.'],
+        ['EDIT · SAVE AS ACTIVE', 'Your own text becomes the active version at once. Phone numbers, ids and links are removed with a warning; names only produce a warning (a name here would be used in every chat, so think twice).'],
+        ['VERSIONS · REVERT TO', 'All versions: active, proposed, superseded (an older active one), rejected, invalid. REVERT TO makes a new active version from that text, through the same checks as an edit.'],
+      ],
+    },
+    {
+      id: 'nudges',
+      title: 'Nudges',
+      where: 'NUDGES panel',
+      text: [
+        'The only way a mind run changes his behaviour: small, temporary nudges on five knobs, kept inside the bands you set. They never touch .env, Settings or skills. At most 3 per run, 6 active at once, one per knob and chat every 12 hours, and each one expires.',
+      ],
+      items: [
+        ['responseRate', 'His base chance of answering in groups (the start of the Decisions score). Default lifetime 24 h.'],
+        ['groupResponseRate', 'A multiplier on that chance for one group. Default 24 h.'],
+        ['reactTendency', 'A multiplier on how often he reacts instead of texting. Default 24 h.'],
+        ['replyLength', 'Shorter, normal or longer replies, for one chat or everywhere. Default 12 h.'],
+        ['proactiveAppetite', 'How keen he is to text first. Default 48 h.'],
+        ['VALUE', 'Before → after, with the effective value now and what the mind asked for if it was cut.'],
+        ['STATUS', 'active, clamped (applied, but cut to the band or the maximum step), refused (with why: fell_back, too_many, not_allowed, bad_scope, cooldown, no_change), expired, reverted (by you), overridden (you changed that knob yourself, or narrowed its band), replaced (a newer nudge on the same knob).'],
+        ['REVERT', 'Ends a nudge that is in force (active or clamped) now; your own value applies again.'],
+      ],
+      tips: [
+        'Your values always win when the skill is off, the mind is paused, a knob\'s band is disabled, or you change responseRate yourself on Settings.',
+      ],
+    },
+    {
+      id: 'bands',
+      title: 'Guard bands',
+      where: 'GUARD BANDS panel',
+      text: [
+        'The limits the mind\'s nudges must stay in, as JSON. Only you can change them. SAVE BANDS needs the whole object with all five knobs; a missing or out-of-range field is refused and named. Active nudges outside a narrowed band end as overridden.',
+      ],
+      items: [
+        ['responseRate', 'minFactor / maxFactor: how far below or above your own response rate it may go, as factors of it (0.01 to 2). floor / ceil: absolute limits (0 to 0.5). maxStep: the biggest change per nudge (up to 0.1).'],
+        ['groupResponseRate, reactTendency, proactiveAppetite', 'min / max multiplier (0.25 to 2) and maxStep (up to 1).'],
+        ['replyLength', 'allowed: which of shorter, normal, longer it may pick. Default: shorter and normal.'],
+        ['disabled', 'true on any knob stops all nudges on it.'],
+      ],
+    },
+    {
+      id: 'proactive',
+      title: 'Proactive messages',
+      where: 'PROACTIVE panel',
+      text: [
+        'When a think wants him to reach out, code first runs a set of checks (exclusions, recent opt-outs, back-off since the last opener, daily caps, and the privacy rule: a reason from one chat can only support a message to a chat allowed to hear it). Then a draft intent is written, his mouth model voices it, and the quality gate must score it at least MIND_PROACTIVE_MIN_SCORE. Never to anyone in OWNER_JIDS.',
+      ],
+      items: [
+        ['OFF', 'No drafts at all. Switching away from LIVE cancels anything queued.'],
+        ['SHADOW', 'The default. Drafts are stored here for you to read and nothing is ever sent.'],
+        ['LIVE…', 'Drafts are queued and sent after a random delay of 2 to 20 minutes, with every check repeated just before sending. Needs OWNER_JIDS in .env (refused otherwise) and a confirm. With DRY_RUN on, a due draft ends as dry_run instead of being sent.'],
+        ['FUN A/B', 'For group drafts only, also asks the fun model for an alternative and shows it in ALT. Never sent. The page asks you to confirm because the group\'s recent messages go to that provider. It is a live setting (mind.funAb): persist it on Settings to keep it after a restart.'],
+        ['STATUS filter / columns', 'CHAT and its kind, KIND (follow_up, check_in for DMs only, share) with urgency, the mode and status, the INTENT and the mind\'s reason, the VOICED text, the fun ALT, and the GATE score.'],
+        ['Statuses', 'drafting, shadow (stored; would not have passed the send checks right now), would_send (stored; would have been sent if live), queued (waiting to send), sent, dry_run, send_failed, dropped (by you or a failed step, with the reason), cancelled (pause, exclusion, mode change), expired (too old to send).'],
+        ['DROP', 'Stops a queued or drafting message.'],
+      ],
+      tips: ['Stay in shadow until the would_send drafts read like something you would be happy for him to send. A reminder appears after 14 days in shadow.'],
+    },
+    {
+      id: 'stances',
+      title: 'Interests and opinions',
+      where: 'INTERESTS & OPINIONS panel',
+      text: [
+        'What he likes and what he thinks of the things in his life. DRAFT A STARTING SET makes one mind call over who he is; it writes rows that wait for you, and nothing reads them until you approve them.',
+        'Once approved they change slowly, at night, from what he lived: how outings went, where his time and money went, whether he went tired. Chats count for little, and a heavy stretch teaches him nothing. No model is asked for this, and it never changes mid-conversation.',
+      ],
+      items: [
+        ['Order', 'What waits for your approval first, then what he holds, strongest first. What is set aside folds away at the end.'],
+        ['Bar and number', 'An interest runs 0 to 1. An opinion runs -1 to 1, from the centre. SURE is how settled it is.'],
+        ['WHY', 'What moved it, in plain words. Something from a chat says only that it was a chat, never what was said. Also holds the controls below.'],
+        ['RETURNS TO', 'The value it drifts back to when nothing feeds it. Changing it also changes how past nights count.'],
+        ['PIN', 'Holds the value exactly where it is, until you unpin it.'],
+        ['RESET', 'Back to RETURNS TO, and forgets what moved it.'],
+        ['SOMETHING HE CAME ACROSS', 'A topic from the wider world the mind noticed in his day: at most two a night and twelve live, citing what it read, never politics, religion, a real person or anything sexual. It waits for your approval. REJECT and it isn\'t offered again. If what it cited is revoked, it goes.'],
+        ['SET ASIDE', 'Someone who left his life, or a place no longer in it. It stops counting, and comes back if they do.'],
+      ],
+    },
+    {
+      id: 'dreams',
+      title: 'Dreams',
+      where: 'DREAMS panel',
+      text: [
+        'What he remembered of a night, about one to three times a week. Most nights he remembers nothing, mostly because he didn\'t wake during a dream.',
+        'A dream is built in code from what he lived that day and sometimes about a week ago, from his own and your events only: never a chat, a real person or anything heavy. In and around a heavy stretch he remembers none.',
+      ],
+      items: [
+        ['A fragment', 'One line from a phrase table, filled in from the dream.'],
+        ['VIVID', 'He woke inside it. At most one small model call a night writes it (ARCS_DREAM_BUDGET_USD); without that it keeps a plain line built in code.'],
+        ['Tone', 'A nightmare or a bad dream dents his morning a little, a good one lifts it, and either is gone by midday. Nothing else changes.'],
+        ['Where else', 'A row on Life · Day at his wake, a line in the journal, his DMs that morning until he has mentioned it, and his first text that day to someone close he dreamt about.'],
+      ],
+    },
+    {
+      id: 'exclusions',
+      title: 'Exclusions',
+      where: 'EXCLUSIONS panel',
+      text: ['People and groups he must never text first. Exclusions only affect proactive messages; he still answers them normally.'],
+      items: [
+        ['EXCLUDE EVERYONE', 'No proactive message to anyone; queued ones are cancelled.'],
+        ['+ EXCLUDE', 'Pick a group or person, add an optional note (up to 120 characters). Their pending drafts are cancelled.'],
+        ['SOURCE', 'owner (you added it), detected (someone said something like "don\'t text me first", in a DM or a group; Jev confirms it, and if Jev is unavailable it counts anyway; before a DM opener the last 180 days are also checked for such lines said while the mind was off, skipping lines Jev already cleared unless they were edited since), owner_cleared (a detection you dismissed).'],
+        ['P', 'How sure Jev was about a detected opt-out; n/a when it was recorded without Jev.'],
+        ['REMOVE / DISMISS', 'REMOVE deletes your own exclusion. DISMISS clears a detected one but keeps the record: only something they say after that can exclude them again.'],
+      ],
+    },
+  ],
+};

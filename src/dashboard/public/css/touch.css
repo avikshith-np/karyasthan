@@ -1,0 +1,57 @@
+/* Phone and touch baseline, loaded last. Decided by what the device can do, so a phone with
+   a mouse or a laptop with a touch screen each get the right half. Desktop with a mouse sees
+   nothing from the coarse-pointer block. */
+
+/* Press feedback at finger-down, on every input type. */
+button, a, .nav-link, [role="button"], .ld-row.is-click, .lp-trow { touch-action: manipulation; }
+button, .nav-link, .chip[role="button"], [role="button"] { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+button:active:not(:disabled) { background: var(--bg-4); }
+button.primary:active:not(:disabled) { background: var(--red-deep); }
+.nav-link:active, .row-list > div:active, .ld-row.is-click:active, .lp-trow:active, .guide-toc a:active { background: var(--bg-3); }
+a:active { color: var(--red-bright); }
+
+/* A long word or URL wraps; on a phone an overflow would widen the whole layout. */
+.empty { overflow-wrap: anywhere; }
+
+/* Clear of the notch and the home indicator (0 everywhere else). */
+.topbar { height: calc(44px + var(--safe-t)); padding: var(--safe-t) var(--safe-r) 0 var(--safe-l); }
+.flash-region { bottom: calc(16px + var(--safe-b)); right: calc(16px + var(--safe-r)); }
+.story-modal { padding: calc(40px + var(--safe-t)) calc(16px + var(--safe-r)) calc(40px + var(--safe-b)) calc(16px + var(--safe-l)); }
+.story-modal-foot { padding-bottom: calc(10px + var(--safe-b)); }
+
+@media (max-width: 900px) {
+  .content { padding: 14px max(14px, var(--safe-r)) calc(60px + var(--safe-b)) max(14px, var(--safe-l)); }
+  .story-metric { grid-template-columns: 66px minmax(36px, 1fr) 34px; }
+  /* Above the topbar; the slide-out sidebar (z-index 200) sits above these. */
+  .ld-side { z-index: 75; }
+  .story-modal { z-index: 90; }
+  .story-modal { padding: var(--safe-t) var(--safe-r) 0 var(--safe-l); }
+  .story-modal-card { max-height: calc(100vh - var(--safe-t)); max-height: calc(100dvh - var(--safe-t)); }
+}
+
+@media (pointer: coarse) {
+  /* iOS zooms the page into a field under 16 px and stays zoomed; inline sizes on some fields
+     are why this one needs !important. Zoom itself is never disabled. */
+  input, select, textarea { font-size: 16px !important; }
+
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="hidden"]), select, button { min-height: var(--tap); }
+  textarea { min-height: calc(var(--tap) * 2); }
+  button { min-width: var(--tap); }
+  input[type="checkbox"], input[type="radio"] { width: 22px; height: 22px; }
+  input[type="range"] { min-height: var(--tap); }
+  label:has(> input[type="checkbox"]), label:has(> input[type="radio"]) { display: inline-flex; align-items: center; gap: 8px; min-height: var(--tap); }
+
+  .nav-link { min-height: var(--tap); }
+  /* Links that stand on their own in a cell or a panel head (a link inside a sentence stays inline). */
+  td a, .panel-head a, a.mute, a.mono { display: inline-flex; align-items: center; min-height: var(--tap); min-width: var(--tap); }
+  .logline[role="button"] { min-height: var(--tap); align-content: center; }
+  .guide-toc a { display: flex; align-items: center; min-height: var(--tap); }
+  .page-tab { min-height: var(--tap); }
+
+  /* The small "?" keeps its look; its hit area grows past its edges. */
+  button.guide-q { position: relative; min-height: 0; min-width: 0; }
+  button.guide-q::after { content: ''; position: absolute; inset: -14px -10px; }
+
+  /* Keeps the scan line; a full-screen blended layer would repaint under every scroll. */
+  .scanlines { mix-blend-mode: normal; }
+}

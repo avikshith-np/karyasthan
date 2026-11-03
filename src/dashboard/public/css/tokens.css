@@ -1,0 +1,84 @@
+/* Design tokens + keyframes (spec 007 T049; split from style.css).
+   Text tokens are checked to >= 4.5:1 (WCAG AA) on --bg-0..--bg-3:
+   ink-0 14.7+, ink-1 11.1+, ink-2 5.9+, ink-3 #8c8c8c 4.9+, ink-4 #808080 4.5+ (bg-0..bg-2; 4.2 on bg-3),
+   red-ink 4.7+, green-ink 7.7+, amber 5.9+. --red / --green / --cyan stay as border/fill colours. */
+:root {
+  --bg-0: #0a0a0a;
+  --bg-1: #121212;
+  --bg-2: #181818;
+  --bg-3: #1f1f1f;
+  --bg-4: #2a2a2a;
+  --line-1: #232323;
+  --line-2: #2e2e2e;
+  --line-3: #3a3a3a;
+  --line-4: #4a4a4a;
+  --ink-0: #f2f2f2;
+  --ink-1: #d4d4d4;
+  --ink-2: #9a9a9a;
+  --ink-3: #8c8c8c;
+  --ink-4: #808080;
+  --red: #c8102e;
+  --red-bright: #ff2828;
+  --red-deep: #7a0a1c;
+  --red-ink: #ff3b3b;   /* red used as text (--red is 3.4:1 on bg-0) */
+  --amber: #c69214;
+  --amber-ink: #e0b048;
+  --cyan-ink: #6fb3c4;
+  --green: #4a7c30;
+  --green-ink: #8bc06b; /* green used as text (--green is 4.0:1 on bg-0) */
+  --cyan: #2d6e7e;
+  --font-sans: 'Space Grotesk', 'IBM Plex Sans', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', 'IBM Plex Mono', ui-monospace, monospace;
+  color-scheme: dark;
+  accent-color: var(--red);
+
+  /* Type: a step's name says what it is for. Every font-size in the CSS and pages uses
+     one, so the phone scale below reaches all of them. */
+  --t-micro: 9px;
+  --t-label: 10px;  /* mono uppercase labels */
+  --t-meta: 11px;   /* secondary values */
+  --t-data: 12px;   /* tables, controls */
+  --t-body: 13px;
+  --t-lead: 14px;
+  --t-sub: 15px;
+  --t-title: 16px;
+  --t-h3: 18px;
+  --t-h2: 22px;
+  --t-h1: 28px;
+  --t-stat: 30px;
+
+  /* Space: a 4 px rhythm for new layout work. */
+  --s-1: 4px;
+  --s-2: 8px;
+  --s-3: 12px;
+  --s-4: 16px;
+  --s-5: 24px;
+  --s-6: 32px;
+
+  /* Touch */
+  --tap: 44px;
+  --safe-t: env(safe-area-inset-top, 0px);
+  --safe-r: env(safe-area-inset-right, 0px);
+  --safe-b: env(safe-area-inset-bottom, 0px);
+  --safe-l: env(safe-area-inset-left, 0px);
+}
+
+/* Phone scale: labels never under 11 px, values and running text at least 14 px. */
+@media (max-width: 900px), (pointer: coarse) {
+  :root {
+    --t-micro: 11px;
+    --t-label: 11px;
+    --t-meta: 13px;
+    --t-data: 14px;
+    --t-body: 15px;
+    --t-lead: 15px;
+    --t-sub: 16px;
+    --t-title: 17px;
+  }
+}
+
+@keyframes pulse { 0%,100% { opacity: 1; transform: scale(1);} 50% { opacity: 0.35; transform: scale(0.8);} }
+@keyframes blink { 0%,49% { opacity: 1; } 50%,100% { opacity: 0; } }
+@keyframes scan { 0% { transform: translateY(-100%); } 100% { transform: translateY(100vh); } }
+@keyframes ticker { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
+@keyframes sweep { 0% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }

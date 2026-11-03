@@ -1,0 +1,603 @@
+[
+  {
+    "name": "work.late after a rewind, dated before its re-plan (fixed 2026-11-02)",
+    "seed": 20261117,
+    "ops": [
+      {
+        "t": "pass",
+        "h": 12
+      },
+      {
+        "t": "pass",
+        "h": 5
+      },
+      {
+        "t": "pass",
+        "h": 2
+      },
+      {
+        "t": "pass",
+        "h": 2
+      },
+      {
+        "t": "text",
+        "cast": "cast:coworker-a"
+      },
+      {
+        "t": "outing",
+        "place": "place:park",
+        "inMin": 480,
+        "minutes": 150,
+        "cast": [
+          "cast:sibling"
+        ]
+      },
+      {
+        "t": "pass",
+        "h": 2
+      },
+      {
+        "t": "pass",
+        "h": 5
+      },
+      {
+        "t": "outing",
+        "place": "place:cinema",
+        "inMin": 915,
+        "minutes": 195,
+        "cast": [
+          "cast:manager",
+          "cast:coworker-a"
+        ]
+      },
+      {
+        "t": "pass",
+        "h": 5
+      },
+      {
+        "t": "pass",
+        "h": 12
+      },
+      {
+        "t": "pass",
+        "h": 12
+      },
+      {
+        "t": "rewind",
+        "back": 0.074
+      },
+      {
+        "t": "pass",
+        "h": 0.25
+      }
+    ]
+  },
+  {
+    "name": "a committed outing rewound away expires instead of staying 'go' (go_happened; fixed 2026-11-02)",
+    "seed": 1,
+    "noNotes": [
+      "go_happened"
+    ],
+    "ops": [
+      {
+        "t": "pass",
+        "h": 2
+      },
+      {
+        "t": "outing",
+        "place": "place:cafe",
+        "inMin": 120,
+        "minutes": 60,
+        "cast": [
+          "cast:flatmate"
+        ]
+      },
+      {
+        "t": "pass",
+        "h": 5
+      },
+      {
+        "t": "rewind",
+        "back": 0.4
+      },
+      {
+        "t": "pass",
+        "h": 3
+      }
+    ]
+  },
+  {
+    "name": "a text at the very tick an outing starts waits until they part (phone_with_someone; fixed 2026-11-02)",
+    "seed": 1,
+    "noNotes": [
+      "phone_with_someone"
+    ],
+    "ops": [
+      {
+        "t": "pass",
+        "h": 2
+      },
+      {
+        "t": "outing",
+        "place": "place:cafe",
+        "inMin": 120,
+        "minutes": 60,
+        "cast": [
+          "cast:flatmate"
+        ]
+      },
+      {
+        "t": "pass",
+        "h": 5
+      },
+      {
+        "t": "rewind",
+        "back": 0.2
+      },
+      {
+        "t": "pass",
+        "h": 3
+      }
+    ]
+  },
+  {
+    "name": "an outing restored by undoing, after its time, the change that displaced it expires (go_happened; fixed 2026-11-02)",
+    "seed": 31000012,
+    "noNotes": [
+      "go_happened"
+    ],
+    "ops": [
+      {
+        "t": "outing",
+        "place": "place:cinema",
+        "inMin": 75,
+        "minutes": 60,
+        "cast": [
+          "cast:coworker-b"
+        ]
+      },
+      {
+        "t": "rewind",
+        "back": 0.149
+      },
+      {
+        "t": "text",
+        "cast": "cast:sibling"
+      },
+      {
+        "t": "schedule",
+        "day": 0,
+        "activity": "errand",
+        "from": "09:45",
+        "to": "12:00"
+      },
+      {
+        "t": "pass",
+        "h": 12
+      },
+      {
+        "t": "text",
+        "cast": "cast:coworker-a"
+      },
+      {
+        "t": "rewind",
+        "back": 0.345
+      },
+      {
+        "t": "outing",
+        "place": "place:cafe",
+        "inMin": 840,
+        "minutes": 195,
+        "cast": [
+          "cast:flatmate"
+        ]
+      },
+      {
+        "t": "text",
+        "cast": "cast:flatmate"
+      },
+      {
+        "t": "reapply"
+      },
+      {
+        "t": "pass",
+        "h": 12
+      },
+      {
+        "t": "revert",
+        "pick": 0.379
+      },
+      {
+        "t": "outing",
+        "place": "place:gym",
+        "inMin": 45,
+        "minutes": 180,
+        "cast": [
+          "cast:flatmate"
+        ]
+      },
+      {
+        "t": "wake"
+      },
+      {
+        "t": "schedule",
+        "day": 2,
+        "activity": "home",
+        "from": "23:00",
+        "to": "23:45"
+      },
+      {
+        "t": "revert",
+        "pick": 0.339
+      },
+      {
+        "t": "pass",
+        "h": 2
+      },
+      {
+        "t": "reapply"
+      },
+      {
+        "t": "pass",
+        "h": 1
+      },
+      {
+        "t": "revert",
+        "pick": 0.423
+      },
+      {
+        "t": "pass",
+        "h": 8
+      },
+      {
+        "t": "text",
+        "cast": "cast:flatmate"
+      },
+      {
+        "t": "rewind",
+        "back": 0.23
+      },
+      {
+        "t": "revert",
+        "pick": 0.991
+      },
+      {
+        "t": "outing",
+        "place": "place:cafe",
+        "inMin": 885,
+        "minutes": 45,
+        "cast": [
+          "cast:flatmate",
+          "cast:manager"
+        ]
+      },
+      {
+        "t": "revert",
+        "pick": 0.682
+      },
+      {
+        "t": "revert",
+        "pick": 0.543
+      },
+      {
+        "t": "text",
+        "cast": "cast:sibling"
+      },
+      {
+        "t": "text",
+        "cast": "cast:flatmate"
+      },
+      {
+        "t": "pass",
+        "h": 0.5
+      },
+      {
+        "t": "schedule",
+        "day": 1,
+        "activity": "home",
+        "from": "18:00",
+        "to": "20:45"
+      },
+      {
+        "t": "outing",
+        "place": "place:cinema",
+        "inMin": 1470,
+        "minutes": 120,
+        "cast": [
+          "cast:flatmate",
+          "cast:coworker-b"
+        ]
+      },
+      {
+        "t": "rewind",
+        "back": 0.199
+      },
+      {
+        "t": "pass",
+        "h": 0.5
+      },
+      {
+        "t": "outing",
+        "place": "place:cinema",
+        "inMin": 675,
+        "minutes": 75,
+        "cast": [
+          "cast:coworker-b",
+          "cast:flatmate"
+        ]
+      },
+      {
+        "t": "revert",
+        "pick": 0.056
+      },
+      {
+        "t": "money",
+        "mode": "income",
+        "amount": 600
+      },
+      {
+        "t": "revert",
+        "pick": 0.68
+      },
+      {
+        "t": "outing",
+        "place": "place:gym",
+        "inMin": 795,
+        "minutes": 135,
+        "cast": [
+          "cast:manager"
+        ]
+      },
+      {
+        "t": "text",
+        "cast": "cast:flatmate"
+      },
+      {
+        "t": "pass",
+        "h": 24
+      }
+    ]
+  },
+  {
+    "name": "an outing restored days later for a day already gone expires (go_happened; fixed 2026-11-02)",
+    "seed": 31000015,
+    "noNotes": [
+      "go_happened"
+    ],
+    "ops": [
+      {
+        "t": "reapply"
+      },
+      {
+        "t": "revert",
+        "pick": 0.936
+      },
+      {
+        "t": "pass",
+        "h": 1
+      },
+      {
+        "t": "money",
+        "mode": "expense",
+        "amount": 650
+      },
+      {
+        "t": "schedule",
+        "day": 1,
+        "activity": "gym",
+        "from": "21:30",
+        "to": "23:45"
+      },
+      {
+        "t": "outing",
+        "place": "place:cafe",
+        "inMin": 90,
+        "minutes": 165,
+        "cast": [
+          "cast:sibling",
+          "cast:coworker-b"
+        ]
+      },
+      {
+        "t": "schedule",
+        "day": 1,
+        "activity": "sleep",
+        "from": "11:00",
+        "to": "12:15"
+      },
+      {
+        "t": "reapply"
+      },
+      {
+        "t": "outing",
+        "place": "place:gym",
+        "inMin": 30,
+        "minutes": 135,
+        "cast": [
+          "cast:sibling"
+        ]
+      },
+      {
+        "t": "pass",
+        "h": 2
+      },
+      {
+        "t": "pass",
+        "h": 5
+      },
+      {
+        "t": "schedule",
+        "day": 0,
+        "activity": "sleep",
+        "from": "18:00",
+        "to": "19:45"
+      },
+      {
+        "t": "revert",
+        "pick": 0.089
+      },
+      {
+        "t": "outing",
+        "place": "place:cinema",
+        "inMin": 90,
+        "minutes": 150,
+        "cast": [
+          "cast:sibling"
+        ]
+      },
+      {
+        "t": "pass",
+        "h": 5
+      },
+      {
+        "t": "rewind",
+        "back": 0.505
+      },
+      {
+        "t": "pass",
+        "h": 0.25
+      },
+      {
+        "t": "pass",
+        "h": 0.25
+      },
+      {
+        "t": "money",
+        "mode": "income",
+        "amount": 2000
+      },
+      {
+        "t": "outing",
+        "place": "place:restaurant",
+        "inMin": 900,
+        "minutes": 195,
+        "cast": [
+          "cast:flatmate"
+        ]
+      },
+      {
+        "t": "pass",
+        "h": 0.25
+      },
+      {
+        "t": "pass",
+        "h": 0.5
+      },
+      {
+        "t": "text",
+        "cast": "cast:sibling"
+      },
+      {
+        "t": "rewind",
+        "back": 0.513
+      },
+      {
+        "t": "pass",
+        "h": 5
+      },
+      {
+        "t": "pass",
+        "h": 0.25
+      },
+      {
+        "t": "money",
+        "mode": "expense",
+        "amount": 750
+      },
+      {
+        "t": "pass",
+        "h": 0.5
+      },
+      {
+        "t": "pass",
+        "h": 12
+      },
+      {
+        "t": "outing",
+        "place": "place:cafe",
+        "inMin": 1665,
+        "minutes": 90,
+        "cast": [
+          "cast:flatmate"
+        ]
+      },
+      {
+        "t": "text",
+        "cast": "cast:coworker-b"
+      },
+      {
+        "t": "text",
+        "cast": "cast:flatmate"
+      },
+      {
+        "t": "pass",
+        "h": 5
+      },
+      {
+        "t": "schedule",
+        "day": 1,
+        "activity": "sleep",
+        "from": "12:15",
+        "to": "16:30"
+      },
+      {
+        "t": "text",
+        "cast": "cast:coworker-a"
+      },
+      {
+        "t": "money",
+        "mode": "income",
+        "amount": 1050
+      },
+      {
+        "t": "schedule",
+        "day": 0,
+        "activity": "errand",
+        "from": "18:00",
+        "to": "20:15"
+      },
+      {
+        "t": "pass",
+        "h": 1
+      },
+      {
+        "t": "revert",
+        "pick": 0.042
+      },
+      {
+        "t": "revert",
+        "pick": 0.198
+      },
+      {
+        "t": "pass",
+        "h": 24
+      }
+    ]
+  },
+  {
+    "name": "an old committed attend survives an unrelated short rewind (batch 3 review 35; fixed 2026-11-03)",
+    "seed": 2,
+    "ops": [
+      {
+        "t": "pass",
+        "h": 2
+      },
+      {
+        "t": "attend",
+        "inMin": 360
+      },
+      {
+        "t": "pass",
+        "h": 36
+      },
+      {
+        "t": "rewind",
+        "back": 0.01
+      },
+      {
+        "t": "pass",
+        "h": 1
+      }
+    ]
+  }
+]

@@ -1,0 +1,41 @@
+{
+  "version": 1,
+  "career": {
+    "appraisalMonth": null,
+    "salaryChangePct": { "min": -2, "max": 8 },
+    "noticeDays": 30,
+    "employers": [
+      { "name": "Example Works (example)" },
+      { "name": "Sample Studio (example)" }
+    ],
+    "titles": ["Analyst", "Senior Analyst", "Lead"],
+    "officeAreas": [
+      { "near": "place:office", "maxKm": 5 }
+    ]
+  },
+  "family": {
+    "callCadenceDays": [5, 12],
+    "themes": [
+      { "id": "more-calls", "label": "wants more calls", "fromAge": 18, "intensity": 0.3, "growthPerYear": 0.02 }
+    ],
+    "occasions": [],
+    "majorDecisions": []
+  },
+  "castStatus": {
+    "flatmate": ["busy with work", "on a trip", "trying a new hobby"],
+    "coworker": ["busy with work", "on a trip", "swamped with a deadline"],
+    "manager": ["busy with work", "on a trip", "in back-to-back meetings"],
+    "family": ["busy with work", "on a trip", "keeping well"],
+    "friend": ["busy with work", "on a trip", "trying a new hobby"],
+    "any": ["busy with work", "on a trip", "under the weather", "catching up on sleep"]
+  },
+  "heavy": {
+    "themes": [
+      { "id": "minor-accident", "kind": "minor_accident", "label": "a small accident", "durationDays": [2, 7] },
+      { "id": "friend-moving-away", "kind": "friend_moving_away", "label": "a friend moving away", "durationDays": [3, 14] }
+    ]
+  },
+  "romance": {
+    "meetVia": ["friend", "hobby"]
+  }
+}

@@ -1,0 +1,48 @@
+; Copy to pjsip.conf (gitignored) and fill in your two Tailscale addresses:
+;   <SERVER_TAILSCALE_IP>  this server's address:  tailscale ip -4
+;   <PHONE_TAILSCALE_IP>   the gateway phone's address, from the Tailscale app on the phone
+; Asterisk won't start on the placeholders, so a forgotten copy fails loudly.
+;
+; The Android gateway phone (Voice SIP Agent) registers here as a trunk named android-gw.
+; Tailnet-only: the transport binds to the server's Tailscale address (WireGuard-encrypted, peers are
+; device-authenticated), and the ACL below drops SIP from anything but the phone's Tailscale address.
+; There is no anonymous endpoint, so even the phone must authenticate as android-gw.
+
+[global]
+type = global
+user_agent = karyasthan-pbx
+endpoint_identifier_order = username
+
+[transport-tcp]
+type = transport
+protocol = tcp
+bind = <SERVER_TAILSCALE_IP>:5060
+
+[gateway-only]
+type = acl
+deny = 0.0.0.0/0.0.0.0
+permit = <PHONE_TAILSCALE_IP>/255.255.255.255
+
+[android-gw]
+type = endpoint
+transport = transport-tcp
+context = from-gateway
+aors = android-gw
+auth = android-gw-auth
+identify_by = username
+disallow = all
+allow = opus,ulaw,alaw
+dtmf_mode = rfc4733
+direct_media = no
+rtp_symmetric = yes
+force_rport = yes
+rewrite_contact = yes
+trust_id_inbound = yes
+
+[android-gw]
+type = aor
+max_contacts = 1
+remove_existing = yes
+qualify_frequency = 60
+
+#include /etc/asterisk-secrets/pjsip_auth.conf

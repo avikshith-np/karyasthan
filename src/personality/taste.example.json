@@ -1,0 +1,20 @@
+{
+  "likes": [
+    "everyday relatable humour",
+    "friend-group banter and roasts",
+    "sports moments and bloopers",
+    "movie and TV dialogue spoofs",
+    "clever memes and skits",
+    "food and travel fails"
+  ],
+  "humour": "witty, observational, a little sarcastic — affectionate roasting, not mean",
+  "languages": ["English"],
+  "hard_no": [
+    "politics",
+    "religion",
+    "motivational or hustle content",
+    "sad, breakup or relationship-advice posts",
+    "ads and giveaways"
+  ],
+  "notes": ""
+}
