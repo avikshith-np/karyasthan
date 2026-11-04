@@ -1,9 +1,24 @@
 // Prompts on a terminal. One readline interface per question, closed before the next
 // prompt: left open it also echoes what's typed at a hidden prompt.
 import readline from 'node:readline';
+import fs from 'node:fs';
+import tty from 'node:tty';
 
 /** Ctrl-C or Ctrl-D at a prompt. setup.js ends cleanly on it; what's saved stays saved. */
 export class Interrupted extends Error {}
+
+/**
+ * A readable terminal, or null. Under `curl | bash` stdin is the installer script, so with no
+ * terminal on stdin this opens the controlling one. close() when done.
+ */
+export function openTerminal() {
+  if (process.stdin.isTTY) return { input: process.stdin, close: () => { try { process.stdin.pause(); } catch { /* gone */ } } };
+  try {
+    const fd = fs.openSync('/dev/tty', 'r');
+    const input = new tty.ReadStream(fd);
+    return { input, close: () => { try { input.destroy(); } catch { /* gone */ } } };
+  } catch { return null; }
+}
 
 export function createUi({ input, output }) {
   function showHelp(text) {

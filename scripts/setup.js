@@ -31,6 +31,7 @@ import {
 import { testModel, failureWords, isInconclusive } from './setup/keys.js';
 import { HELP } from './setup/help.js';
 import { renderUserUnit, renderSystemUnit } from './setup/service.js';
+import { commandExists, pm2Has } from './setup/running.js';
 
 const NODE_MAJOR = Number(process.versions.node.split('.')[0]);
 if (!Number.isFinite(NODE_MAJOR) || NODE_MAJOR < 20) {
@@ -685,6 +686,17 @@ async function stepReview() {
 }
 
 // ── Running setup again ───────────────────────────────────────────────────────
+/** True when new code landed: this setup is then the old one, so it stops here. */
+function runUpdate() {
+  const head = () => spawnSync('git', ['rev-parse', 'HEAD'], { cwd: PROJECT_ROOT, encoding: 'utf-8' }).stdout.trim();
+  const before = head();
+  spawnSync(process.execPath, ['scripts/update.js'], { cwd: PROJECT_ROOT, stdio: 'inherit' });
+  if (head() === before) return false;
+  say('Run npm run setup again if there\'s anything else to change.');
+  say('');
+  return true;
+}
+
 async function menu() {
   for (;;) {
     let name = 'It';
@@ -692,11 +704,11 @@ async function menu() {
     say(`${name} is set up. ${isLinked() ? 'Linked to WhatsApp.' : 'Not linked to WhatsApp yet.'} Nothing changes unless you choose it.\n`);
     const items = [
       '1  Change a key or model', '2  Change the character', '3  Numbers and time zone', '4  Switch abilities on or off',
-      '5  Dashboard password and access', '6  Link WhatsApp', '7  Check everything', '8  Keep it running', '9  Finish',
+      '5  Dashboard password and access', '6  Link WhatsApp', '7  Check everything', '8  Keep it running', '9  Update to the newest version', '10 Finish',
     ];
     for (const i of items) say(`  ${i}`);
     say('');
-    const a = await ui.ask('Choose', '9');
+    const a = await ui.ask('Choose', '10');
     if (a === '1') { await stepKeys(); await stepJobs(); }
     else if (a === '2') await stepCharacter();
     else if (a === '3') await stepNumber({ force: true });
@@ -705,8 +717,9 @@ async function menu() {
     else if (a === '6') await stepLink();
     else if (a === '7') spawnSync(process.execPath, ['scripts/doctor.js'], { cwd: PROJECT_ROOT, stdio: 'inherit' });
     else if (a === '8') await stepKeepRunning();
-    else if (a === '9') return;
-    else say('! A number from 1 to 9.');
+    else if (a === '9') { if (runUpdate()) return 'updated'; }
+    else if (a === '10') return 'finished';
+    else say('! A number from 1 to 10.');
     say('');
   }
 }
@@ -768,11 +781,6 @@ function runScript(script, args = []) {
   });
 }
 
-function pm2Has(name = 'karyasthan') {
-  const r = spawnSync('pm2', ['pid', name], { encoding: 'utf-8' });
-  return r.status === 0 && /^\d+$/.test(r.stdout.trim()) && r.stdout.trim() !== '0' ? r.stdout.trim() : '';
-}
-
 /** Stops a running copy for a moment, with permission. A function to start it again, or null if it stays. */
 async function clearTheWay(what) {
   const holder = (await import('../src/utils/instanceLock.js')).lockHolder(DATA_DIR);
@@ -825,10 +833,6 @@ async function stepFirstCheck() {
 }
 
 // ── Keep it running ───────────────────────────────────────────────────────────
-function commandExists(cmd, args = ['--version']) {
-  return spawnSync(cmd, args, { stdio: 'ignore' }).status === 0;
-}
-
 async function stepKeepRunning() {
   if (HEADLESS || !isLinked()) return;
   const holder = (await import('../src/utils/instanceLock.js')).lockHolder(DATA_DIR);
@@ -973,7 +977,7 @@ async function main() {
   } else if (state.fresh) {
     say('Carrying on where you stopped.');
   } else {
-    await menu();
+    if (await menu() === 'updated') return 0;
     await stepDatabase();
     finish();
     return 0;

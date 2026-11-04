@@ -18,6 +18,7 @@
     "test:instagram": "node scripts/test-instagram.js",
     "test:pipeline": "node scripts/test-pipeline.js",
     "test:install": "node scripts/test-install.js",
+    "test:day-two": "node scripts/test-day-two.js",
     "test:cap-catchup": "node scripts/test-cap-catchup.js",
     "test:llm-offline": "node scripts/test-llm-offline.js",
     "test:review": "node scripts/test-review.js",
@@ -36,7 +37,10 @@
     "gen:env": "node scripts/gen-env-example.js",
     "inspect": "node scripts/inspect-memory.js",
     "setup": "node scripts/setup.js",
-    "doctor": "node scripts/doctor.js"
+    "doctor": "node scripts/doctor.js",
+    "update": "node scripts/update.js",
+    "backup": "node scripts/backup.js",
+    "uninstall": "node scripts/uninstall.js"
   },
   "private": true,
   "license": "Apache-2.0",

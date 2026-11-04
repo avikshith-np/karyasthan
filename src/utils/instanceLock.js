@@ -4,15 +4,18 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
-const OURS = /(^|\/)src\/index\.js$|(^|\/)scripts\/(pair|first-check)\.js$/;
+const OURS = /(^|\/)src\/index\.js( |$)|(^|\/)scripts\/(pair|first-check)\.js( |$)/;
 
 export function lockPath(dataDir) { return path.join(dataDir, '.instance-lock'); }
 
 function aliveAndOurs(pid) {
   try { process.kill(pid, 0); } catch (err) { if (err.code === 'ESRCH') return false; }
   try {
-    // Node, running one of our scripts. pm2 renames its process, so spaces may stand in for NULs.
-    const [cmd, script] = fs.readFileSync(`/proc/${pid}/cmdline`, 'utf-8').split(/[\0 ]+/).filter(Boolean);
+    // Node, running one of our scripts. NULs separate the arguments, so a folder may hold spaces;
+    // pm2 renames its process to one string, "node <path>", padded with NULs.
+    const parts = fs.readFileSync(`/proc/${pid}/cmdline`, 'utf-8').split('\0').filter(Boolean);
+    let [cmd, script] = parts;
+    if (parts.length === 1) { const at = cmd.indexOf(' '); script = at < 0 ? '' : cmd.slice(at + 1); cmd = at < 0 ? cmd : cmd.slice(0, at); }
     return /(^|\/)node(js)?$/.test(cmd || '') && OURS.test(script || '');
   } catch { return true; }   // no /proc: trust the pid
 }

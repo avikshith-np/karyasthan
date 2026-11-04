@@ -91,9 +91,60 @@ It has to run all the time. Setup offers pm2 or a systemd user service if it fin
 npm start         # start it
 npm run doctor    # check everything; keys and numbers are masked, so it's safe to paste
 npm run setup     # change a key, model, character, abilities or dashboard password
+npm run update    # new code, safely
+npm run backup    # one private file with everything that's yours
 ```
 
 Silence at first is normal, even in DMs: see "Warmup" above.
+
+## Updating
+
+```bash
+npm run update
+```
+
+It tells you how many commits are new and whether the database will migrate, then asks. On yes it backs up to `data/backups/`, stops the bot under pm2 or a systemd user service, pulls, reinstalls packages if they changed, and starts it again. It's also on the `npm run setup` menu.
+
+It refuses, and says why, on any branch but `main`, with changes to tracked files, outside a git checkout, or when `main` can't be fast-forwarded. If you run the bot by hand, stop it first.
+
+If something fails, the code and packages go back and it starts again on the old version. The one exception: if the database was already upgraded, the old code refuses it, so the bot stays stopped and the exact steps to go back are printed. Those steps lose every message since the backup, so they're yours to choose. It never restores a database by itself.
+
+With no terminal, use `npm run update -- --yes`.
+
+## Backing up, and moving to a new machine
+
+```bash
+npm run backup
+```
+
+This writes one file to `data/backups/`, readable only by you: `.env`, a copy of the database, the WhatsApp session, your prices, added models and warmup progress, and the character files. Media caches, logs, older backups and Asterisk or SearXNG data stay out. The file holds your keys, your session and your chats, so keep it private. Copy it off the machine, since a backup on the same disk won't survive losing that disk.
+
+To move: install on the new machine without linking WhatsApp, stop the old copy and leave it stopped, then:
+
+```bash
+npm run backup -- --restore /path/to/karyasthan-backup-….tar.gz
+npm run doctor
+npm start
+```
+
+**Two machines running one session knock each other off WhatsApp, so stop the old one first.** A session restored from an old backup may also need linking again.
+
+A restore refuses while a copy runs here, and if a session or database is already here. `--force` moves those aside, with `.old-` in the name, and never deletes. It refuses any file that holds paths outside the project, links, or anything a backup wouldn't hold, checked before anything is extracted. Only restore a backup you made: it brings a `.env`, and that decides where your keys go.
+
+## Uninstalling
+
+```bash
+npm run uninstall
+```
+
+It lists exactly what goes and what stays, then offers a backup, kept outside the folder so it survives. Nothing happens until you type the word `delete`.
+
+- **Goes:** the pm2 entry or systemd user service, if it points at this folder, and any running copy. `.env` and its copies, `data/`, the character files, `node_modules`.
+- **Online, if you set them up:** it can replace the public site with an offline notice and delete cloned voices at Google. The bucket and the site stay in your Cloudflare account. If either fails it tells you, and carries on.
+- **Only you can do:** remove the linked device on the phone (WhatsApp, Linked Devices), and revoke your model keys.
+- **Stays:** the folder itself. The last line it prints is the `rm -rf` for that.
+
+It only runs on `main`, and only with a person at a terminal.
 
 ## No keyboard
 

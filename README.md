@@ -282,17 +282,26 @@ ssh -L 7070:127.0.0.1:7070 you@your-server    # then open http://127.0.0.1:7070
 
 Set `DASHBOARD_READONLY=false` to edit state. Every write needs a CSRF token and is audited. For Tailscale, add `100.64.0.0/10` to `DASHBOARD_ALLOW_CIDRS`. Never put it on the public internet.
 
-**Update.** The database backs itself up and migrates at boot.
+**Update.**
 
 ```bash
-git pull --ff-only && npm ci && pm2 restart karyasthan
+npm run update
 ```
 
-After a Node major upgrade, run `npm rebuild better-sqlite3`. To go back, restore the backup from `data/backups/`.
+It only runs on a clean `main` that can fast-forward. It says how many commits are new and whether the database will migrate, backs up, stops the bot, pulls, reinstalls packages if they changed, and starts it again. If any of that fails, the code and packages go back. The database never goes back by itself, because that would lose messages: if it has already moved on, you get the exact steps to choose. After a Node major upgrade it rebuilds SQLite.
 
 **If WhatsApp logs it out,** stop the bot, move `data/auth_info_baileys/` aside, and link again.
 
-**Back up** `.env`, `data/` and `src/personality/`. That's everything that makes it yours.
+**Back up.**
+
+```bash
+npm run backup                          # one private tar.gz in data/backups/
+npm run backup -- --restore <file>      # put one back, here or on a new machine
+```
+
+It holds your keys, your WhatsApp session, a copy of the database and your character, so keep it private and copy it off the machine. A restore refuses while a copy is running or a session or database is here; `--force` moves those aside and deletes nothing. Stop the old machine first: two running one session knock each other off WhatsApp.
+
+**Uninstall** with `npm run uninstall`. It lists everything first, including what stays online, offers a backup, and does nothing until you type `delete`.
 
 ## Testing
 

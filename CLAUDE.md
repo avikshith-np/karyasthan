@@ -33,6 +33,10 @@ npm run test:instagram # Test the Instagram phone guard (fake ADB), screen reade
 npm run test:pipeline  # Offline: bot @-mention helper, explicit+directed image-request detector, stale-turn guard
 npm run test:install   # Installer + setup wizard: helpers, model suggestions, templates, install.sh with stubbed git/npm, setup.js and doctor in a real terminal (`script`) on scratch copies: hidden input, ? help, resume, menu, headless checks, private files
 npm run doctor         # Reads an install and says what's wrong; keys and numbers masked; `-- --offline` makes no calls, `-- --json`; exit 1 on a failure
+npm run update         # Clean `main` only (a `live` install is never touched): backup, stop, pull --ff-only, npm ci if the lockfile changed, start, wait for the lock; a failure puts code and packages back and never restores a database by itself. `-- --yes` with no terminal
+npm run backup         # One private tar.gz in data/backups/: .env, a VACUUM'd database, the session, data/llm-prices.json, warmup.json, llm-models.json, the character files. `-- --restore <file> [--force]` puts one back (tar checked first; --force moves aside, never deletes)
+npm run uninstall      # Interactive, `main` only: lists everything incl. what stays online, offers a backup, needs the typed word `delete`, takes the site offline and deletes cloned voices if asked, prints the last `rm -rf`
+npm run test:day-two   # update, backup and uninstall on scratch repos: real bare remote, stand-in bot on the real lock, stubbed npm/pm2/systemctl/fetch, a real terminal through `script`
 npm run test:public-scan # The pre-push guard itself, on scratch repos (docs/claude/public-scan.md)
 npm run test:cap-catchup # Offline: catch-up reply after an hourly cap frees (capped would-reply queues, firing, drops, life, DRY_RUN) — scratch DB
 npm run test:privacy   # Memory privacy: audience rule matrix, identity merge/reassignment, membership freshness, import guard (`-- --strict`) — scratch DB

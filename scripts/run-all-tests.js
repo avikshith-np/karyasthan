@@ -26,6 +26,7 @@ const SUITES = [
   ['decision', 'test-decision.js'],
   ['pipeline', 'test-pipeline.js'],
   ['install', 'test-install.js'],
+  ['day-two', 'test-day-two.js'],
   ['cap-catchup', 'test-cap-catchup.js'],
   ['search', 'test-search.js'],
   ['imitate', 'test-imitate.js'],

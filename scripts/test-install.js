@@ -353,13 +353,13 @@ if (!hasScript) {
   fs.writeFileSync(path.join(c2, '.env'), 'LLM_PROVIDER=ollama\nLLM_MODEL=m\nWA_PHONE_NUMBER=15550100123\nTIMEZONE=UTC\n');
   fs.writeFileSync(path.join(c2, 'src/personality/persona.json'), JSON.stringify({ name: 'Sam' }));
   fs.writeFileSync(path.join(c2, 'src/personality/identity.md'), 'x');
-  const svc = await terminal(c2, [['Choose', '8\r'], ['Choose', '1\r'], ['Choose', '9\r']], { env: { PATH: `${bin}:${process.env.PATH}` } });
+  const svc = await terminal(c2, [['Choose', '8\r'], ['Choose', '1\r'], ['Choose', '10\r']], { env: { PATH: `${bin}:${process.env.PATH}` } });
   const calls = fs.existsSync(svcLog) ? fs.readFileSync(svcLog, 'utf-8') : '';
   check('pm2: starts under its name, won\'t restart on 78, saved', calls.includes('pm2 start src/index.js --name karyasthan') && calls.includes('--stop-exit-codes 78') && calls.includes('pm2 save'), calls + svc.out.slice(-300));
   check('pm2: sudo is printed, never run', svc.out.includes('needs sudo') && svc.out.includes('pm2 startup') && !calls.includes('startup'), svc.out.slice(-300));
   fs.rmSync(svcLog, { force: true });
   const c3home = path.join(SCRATCH, 'svc-home'); fs.mkdirSync(c3home, { recursive: true });
-  const svc2 = await terminal(c2, [['Choose', '8\r'], ['Choose', '2\r'], ['Choose', '9\r']], { env: { PATH: `${bin}:${process.env.PATH}`, HOME: c3home } });
+  const svc2 = await terminal(c2, [['Choose', '8\r'], ['Choose', '2\r'], ['Choose', '10\r']], { env: { PATH: `${bin}:${process.env.PATH}`, HOME: c3home } });
   const unit = path.join(c3home, '.config/systemd/user/karyasthan.service');
   check('systemd: writes a user unit with real paths and starts it', fs.existsSync(unit) && fs.readFileSync(unit, 'utf-8').includes(c2) && fs.readFileSync(svcLog, 'utf-8').includes('enable --now karyasthan'), svc2.out.slice(-300));
   check('systemd: the linger line is printed, never run', svc2.out.includes('enable-linger'));
