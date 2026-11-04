@@ -185,9 +185,11 @@ node scripts/pair.js 15550100123    # the bot's number
 
 Stop the bot before you link it, if it's already running.
 
-**4. Start it**
+**4. First check, and keep it running**
 
-Setup's last lines say either that it's ready or exactly what's left.
+Setup then proves the chain on one real message: you message the bot from your own phone, the reply model writes an answer, and nothing is sent. It can start the bot under pm2 or a systemd user service with your real paths. Its last lines say it's running, ready, or exactly what's left.
+
+To start it yourself:
 
 ```bash
 npm start
@@ -264,13 +266,13 @@ node scripts/arcs-dry-run.js --source data/karyasthan.db --days 30
 
 ## Running it
 
-**Keep it running** under any process manager. Link WhatsApp first, because under a manager the code would land in the logs.
+**Keep it running** with setup's last step, or by hand. Link WhatsApp first: an unlinked bot under a manager exits with code 78 rather than keep asking WhatsApp for codes.
 
 ```bash
-pm2 start src/index.js --name karyasthan && pm2 save
+pm2 start src/index.js --name karyasthan --stop-exit-codes 78 && pm2 save
 ```
 
-Or edit the paths, user and node location in [`karyasthan.service`](karyasthan.service) and use systemd. Run only one copy: two on one session knock each other off WhatsApp.
+Or edit the paths, user and node location in [`karyasthan.service`](karyasthan.service) and use systemd. A second copy on one install refuses to start, because two on one session knock each other off WhatsApp.
 
 **Reach the dashboard.** It binds to `127.0.0.1:7070` and starts read-only.
 

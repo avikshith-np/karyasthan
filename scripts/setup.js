@@ -30,6 +30,7 @@ import {
 } from './setup/suggestions.js';
 import { testModel, failureWords, isInconclusive } from './setup/keys.js';
 import { HELP } from './setup/help.js';
+import { renderUserUnit, renderSystemUnit } from './setup/service.js';
 
 const NODE_MAJOR = Number(process.versions.node.split('.')[0]);
 if (!Number.isFinite(NODE_MAJOR) || NODE_MAJOR < 20) {
@@ -691,11 +692,11 @@ async function menu() {
     say(`${name} is set up. ${isLinked() ? 'Linked to WhatsApp.' : 'Not linked to WhatsApp yet.'} Nothing changes unless you choose it.\n`);
     const items = [
       '1  Change a key or model', '2  Change the character', '3  Numbers and time zone', '4  Switch abilities on or off',
-      '5  Dashboard password and access', '6  Link WhatsApp', '7  Check everything', '8  Finish',
+      '5  Dashboard password and access', '6  Link WhatsApp', '7  Check everything', '8  Keep it running', '9  Finish',
     ];
     for (const i of items) say(`  ${i}`);
     say('');
-    const a = await ui.ask('Choose', '8');
+    const a = await ui.ask('Choose', '9');
     if (a === '1') { await stepKeys(); await stepJobs(); }
     else if (a === '2') await stepCharacter();
     else if (a === '3') await stepNumber({ force: true });
@@ -703,8 +704,9 @@ async function menu() {
     else if (a === '5') await stepDashboard({ force: true });
     else if (a === '6') await stepLink();
     else if (a === '7') spawnSync(process.execPath, ['scripts/doctor.js'], { cwd: PROJECT_ROOT, stdio: 'inherit' });
-    else if (a === '8') return;
-    else say('! A number from 1 to 8.');
+    else if (a === '8') await stepKeepRunning();
+    else if (a === '9') return;
+    else say('! A number from 1 to 9.');
     say('');
   }
 }
@@ -755,6 +757,36 @@ function isLinked() {
   try { return credsAreLinked(fs.readFileSync(path.join(authDir(), 'creds.json'), 'utf-8')); } catch { return false; }
 }
 
+function runScript(script, args = []) {
+  return new Promise((resolve) => {
+    const ignore = () => {};
+    process.on('SIGINT', ignore);       // Ctrl-C ends the child, not setup
+    const child = spawn(process.execPath, [script, ...args], { cwd: PROJECT_ROOT, stdio: ['ignore', 'inherit', 'inherit'], env: process.env });
+    const done = (code) => { process.removeListener('SIGINT', ignore); resolve(code); };
+    child.on('exit', (code) => done(code ?? 1));
+    child.on('error', (err) => { say(`! Could not start it: ${err.message}`); done(1); });
+  });
+}
+
+function pm2Has(name = 'karyasthan') {
+  const r = spawnSync('pm2', ['pid', name], { encoding: 'utf-8' });
+  return r.status === 0 && /^\d+$/.test(r.stdout.trim()) && r.stdout.trim() !== '0' ? r.stdout.trim() : '';
+}
+
+/** Stops a running copy for a moment, with permission. A function to start it again, or null if it stays. */
+async function clearTheWay(what) {
+  const holder = (await import('../src/utils/instanceLock.js')).lockHolder(DATA_DIR);
+  if (!holder) return () => {};
+  say(`It's already running (pid ${holder.pid}). Two copies on one session knock each other off WhatsApp.`);
+  if (String(holder.pid) === pm2Has()) {
+    if (!await ui.confirm(`Stop it under pm2, ${what}, then start it again?`, false)) return null;
+    spawnSync('pm2', ['stop', 'karyasthan'], { stdio: 'ignore' });
+    return () => { spawnSync('pm2', ['start', 'karyasthan'], { stdio: 'ignore' }); say('Started it again.'); };
+  }
+  say(`Stop it, then ${what}.`);
+  return null;
+}
+
 async function stepLink() {
   heading('Link WhatsApp');
   if (isLinked()) { say('Already linked.'); return; }
@@ -762,17 +794,79 @@ async function stepLink() {
   if (HEADLESS) { say('WhatsApp needs a person for this step.'); return; }
   say(`You'll need the phone with +${current.WA_PHONE_NUMBER} in your hand.`);
   if (!await ui.confirm('Link it now?', true, { help: HELP.link })) return;
-  await new Promise((resolve) => {
-    const ignore = () => {};
-    process.on('SIGINT', ignore);       // Ctrl-C ends the pairing, not setup
-    const child = spawn(process.execPath, ['scripts/pair.js', current.WA_PHONE_NUMBER], {
-      cwd: PROJECT_ROOT,
-      stdio: ['ignore', 'inherit', 'inherit'],
-    });
-    const done = () => { process.removeListener('SIGINT', ignore); resolve(); };
-    child.on('exit', done);
-    child.on('error', (err) => { say(`! Could not start linking: ${err.message}`); done(); });
-  });
+  const restart = await clearTheWay('link');
+  if (!restart) return;
+  let code = await runScript('scripts/pair.js', [current.WA_PHONE_NUMBER]);
+  if (code === 3) {
+    const aside = `${authDir()}.old-${new Date().toISOString().slice(0, 10)}-${Date.now() % 100000}`;
+    if (await ui.confirm('Set the old session aside and link again?', true)) {
+      fs.renameSync(authDir(), aside);
+      say(`Moved to ${path.relative(PROJECT_ROOT, aside)}`);
+      code = await runScript('scripts/pair.js', [current.WA_PHONE_NUMBER]);
+    }
+  }
+  restart();
+}
+
+// ── First check ───────────────────────────────────────────────────────────────
+async function stepFirstCheck() {
+  if (HEADLESS || !isLinked()) return;
+  if (state.done.includes('firstCheck')) return;
+  heading('First check');
+  say('This proves the whole chain on one real message. Nothing is sent, and only your');
+  say('own direct message is read.');
+  if (!await ui.confirm('Do it now?', true)) { state.firstCheck = 'skipped'; saveState(); return; }
+  const restart = await clearTheWay('run the check');
+  if (!restart) { state.firstCheck = 'skipped'; saveState(); return; }
+  const code = await runScript('scripts/first-check.js');
+  restart();
+  state.firstCheck = code === 0 ? 'passed' : 'not checked';
+  markDone('firstCheck');
+}
+
+// ── Keep it running ───────────────────────────────────────────────────────────
+function commandExists(cmd, args = ['--version']) {
+  return spawnSync(cmd, args, { stdio: 'ignore' }).status === 0;
+}
+
+async function stepKeepRunning() {
+  if (HEADLESS || !isLinked()) return;
+  const holder = (await import('../src/utils/instanceLock.js')).lockHolder(DATA_DIR);
+  if (holder) { say(`It's already running (pid ${holder.pid}).`); return; }
+  heading('Keep it running');
+  say('It has to run all the time.\n');
+  const pm2 = commandExists('pm2');
+  const systemd = process.platform === 'linux' && commandExists('systemctl', ['--user', 'show-environment']);
+  const options = [
+    ...(pm2 ? [{ id: 'pm2', label: 'pm2                  already installed' }] : []),
+    ...(systemd ? [{ id: 'systemd', label: 'systemd user service starts with this account' }] : []),
+    { id: 'none', label: 'Neither              I\'ll run npm start myself' },
+  ];
+  options.forEach((o, i) => say(`  ${i + 1}  ${o.label}`));
+  if (!pm2 && !systemd) say('  (pm2 and systemd weren\'t found here. npm install -g pm2 adds pm2.)');
+  say('');
+  const pick = await ui.choose('Choose', options, 0);
+  if (pick.id === 'pm2') {
+    const r = spawnSync('pm2', ['start', 'src/index.js', '--name', 'karyasthan', '--cwd', PROJECT_ROOT, '--stop-exit-codes', '78'], { cwd: PROJECT_ROOT, stdio: 'ignore' });
+    if (r.status !== 0) { say('! pm2 couldn\'t start it. Try: npm start'); return; }
+    spawnSync('pm2', ['save'], { stdio: 'ignore' });
+    say('✓ Started as "karyasthan" under pm2');
+    say('To survive a reboot, run this once (needs sudo):');
+    say(`    sudo env PATH=$PATH pm2 startup systemd -u ${process.env.USER || 'you'} --hp ${process.env.HOME || '~'}`);
+    say('    pm2 save');
+    state.running = 'pm2'; saveState();
+  } else if (pick.id === 'systemd') {
+    const dir = path.join(process.env.HOME || '', '.config/systemd/user');
+    fs.mkdirSync(dir, { recursive: true });
+    fs.writeFileSync(path.join(dir, 'karyasthan.service'), renderUserUnit({ root: PROJECT_ROOT, node: process.execPath }));
+    spawnSync('systemctl', ['--user', 'daemon-reload'], { stdio: 'ignore' });
+    const r = spawnSync('systemctl', ['--user', 'enable', '--now', 'karyasthan'], { stdio: 'ignore' });
+    if (r.status !== 0) { say('! systemd couldn\'t start it. Try: npm start'); return; }
+    say('✓ Started as a user service');
+    say('So it keeps running after you log out, run this once (needs sudo):');
+    say(`    sudo loginctl enable-linger ${process.env.USER || 'you'}`);
+    state.running = 'systemd'; saveState();
+  }
 }
 
 // ── The end ───────────────────────────────────────────────────────────────────
@@ -783,9 +877,12 @@ function finish() {
     for (const l of left) { say(`· ${l.what}`); say(`    ${l.how}`); }
     say('');
     say('Then run: npm start');
+  } else if (state.running) {
+    heading(`Running under ${state.running}.`);
   } else {
     heading('Ready. Start it with: npm start');
   }
+  if (!left.length && state.firstCheck && state.firstCheck !== 'passed') say(`First check: ${state.firstCheck}. npm run doctor checks the rest.`);
   say('');
   if ((current.WARMUP_ENABLED || 'true').toLowerCase() !== 'false') {
     say('What to expect, to protect a new number:');
@@ -890,6 +987,8 @@ async function main() {
   heading('Database');
   await stepDatabase();
   await stepLink();
+  await stepFirstCheck();
+  await stepKeepRunning();
   finish();
   return 0;
 }

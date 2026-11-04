@@ -77,6 +77,14 @@ This links the bot's number to this install, like WhatsApp Web. You'll type a co
 
 On the bot's phone: WhatsApp → Linked Devices → Link a Device → Link with phone number instead. Then keep that phone on, and open WhatsApp at least every 14 days, or WhatsApp drops the link.
 
+## First check
+
+This proves the whole chain on one real message. You send the bot's number a WhatsApp message from your own phone; it arrives, and the reply model writes an answer. Nothing is sent, and only your own direct message is read.
+
+## Keep it running
+
+It has to run all the time. Setup offers pm2 or a systemd user service if it finds them, and starts it with your real paths. It never runs sudo: if a step needs it, like surviving a reboot, it prints the exact line. An unlinked bot under a service doesn't keep retrying: it exits with code 78 and says what to do.
+
 ## Afterwards
 
 ```bash

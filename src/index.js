@@ -1,7 +1,14 @@
 import './utils/privateFiles.js';
+import fs from 'node:fs';
+import path from 'node:path';
 import { downloadMediaMessage, jidNormalizedUser } from '@whiskeysockets/baileys';
-import { config, getPersona } from './utils/config.js';
+import { config, getPersona, getProviderKey } from './utils/config.js';
 import { logger } from './utils/logger.js';
+import { takeLock } from './utils/instanceLock.js';
+import { bootVerdict, credsAreLinked, EXIT_NEEDS_PERSON } from './utils/bootCheck.js';
+import { resolveRole } from './brain/roles.js';
+import { PROVIDER_KEY_FIELD } from './brain/providers.js';
+import { safePath } from './utils/pathGuard.js';
 import { runMigrations, closeDb } from './memory/db.js';
 import { connectToWhatsApp, disconnectFromWhatsApp, getSock } from './whatsapp/connection.js';
 import { registerEventHandlers, setMessageProcessor, buildQuotedWAMessage, waitForMediaDescription, withChatLock } from './whatsapp/events.js';
@@ -60,6 +67,34 @@ logger.info({
   provider: config.llm.provider,
   model: config.llm.model,
 }, `${getPersona().name} starting up...`);
+
+// ── One copy per install, and nothing wrong that needs a person ──
+// (Only a real start: a test imports this file with KARYASTHAN_NO_START=1.)
+let verdict = {};
+if (process.env.KARYASTHAN_NO_START !== '1') {
+  const dataDir = path.dirname(safePath(config.dbPath));
+  const lockedBy = takeLock(dataDir, 'bot');
+  if (lockedBy) {
+    console.error(`\n  Already running (pid ${lockedBy.pid}). Two copies on one session knock each other off WhatsApp.\n`);
+    process.exit(EXIT_NEEDS_PERSON);
+  }
+  let linkedNow = false;
+  try { linkedNow = credsAreLinked(fs.readFileSync(path.join(safePath(config.authPath), 'creds.json'), 'utf-8')); } catch { /* none yet */ }
+  const mouthRole = resolveRole('mouth', config);
+  verdict = bootVerdict({
+    linked: linkedNow,
+    tty: Boolean(process.stdout.isTTY),
+    phone: config.phoneNumber,
+    keyMissing: mouthRole.provider && PROVIDER_KEY_FIELD[mouthRole.provider] && !getProviderKey(mouthRole.provider) ? mouthRole.provider : '',
+    dashboard: config.dashboard?.enabled,
+  });
+  if (verdict.stop) {
+    console.error('');
+    for (const line of verdict.stop) console.error(`  ${line}`);
+    console.error('');
+    process.exit(EXIT_NEEDS_PERSON);
+  }
+}
 
 // ── Initialize database ──
 runMigrations();
@@ -1229,6 +1264,10 @@ async function start() {
       if (s) syncAllGroups(s).catch(err => logger.warn({ err: err.message }, 'Periodic membership sync failed'));
     }, 3 * 60 * 60 * 1000);
 
+    if (verdict.noWhatsApp) {
+      for (const line of verdict.lines) logger.warn(line);
+      return;
+    }
     await connectToWhatsApp(async (connectedSock) => {
       liveSock = connectedSock;
       // Nothing counts as fresh on a new connection until its own sync completes —

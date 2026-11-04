@@ -5,6 +5,8 @@
 #   - User=/Group=    the unix account that owns the install
 #   - the /opt/karyasthan paths below (ExecStart, WorkingDirectory, HOME, ReadWritePaths)
 #   - the node path in ExecStart (run `which node`)
+#   - under /home, ProtectHome=true blocks it: set ProtectHome=false
+# npm run setup can write one with your real paths.
 
 [Unit]
 Description=Karyasthan WhatsApp Agent
@@ -19,6 +21,8 @@ ExecStart=/usr/bin/node /opt/karyasthan/src/index.js
 WorkingDirectory=/opt/karyasthan
 Restart=always
 RestartSec=10
+# 78 = a person is needed (not linked, or already running): don't keep retrying
+RestartPreventExitStatus=78
 TimeoutStopSec=30
 
 # Environment

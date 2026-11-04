@@ -58,7 +58,8 @@ node scripts/public-scan.js <ref> --strict --sources <personality dir> --db <db>
 npm run gen:env -- --check # .env.example's generated roles block matches src/brain/roles.js (`-- --write` regenerates it)
 node scripts/ig-probe.js status|dump|screenshot|clip …  # Poke the Instagram phone through the guarded driver
 npm run inspect        # Inspect/debug memory database content
-node scripts/pair.js [phone]  # Pair WhatsApp via phone number (pairing code flow)
+node scripts/pair.js [phone]  # Pair WhatsApp via phone number (pairing code flow); ends by itself, up to 3 codes
+node scripts/first-check.js   # Setup's first check: one real message in, a reply written, nothing sent
 ```
 
 Set `DRY_RUN=true` in `.env` to log responses instead of sending them to WhatsApp.
@@ -111,6 +112,7 @@ Orchestrated by `src/index.js` which is the main event loop.
 - **Stale turns**: when the 90s in-flight guard fires, the chat lock is released but the slow turn keeps running; it is aborted (`context.turnSignal`) only when a newer turn starts for that chat, and `index.js` checks the signal before each send — no double replies, no half-sent replies.
 - **LLM skip signal**: If LLM returns `[SKIP]` or `SKIP`, interpreted as intentional decision not to respond
 - **Cooldowns are in-memory**: Burst cooldowns reset on restart
+- **One copy, boot check**: `src/utils/instanceLock.js` (`data/.instance-lock`, a dead or foreign holder is stale) and `bootCheck.js` run before migrations. Unlinked with no terminal: exit 78 (service files don't restart on it), or the dashboard stays up with no WhatsApp connection if it's on, so it can link. `scripts/pair.js` prints `PAIRING CODE:`, which the dashboard's pairing job reads.
 - **ESM modules**: Project uses `"type": "module"` — all imports are ES module style
 
 ## Configuration

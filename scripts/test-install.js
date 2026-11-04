@@ -17,6 +17,10 @@ import {
 import { classifyFailure, testModel, isInconclusive } from './setup/keys.js';
 import { HELP } from './setup/help.js';
 import { textHasName } from '../src/utils/nameMatch.js';
+import { bootVerdict } from '../src/utils/bootCheck.js';
+import { takeLock, lockHolder, releaseLock, lockPath } from '../src/utils/instanceLock.js';
+import { nextAfterClose, ownerMessage, MAX_CODES } from './setup/link.js';
+import { renderUserUnit, renderSystemUnit } from './setup/service.js';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const SCRATCH = fs.mkdtempSync(path.join(os.tmpdir(), 'karyasthan-install-'));
@@ -35,7 +39,7 @@ function project(name) {
     filter: (p) => !PRIVATE.test(path.basename(p)) && !p.includes(`${path.sep}public${path.sep}js${path.sep}.hallmark`),
   });
   fs.cpSync(path.join(ROOT, 'scripts/setup'), path.join(dir, 'scripts/setup'), { recursive: true });
-  for (const f of ['scripts/setup.js', 'scripts/doctor.js', 'scripts/pair.js', '.env.example', 'package.json']) fs.copyFileSync(path.join(ROOT, f), path.join(dir, f));
+  for (const f of ['scripts/setup.js', 'scripts/doctor.js', 'scripts/pair.js', 'scripts/first-check.js', '.env.example', 'package.json']) fs.copyFileSync(path.join(ROOT, f), path.join(dir, f));
   // Nothing answers here, whatever runs on this machine.
   const example = path.join(dir, '.env.example');
   fs.writeFileSync(example, fs.readFileSync(example, 'utf-8').replace(/^SEARXNG_URL=.*$/m, 'SEARXNG_URL=http://127.0.0.1:9'));
@@ -186,6 +190,73 @@ for (const [k, text] of Object.entries(HELP)) {
 }
 check('docs/install.md names every template', templates.every((t) => docs.includes(t.label)));
 
+section('one copy, boot check');
+const lockDir = fs.mkdtempSync(path.join(SCRATCH, 'lock-'));
+check('A free lock is taken, private', takeLock(lockDir, 'bot') === null && mode(lockPath(lockDir)) === '600');
+check('Our own lock isn\'t a holder', lockHolder(lockDir) === null);
+releaseLock(lockDir);
+check('Released', !fs.existsSync(lockPath(lockDir)));
+fs.writeFileSync(lockPath(lockDir), '999999 bot\n');
+check('A dead pid is stale and replaced', takeLock(lockDir, 'bot') === null && fs.readFileSync(lockPath(lockDir), 'utf-8').startsWith(`${process.pid} `));
+fs.writeFileSync(lockPath(lockDir), `${process.ppid} bot\n`);
+check('A pid that\'s something else now is stale', lockHolder(lockDir) === null || process.platform !== 'linux');
+// A stand-in for the bot: node running a file at the bot's path.
+const standIn = path.join(SCRATCH, 'stand-in/src/index.js');
+fs.mkdirSync(path.dirname(standIn), { recursive: true });
+fs.writeFileSync(standIn, 'setTimeout(()=>{},60000)');
+const otherApp = path.join(SCRATCH, 'other-app/index.js');
+fs.mkdirSync(path.dirname(otherApp), { recursive: true });
+fs.writeFileSync(otherApp, 'setTimeout(()=>{},60000)');
+const other = spawn(process.execPath, [otherApp], { stdio: 'ignore' });
+await new Promise((r) => setTimeout(r, 300));
+fs.writeFileSync(lockPath(lockDir), `${other.pid} bot\n`);
+check('Another app\'s index.js holding that pid now isn\'t a copy', lockHolder(lockDir) === null || process.platform !== 'linux');
+other.kill('SIGKILL');
+const sleeper = spawn(process.execPath, [standIn], { stdio: 'ignore' });
+await new Promise((r) => setTimeout(r, 300));
+fs.writeFileSync(lockPath(lockDir), `${sleeper.pid} bot\n`);
+const held = lockHolder(lockDir);
+check('A live copy holds it', held?.pid === sleeper.pid, JSON.stringify(held));
+check('A second copy is told who', takeLock(lockDir, 'bot')?.pid === sleeper.pid);
+check('The dashboard\'s pairing job gets through under its parent', takeLock(lockDir, 'pair', { allow: (h) => h.pid === sleeper.pid }) === null && fs.readFileSync(lockPath(lockDir), 'utf-8').startsWith(`${sleeper.pid} `));
+sleeper.kill('SIGKILL');
+const B = { linked: true, tty: false, phone: '1', keyMissing: '', dashboard: false };
+check('Linked with a key: starts', !bootVerdict(B).stop && !bootVerdict(B).noWhatsApp);
+check('No key, no dashboard: stops', bootVerdict({ ...B, keyMissing: 'gemini' }).stop?.[0].includes('gemini'));
+check('No key, dashboard on: starts, a key can be added there', !bootVerdict({ ...B, keyMissing: 'gemini', dashboard: true }).stop);
+check('Unlinked under a service: stops, no codes in a log', bootVerdict({ ...B, linked: false }).stop?.join(' ').includes('npm run setup'));
+check('Unlinked under a service with a dashboard: up, no WhatsApp', bootVerdict({ ...B, linked: false, dashboard: true }).noWhatsApp === true);
+check('Unlinked in a terminal with a number: goes on to show a code', !bootVerdict({ ...B, linked: false, tty: true }).stop);
+check('Unlinked in a terminal, no number: says so', bootVerdict({ ...B, linked: false, tty: true, phone: '' }).stop?.[0].includes('number'));
+
+section('linking');
+const R = { loggedOut: 401, restartRequired: 515 };
+check('Logged out before any code: its own exit', nextAfterClose(401, { codesShown: 0, ...R }).exit === 3);
+check('A refused number stops, no retry loop', nextAfterClose(403, { codesShown: 1, ...R }).exit === 5 && nextAfterClose(405, { codesShown: 1, ...R }).exit === 5);
+check('A restart after linking is quick', nextAfterClose(515, { codesShown: 1, ...R }).delayMs === 500);
+check('A code running out earns a new one', nextAfterClose(408, { codesShown: 1, ...R }).newCode === true);
+check('Codes stop at the cap', nextAfterClose(408, { codesShown: MAX_CODES, ...R }).exit === 4);
+check('Anything else waits and retries', nextAfterClose(428, { codesShown: 1, ...R }).delayMs === 10000);
+check('pair.js prints the label the dashboard reads', fs.readFileSync(path.join(ROOT, 'scripts/pair.js'), 'utf-8').includes('PAIRING CODE: ${code}') && fs.readFileSync(path.join(ROOT, 'src/dashboard/routes/pair.js'), 'utf-8').includes('PAIRING CODE:'));
+const dm = (remoteJid, text, extra = {}) => ({ key: { remoteJid, ...extra }, message: { conversation: text } });
+check('The owner\'s DM counts', ownerMessage(dm('15550100456@s.whatsapp.net', 'hi'), '15550100456')?.confirmed === true);
+check('Through its phone beside a LID too', ownerMessage(dm('123@lid', 'hi', { remoteJidAlt: '15550100456@s.whatsapp.net' }), '15550100456')?.confirmed === true);
+check('A LID with nothing beside it asks first', ownerMessage(dm('123@lid', 'hi'), '15550100456')?.confirmed === false);
+check('Someone else\'s message is ignored', ownerMessage(dm('15550100999@s.whatsapp.net', 'secret'), '15550100456') === null);
+check('A group never counts', ownerMessage(dm('1@g.us', 'hi', { participant: '15550100456@s.whatsapp.net' }), '15550100456') === null);
+check('Its own message never counts', ownerMessage(dm('15550100456@s.whatsapp.net', 'hi', { fromMe: true }), '15550100456') === null);
+check('No owner number: asks who, with the number', ownerMessage(dm('15550100456@s.whatsapp.net', 'hi'), '')?.from === '15550100456');
+const fc = fs.readFileSync(path.join(ROOT, 'scripts/first-check.js'), 'utf-8');
+check('The first check can\'t send or mark read', !/sendMessage|readMessages|sendReceipt|sendPresenceUpdate/.test(fc) && /markOnlineOnConnect: false/.test(fc));
+
+section('service files');
+const FAKE_HOME = ['', 'home', 'sam'].join('/');   // built, so the repo's path check stays strict
+const user = renderUserUnit({ root: `${FAKE_HOME}/karyasthan`, node: '/opt/node/bin/node' });
+check('A user unit has the real paths and doesn\'t restart on 78', user.includes(`ExecStart=/opt/node/bin/node ${FAKE_HOME}/karyasthan/src/index.js`) && user.includes(`WorkingDirectory=${FAKE_HOME}/karyasthan`) && user.includes('RestartPreventExitStatus=78'));
+const sys = (root) => renderSystemUnit({ root, node: '/usr/bin/node', user: 'sam' });
+check('A system unit under /home doesn\'t block itself', sys(`${FAKE_HOME}/k`).includes('ProtectHome=false') && sys('/opt/k').includes('ProtectHome=true') && sys('/opt/k').includes('User=sam'));
+check('The committed unit doesn\'t restart on 78', fs.readFileSync(path.join(ROOT, 'karyasthan.service'), 'utf-8').includes('RestartPreventExitStatus=78'));
+
 // ── setup.js ──────────────────────────────────────────────────────────────────
 const hasScript = spawnSync('script', ['--version'], { stdio: 'ignore' }).status === 0;
 section('setup.js in a real terminal');
@@ -270,6 +341,42 @@ if (!hasScript) {
   const cfg = spawnSync('node', ['--input-type=module', '-e', `process.env.DOTENV_CONFIG_QUIET='true';const {config}=await import('./src/utils/config.js');const {resolveRole}=await import('./src/brain/roles.js');const r=n=>resolveRole(n,config);console.log(JSON.stringify({m:r('mouth').chain,g:r('gate').chain,c:r('clerk').chain,d:r('mind').chain,f:r('desire').disabled}))`], { cwd: a, env: cleanEnv(), encoding: 'utf-8' });
   let roles = {}; try { roles = JSON.parse(cfg.stdout.trim().split('\n').pop()); } catch { /* reported below */ }
   check('the bot reads these as its roles', roles.m?.[0]?.model === 'claude-haiku-5-5' && roles.m?.length === 1 && roles.g?.[0]?.provider === 'anthropic' && roles.c?.[0]?.model === 'claude-haiku-5-5' && roles.d?.[0]?.model === 'claude-opus-5-5' && roles.f === true, cfg.stdout + cfg.stderr);
+
+  // Linked now: the last steps run. Stubs stand in for the service managers and the check.
+  const bin = path.join(SCRATCH, 'svc-bin'); fs.mkdirSync(bin, { recursive: true });
+  const svcLog = path.join(SCRATCH, 'svc.log');
+  fs.writeFileSync(path.join(bin, 'pm2'), `#!/bin/sh\necho "pm2 $*" >> "${svcLog}"\n[ "$1" = "--version" ] && echo 5\n[ "$1" = "pid" ] && echo 0\nexit 0\n`, { mode: 0o755 });
+  fs.writeFileSync(path.join(bin, 'systemctl'), `#!/bin/sh\necho "systemctl $*" >> "${svcLog}"\nexit 0\n`, { mode: 0o755 });
+  const c2 = project('run-steps');
+  fs.mkdirSync(path.join(c2, 'data/auth_info_baileys'), { recursive: true });
+  fs.writeFileSync(path.join(c2, 'data/auth_info_baileys/creds.json'), '{"registered":true}');
+  fs.writeFileSync(path.join(c2, '.env'), 'LLM_PROVIDER=ollama\nLLM_MODEL=m\nWA_PHONE_NUMBER=15550100123\nTIMEZONE=UTC\n');
+  fs.writeFileSync(path.join(c2, 'src/personality/persona.json'), JSON.stringify({ name: 'Sam' }));
+  fs.writeFileSync(path.join(c2, 'src/personality/identity.md'), 'x');
+  const svc = await terminal(c2, [['Choose', '8\r'], ['Choose', '1\r'], ['Choose', '9\r']], { env: { PATH: `${bin}:${process.env.PATH}` } });
+  const calls = fs.existsSync(svcLog) ? fs.readFileSync(svcLog, 'utf-8') : '';
+  check('pm2: starts under its name, won\'t restart on 78, saved', calls.includes('pm2 start src/index.js --name karyasthan') && calls.includes('--stop-exit-codes 78') && calls.includes('pm2 save'), calls + svc.out.slice(-300));
+  check('pm2: sudo is printed, never run', svc.out.includes('needs sudo') && svc.out.includes('pm2 startup') && !calls.includes('startup'), svc.out.slice(-300));
+  fs.rmSync(svcLog, { force: true });
+  const c3home = path.join(SCRATCH, 'svc-home'); fs.mkdirSync(c3home, { recursive: true });
+  const svc2 = await terminal(c2, [['Choose', '8\r'], ['Choose', '2\r'], ['Choose', '9\r']], { env: { PATH: `${bin}:${process.env.PATH}`, HOME: c3home } });
+  const unit = path.join(c3home, '.config/systemd/user/karyasthan.service');
+  check('systemd: writes a user unit with real paths and starts it', fs.existsSync(unit) && fs.readFileSync(unit, 'utf-8').includes(c2) && fs.readFileSync(svcLog, 'utf-8').includes('enable --now karyasthan'), svc2.out.slice(-300));
+  check('systemd: the linger line is printed, never run', svc2.out.includes('enable-linger'));
+  const lockd = project('locked');
+  fs.mkdirSync(path.join(lockd, 'data'), { recursive: true, mode: 0o700 });
+  const copy = spawn(process.execPath, [standIn], { stdio: 'ignore' });
+  await new Promise((r) => setTimeout(r, 300));
+  fs.writeFileSync(path.join(lockd, 'data/.instance-lock'), `${copy.pid} bot\n`);
+  const pr = spawnSync('node', ['scripts/pair.js', '15550100123'], { cwd: lockd, env: cleanEnv(), encoding: 'utf-8', timeout: 20000 });
+  check('pair.js won\'t run beside a live copy: exit 78, says so', pr.status === 78 && pr.stderr.includes('already running'), `${pr.status} ${pr.stderr}`);
+  const fcr = spawnSync('node', ['scripts/first-check.js'], { cwd: lockd, env: cleanEnv(), encoding: 'utf-8', timeout: 20000 });
+  check('first-check won\'t run beside a live copy', fcr.status === 78, `${fcr.status} ${fcr.stderr}`);
+  copy.kill('SIGKILL');
+  const boots = project('boot');
+  fs.writeFileSync(path.join(boots, '.env'), 'LLM_PROVIDER=ollama\nLLM_MODEL=m\nWA_PHONE_NUMBER=15550100123\nDASHBOARD_ENABLED=false\n');
+  const bo = spawnSync('node', ['src/index.js'], { cwd: boots, env: cleanEnv(), encoding: 'utf-8', timeout: 30000 });
+  check('The bot unlinked with no terminal: exit 78, no WhatsApp, no database', bo.status === 78 && bo.stderr.includes('Not linked') && !fs.existsSync(path.join(boots, 'data/auth_info_baileys')) && !fs.existsSync(path.join(boots, 'data/karyasthan.db')), `${bo.status} ${bo.stderr.slice(-300)}`);
 
   const again = await terminal(a, [['Choose', '\r']]);
   const unchanged = readEnv(a);

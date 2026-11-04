@@ -249,13 +249,7 @@ export function validateHeadless(env, { personaExists = false, currentEnv = {} }
   return errors;
 }
 
-/** Baileys' creds.json body → is this session linked? */
-export function credsAreLinked(text) {
-  try {
-    const c = JSON.parse(text);
-    return Boolean(c.registered || c.me?.id);
-  } catch { return false; }
-}
+export { credsAreLinked } from '../../src/utils/bootCheck.js';
 
 /** What still stands between this install and working. Empty means ready. */
 export function whatsLeft(current, { linked = false } = {}) {
@@ -265,6 +259,6 @@ export function whatsLeft(current, { linked = false } = {}) {
   if (!provider || !current.LLM_MODEL) left.push({ what: 'A model for replies', how: 'npm run setup' });
   else if (def?.keyEnv && !current[def.keyEnv]) left.push({ what: `A ${def.label} key for replies`, how: `Add ${def.keyEnv} to .env (${def.keyUrl})` });
   if (!current.WA_PHONE_NUMBER) left.push({ what: 'The WhatsApp number', how: 'npm run setup' });
-  if (!linked) left.push({ what: 'Link WhatsApp', how: `node scripts/pair.js ${current.WA_PHONE_NUMBER || '<number>'}` });
+  if (!linked) left.push({ what: 'Link WhatsApp', how: 'npm run setup   (choose Link WhatsApp)' });
   return left;
 }
