@@ -98,6 +98,11 @@ export const MIND = S.obj({
   interests: S.arr(S.obj({ topic: S.str(40), value: S.num(0, 1), trend: MIND_TREND, why: S.str(160), since: S.time() }), MIND_ROWS_MAX),
   opinions: S.arr(S.obj({ topic: S.str(40), stance: S.num(-1, 1), trend: MIND_TREND, why: S.str(160), since: S.time() }), MIND_ROWS_MAX),
 });
+// plan 020 D2: how things stand with each fictional cast member. The site has the name by id, so the row carries none.
+export const STANDING_SCHEMA_VERSION = 1;
+export const STANDING_TEXT_MAX = 600;
+export const STANDING_PEOPLE_MAX = 40;   // people.cast's own cap: one row per member at most
+export const STANDING = S.obj({ people: S.arr(S.obj({ id: S.tok(ID.c), text: S.str(STANDING_TEXT_MAX), since: S.time() }), STANDING_PEOPLE_MAX) });
 // ── 019 phone (contracts/public-json.md "phone"): optional, additive like scenes / wallet ──
 // His in-world texts with fictional cast members only; every text scrubbed like all prose.
 export const PHONE_SCHEMA_VERSION = 1;
@@ -194,14 +199,17 @@ export const SCHEMA = S.obj({
   dreamsSchema: opt(S.lit(DREAMS_SCHEMA_VERSION)),
   mind: opt(MIND),
   mindSchema: opt(S.lit(MIND_SCHEMA_VERSION)),
+  standing: opt(STANDING),
+  standingSchema: opt(S.lit(STANDING_SCHEMA_VERSION)),
 });
 
 /**
  * Plan 020's keys, what the schema language can't say. Every person is a cast member of this document and every place a place of it,
- * never home; a private session's live line is the bare word and nothing beside it; times in order; ids unique; a fragment stays short.
+ * never home; a private session's live line is the bare word and nothing beside it; times in order; ids unique; a fragment stays short;
+ * a standing row is one per cast member of this document.
  */
 function feedRules(doc, errs) {
-  for (const k of ['live', 'thoughts', 'dreams', 'mind']) if (`${k}Schema` in doc !== k in doc) errs.push(`$.${k}Schema:without_${k}`);
+  for (const k of ['live', 'thoughts', 'dreams', 'mind', 'standing']) if (`${k}Schema` in doc !== k in doc) errs.push(`$.${k}Schema:without_${k}`);
   const castIds = new Set((doc.people?.cast ?? []).map((c) => c?.id));
   const placeIds = new Set((doc.city?.places ?? []).map((p) => p?.id));
   const live = doc.live;
@@ -234,6 +242,14 @@ function feedRules(doc, errs) {
       if (d?.recall === 'fragment' && typeof d.text === 'string' && d.text.length > DREAM_FRAGMENT_MAX) errs.push(`$.dreams[${i}].text:fragment_too_long`);
       (d?.with ?? []).forEach((c, j) => { if (!castIds.has(c)) errs.push(`$.dreams[${i}].with[${j}]:not_cast`); });
       (d?.placeIds ?? []).forEach((p, j) => { if (!placeIds.has(p)) errs.push(`$.dreams[${i}].placeIds[${j}]:not_place`); });
+    });
+  }
+  if (Array.isArray(doc.standing?.people)) {
+    const seen = new Set();
+    doc.standing.people.forEach((r, i) => {
+      if (!castIds.has(r?.id)) errs.push(`$.standing.people[${i}].id:not_cast`);
+      if (seen.has(r?.id)) errs.push(`$.standing.people[${i}].id:duplicate`);
+      seen.add(r?.id);
     });
   }
 }

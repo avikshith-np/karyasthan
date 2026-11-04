@@ -240,6 +240,7 @@ section('revert: a version whose evidence left is invalidated at once for the wr
   check('the owner reverted it', Number.isSafeInteger(res.revertEventId), JSON.stringify(res));
   const s = life.getState();
   eq('the sheet reads none at once, before any sweep', worker.noteAt(s, SIB, clock.now()), null);
+  check('the site rows drop it at once too', !story.publicStanding().some(x => x.castId === SIB), story.publicStanding().map(x => x.castId));
   worker.sweep(s);
   const gone = store.get(v2.id);
   eq('invalidated', [gone.status, gone.invalidReason], ['invalidated', 'evidence_gone']);
@@ -251,6 +252,7 @@ section('revert: a version whose evidence left is invalidated at once for the wr
   const back = store.live(SIB);
   eq('…word for word', [back.text, back.supersedes], [v1.text, v1.id]);
   eq('readable again', worker.noteAt(life.getState(), SIB, clock.now())?.versionId, back.id);
+  eq('…and the site has the one that stands', story.publicStanding().find(x => x.castId === SIB)?.text, v1.text);
   void b1;
 }
 
@@ -665,7 +667,7 @@ section('the mind\'s sleep step runs it, on the clerk, counted, and it never cha
   sleep.__setDepsForTest(null);
 }
 
-section('the site: rows ready, not exported yet');
+section('the site: the rows the exporter reads');
 {
   check('rows for fictional members, before the heavy stretch began', siteRows.length > 0 && siteRows.every(r => r.castId.startsWith('cast:') && typeof r.text === 'string' && Number.isFinite(r.validFrom)), siteRows.length);
   eq('nothing while a note was written inside a heavy window', story.publicStanding().filter(r => worker.view(r.castId).current?.validFrom >= heavyAt - 2 * DAY).length, 0);
@@ -678,7 +680,7 @@ section('the site: rows ready, not exported yet');
     { castId: 'cast:a', text: 'Near Greenfield House again.', validFrom: 1000 },
     { castId: 'cast:a', text: 'A Secret thing.', validFrom: 1000 },
   ], raw, persona: {}, scrubber, venueWords: (t) => t.replace('Blue Tokai', 'a cafe'), castById, tz });
-  eq('venue words, the home check, the scrubber; only people in the document', out.people, [{ id: 'c_1', name: 'A', text: 'They went to a cafe.', since: 1000 }]);
+  eq('venue words, the home check, the scrubber; only people in the document; no name (the site has it by id)', out.people, [{ id: 'c_1', text: 'They went to a cafe.', since: 1000 }]);
   eq('no venue rule: no text at all', buildStanding({ rows: [], raw, persona: {}, scrubber, venueWords: null, castById, tz }).people, []);
 }
 

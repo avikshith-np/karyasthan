@@ -2397,7 +2397,7 @@ export async function storyStandingPass(opts = {}) {
   return story.standingPass(opts);
 }
 
-/** 020 D2: the site's rows for fictional people, ready and not exported yet: [{ castId, text, validFrom }]. */
+/** 020 D2: the site's rows for fictional people (the exporter's `standing` key): [{ castId, text, validFrom }]. */
 export function publicStanding() {
   return story.publicStanding();
 }

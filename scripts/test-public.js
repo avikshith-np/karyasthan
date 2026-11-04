@@ -143,9 +143,9 @@ section('3. schema');
   check('the offline doc validates', validateOffline(off).ok);
   check('the offline doc refuses extra keys', !validateOffline({ ...off, now: {} }).ok);
   check('validate() without a scrubber fails closed', !validate({}, null).ok);
-  // 15 keys of 013 + 016's optional scenes / scenesSchema + 018's optional wallet / walletSchema + 019's phone / phoneSchema + 020's live, thoughts, dreams, mind and their schemas.
-  check('the schema is closed (an object spec lists its keys)', SCHEMA.t === 'obj' && Object.keys(SCHEMA.shape).length === 29
-    && ['live', 'liveSchema', 'thoughts', 'thoughtsSchema', 'dreams', 'dreamsSchema', 'mind', 'mindSchema'].every((k) => SCHEMA.shape[k]?.optional === true)
+  // 15 keys of 013 + 016's optional scenes / scenesSchema + 018's optional wallet / walletSchema + 019's phone / phoneSchema + 020's live, thoughts, dreams, mind, standing and their schemas.
+  check('the schema is closed (an object spec lists its keys)', SCHEMA.t === 'obj' && Object.keys(SCHEMA.shape).length === 31
+    && ['live', 'liveSchema', 'thoughts', 'thoughtsSchema', 'dreams', 'dreamsSchema', 'mind', 'mindSchema', 'standing', 'standingSchema'].every((k) => SCHEMA.shape[k]?.optional === true)
     && SCHEMA.shape.scenes.optional === true && SCHEMA.shape.scenesSchema.optional === true && SCHEMA.shape.v.v === 1
     && SCHEMA.shape.wallet.optional === true && SCHEMA.shape.walletSchema.optional === true
     && SCHEMA.shape.phone.optional === true && SCHEMA.shape.phoneSchema.optional === true);
@@ -1026,20 +1026,32 @@ section('15. the feed (plan 020: optional keys beside v 1, each with its own sch
     { topic: 'kind:y', label: 'y', kind: 'interest', value: 0.9, trend: 'up', why: 'with Priya Raman', since: t },
     { topic: 'kind:z', label: 'z', kind: 'interest', value: 0.9, trend: 'up', why: 'it went well', since: t, subjectJid: P1 },
   ];
+  const B = castNow.find((c) => c.id !== A.id);
+  const STANDING = [
+    { castId: A.id, text: 42, validFrom: t },
+    { castId: A.id, text: 'STANDINGNOTIME', validFrom: Number.NaN },
+    { castId: A.id, text: 'They have been meeting at Bean Bar Northside most weeks, and it is easy between them.', validFrom: t - 3 * 86400 },
+    { castId: A.id, text: 'STANDINGDUPLICATE', validFrom: t - 86400 },
+    { castId: B.id, text: 'Things cooled after he backed out twice.', validFrom: t - 2 * 86400 },
+    { castId: 'cast:not-in-his-life', text: 'STANDINGNOTCAST', validFrom: t },
+    { castId: P1, text: 'STANDINGREALPERSON', validFrom: t },
+    { text: 'STANDINGNOID', validFrom: t },
+  ];
   let live = LIVE;
   let mind = MIND;
+  let standing = STANDING;
   const useDeps = (raw) => pub.__setDepsForTest({
     publicRaw: () => structuredClone(raw), venueWords: venueStub, publicLive: () => { if (live === 'throw') throw new Error('read'); return live; },
     publicThoughts: (ids2) => lifeP.publicThoughts(ids2),
     publicDreams: (ids2) => new Map(ids2.filter((id) => typeof DW[id] === 'string').map((id) => [id, words(id)])),
     publicMind: () => { if (mind === 'throw') throw new Error('read'); return mind; },
+    publicStanding: () => { if (standing === 'throw') throw new Error('read'); return standing; },
   });
   const exportDoc = async (raw = calm) => { useDeps(raw); clock.advance?.(60); const r = await pub.exportNow({ force: true }); return { r, body: puts.at(-1).body, d: JSON.parse(puts.at(-1).body) }; };
 
   const { r: r15, body, d } = await exportDoc();
   check('the export with all four goes out', r15.status === 'ok' || r15.status === 'unchanged', r15);
-  eq('v stays 1, each key with its own number', [d.v, d.liveSchema, d.thoughtsSchema, d.dreamsSchema, d.mindSchema], [1, 1, 1, 1, 1]);
-  check('standing is phase 4: not here', !('standing' in d));
+  eq('v stays 1, each key with its own number', [d.v, d.liveSchema, d.thoughtsSchema, d.dreamsSchema, d.mindSchema, d.standingSchema], [1, 1, 1, 1, 1, 1]);
 
   const castPub = new Set(d.people.cast.map((c) => c.id));
   const placePub = new Set(d.city.places.map((p) => p.id));
@@ -1063,13 +1075,19 @@ section('15. the feed (plan 020: optional keys beside v 1, each with its own sch
   eq('mind: flat reads as steady', d.mind.interests[1].trend, 'steady');
   check('mind: the code-built why', d.mind.interests[0].why === 'it went well');
 
-  const forbidden = ['Priya', 'Raman', G.split('@')[0], '@g.us', '@lid', P1.split('@')[0], 'DREAMCHATTEXT', 'DREAMSUBJECTTEXT', 'DREAMHEAVYTEXT', 'DREAMCHAINTEXT', 'DREAMREDACTEDTEXT', 'DREAMDEPARTEDTEXT', 'THOUGHTCHATTEXT', 'THOUGHTWORDLESSTEXT', 'THOUGHTCHATEVIDENCE', 'THOUGHTHEAVYEVIDENCE', 'THOUGHTGONEEVIDENCE', 'cast:', 'place:'];
-  eq('canary: nothing private in any of the four', forbidden.filter((f) => body.includes(f)), []);
+  const pubOf = (c) => d.people.cast.find((x) => x.name === c.name)?.id;
+  eq('standing: one row per member of this document, no name, venue words; malformed, a duplicate, someone not in his cast and a real person dropped',
+    d.standing.people.map((r) => [r.id, r.text, r.since]),
+    [[pubOf(A), 'They have been meeting at a bar most weeks, and it is easy between them.', t - 3 * 86400], [pubOf(B), 'Things cooled after he backed out twice.', t - 2 * 86400]]);
+  check('standing: every row is id, text, since', d.standing.people.every((r) => Object.keys(r).sort().join() === 'id,since,text'));
+
+  const forbidden = ['STANDINGNOTIME', 'STANDINGDUPLICATE', 'STANDINGNOTCAST', 'STANDINGREALPERSON', 'STANDINGNOID', 'Priya', 'Raman', G.split('@')[0], '@g.us', '@lid', P1.split('@')[0], 'DREAMCHATTEXT', 'DREAMSUBJECTTEXT', 'DREAMHEAVYTEXT', 'DREAMCHAINTEXT', 'DREAMREDACTEDTEXT', 'DREAMDEPARTEDTEXT', 'THOUGHTCHATTEXT', 'THOUGHTWORDLESSTEXT', 'THOUGHTCHATEVIDENCE', 'THOUGHTHEAVYEVIDENCE', 'THOUGHTGONEEVIDENCE', 'cast:', 'place:'];
+  eq('canary: nothing private in any of the five', forbidden.filter((f) => body.includes(f)), []);
 
   // A sample for the site (public-site builds its views against it).
   if (process.env.FEED_SAMPLE) {
-    const used = new Set([...d.live.with, ...d.dreams.flatMap((x) => x.with)]);
-    fs.writeFileSync(process.env.FEED_SAMPLE, JSON.stringify({ v: d.v, people: { cast: d.people.cast.filter((c) => used.has(c.id)) }, live: d.live, liveSchema: d.liveSchema, thoughts: d.thoughts, thoughtsSchema: d.thoughtsSchema, dreams: d.dreams, dreamsSchema: d.dreamsSchema, mind: d.mind, mindSchema: d.mindSchema }, null, 2));
+    const used = new Set([...d.live.with, ...d.dreams.flatMap((x) => x.with), ...d.standing.people.map((x) => x.id)]);
+    fs.writeFileSync(process.env.FEED_SAMPLE, JSON.stringify({ v: d.v, people: { cast: d.people.cast.filter((c) => used.has(c.id)) }, live: d.live, liveSchema: d.liveSchema, thoughts: d.thoughts, thoughtsSchema: d.thoughtsSchema, dreams: d.dreams, dreamsSchema: d.dreamsSchema, mind: d.mind, mindSchema: d.mindSchema, standing: d.standing, standingSchema: d.standingSchema }, null, 2));
   }
 
   section('15b. live: the cases that say less');
@@ -1100,13 +1118,29 @@ section('15. the feed (plan 020: optional keys beside v 1, each with its own sch
   check('nothing to say: no mind key', !('mind' in (await exportDoc()).d));
   mind = MIND;
 
+  section('15b2. standing: the cases that say less');
+  standing = undefined;
+  check('no standing to ask: no standing key', !('standing' in (await exportDoc()).d));
+  standing = 'throw';
+  const st = await exportDoc();
+  check('a failed read: no standing key, the export goes on', (st.r.status === 'ok' || st.r.status === 'unchanged') && !('standing' in st.d) && !('standingSchema' in st.d));
+  standing = [];
+  check('nothing to say: no standing key', !('standing' in (await exportDoc()).d));
+  standing = [{ castId: A.id, text: 'Lunch with Priya Raman again, and she was fine.', validFrom: t }];
+  const sr = await exportDoc();
+  check('a note naming a real person: dropped, no key, never in the document', !('standing' in sr.d) && !sr.body.includes('Priya'));
+  standing = [{ castId: A.id, text: 'Not much since the move.', validFrom: t }, { castId: B.id, text: 'STANDINGNEARHEAVY', validFrom: t - 39 * 86400 }];
+  const sh = await exportDoc({ ...structuredClone(calm), heavyAt: [t - 40 * 86400] });
+  eq('a note written near a heavy onset is dropped, the rest kept', sh.d.standing?.people.map((r) => r.text), ['Not much since the move.']);
+  standing = STANDING;
+
   section('15c. a heavy window: nothing');
   const hard = { ...structuredClone(rawP), heavyAt: [], now: { ...structuredClone(rawP.now), hardStretch: true } };
   const dh = (await exportDoc(hard)).d;
-  check('a hard stretch: no live, no thoughts, no dreams, no mind', dh.live === null && dh.thoughts.length === 0 && dh.dreams.length === 0 && !('mind' in dh), [dh.live, dh.thoughts?.length, dh.dreams?.length]);
+  check('a hard stretch: no live, no thoughts, no dreams, no mind, no standing', dh.live === null && dh.thoughts.length === 0 && dh.dreams.length === 0 && !('mind' in dh) && !('standing' in dh), [dh.live, dh.thoughts?.length, dh.dreams?.length]);
   const onset = { ...structuredClone(calm), heavyAt: [t - 86400] };   // the rows below all fall within a day of it
   const dn = (await exportDoc(onset)).d;
-  check('near an onset: the same', dn.live === null && dn.thoughts.length === 0 && dn.dreams.length === 0 && !('mind' in dn), [dn.live, dn.thoughts?.length, dn.dreams?.length, 'mind' in dn, t, onset.at]);
+  check('near an onset: the same', dn.live === null && dn.thoughts.length === 0 && dn.dreams.length === 0 && !('mind' in dn) && !('standing' in dn));
   live = { private: true };
   eq('…a private session too', (await exportDoc(hard)).d.live, null);
   live = LIVE;
@@ -1150,8 +1184,16 @@ section('15. the feed (plan 020: optional keys beside v 1, each with its own sch
   refuse('13 interests', (x) => { x.mind.interests = Array(13).fill(x.mind.interests[0]); });
   refuse('a why naming a real person', (x) => { x.mind.interests[0].why = 'lunch with Priya Raman'; }, /real_name/);
   refuse('an extra key on an interest', (x) => { x.mind.interests[0].origin = 'self'; }, /origin:unknown_key/);
+  refuse('standing without its number', (x) => { delete x.standingSchema; }, /standingSchema:without_standing/);
+  refuse('standingSchema 2', (x) => { x.standingSchema = 2; });
+  refuse('a standing row for someone not in the document', (x) => { x.standing.people[0].id = 'c_0123456789'; }, /standing\.people\[0\]\.id:not_cast/);
+  refuse('two standing rows for one member', (x) => { x.standing.people[1].id = x.standing.people[0].id; }, /duplicate/);
+  refuse('a standing row with a name', (x) => { x.standing.people[0].name = 'x'; }, /name:unknown_key/);
+  refuse('a long standing note', (x) => { x.standing.people[0].text = 'x'.repeat(601); });
+  refuse('41 standing rows', (x) => { x.standing.people = Array(41).fill(x.standing.people[0]); });
+  refuse('a standing note naming a real person', (x) => { x.standing.people[0].text = 'lunch with Priya Raman'; }, /real_name/);
 
-  pub.__setDepsForTest({ publicRaw: (o) => lifeP.publicRaw(o), publicLive: () => lifeP.publicLive(), publicThoughts: (x) => lifeP.publicThoughts(x), publicDreams: (x) => lifeP.publicDreams(x), publicMind: () => lifeP.publicMind(), venueWords: (x) => lifeP.venueKindWords(x) });
+  pub.__setDepsForTest({ publicRaw: (o) => lifeP.publicRaw(o), publicLive: () => lifeP.publicLive(), publicThoughts: (x) => lifeP.publicThoughts(x), publicDreams: (x) => lifeP.publicDreams(x), publicMind: () => lifeP.publicMind(), publicStanding: () => lifeP.publicStanding(), venueWords: (x) => lifeP.venueKindWords(x) });
 }
 // ── 16. a real name's lone word ───────────────────────────────────────────────
 section('16. a real name\'s every word: dropped where free text holds it, soft where code built it');

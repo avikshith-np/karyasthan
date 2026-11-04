@@ -109,7 +109,7 @@ It refuses, and says why, on any branch but `main`, with changes to tracked file
 
 If something fails, the code and packages go back and it starts again on the old version. The one exception: if the database was already upgraded, the old code refuses it, so the bot stays stopped and the exact steps to go back are printed. Those steps lose every message since the backup, so they're yours to choose. It never restores a database by itself.
 
-With no terminal, use `npm run update -- --yes`.
+With no terminal, use `npm run update -- --yes`. It keeps its newest 5 backups in `data/backups/` and removes older ones after a good update.
 
 ## Backing up, and moving to a new machine
 

@@ -11,6 +11,7 @@ import { fileURLToPath } from 'node:url';
 import { gzipSync } from 'node:zlib';
 import {
   refusal, migrationFiles, latestVersion, migrationPlan, describeUpdate, oldCodeRefuses, restoreSteps,
+  oldUpdateBackups,
 } from './setup/update-plan.js';
 import { checkEntries, listEntries } from './setup/backup-archive.js';
 import { shellQuote, isInside, checkoutFacts } from './setup/day-two.js';
@@ -516,6 +517,30 @@ else {
 }
 
 // ── update: going back ────────────────────────────────────────────────────────
+section('update: old backups');
+check('keeps the newest few of its own, by name', oldUpdateBackups(['update-20200101T000000Z', 'update-20200102T000000Z', 'update-20200103T000000Z'], 2).join() === 'update-20200101T000000Z');
+check('nothing else counts as its own', oldUpdateBackups(['karyasthan-x-pre.db', 'update-notes', 'update-2020', 'full.tar.gz'], 0).length === 0);
+{
+  const repo = scaffold('prune');
+  publish(repo, { 'another.txt': 'x' });
+  await startBot(repo, 'pm2');
+  const bdir = path.join(repo.dir, 'data/backups');
+  fs.mkdirSync(bdir, { recursive: true });
+  const olds = [1, 2, 3, 4, 5, 6, 7].map((d) => `update-2020010${d}T000000Z`);
+  for (const n of olds) fs.mkdirSync(path.join(bdir, n));
+  fs.writeFileSync(path.join(bdir, 'karyasthan-x-pre.db'), 'mine');
+  fs.mkdirSync(path.join(bdir, 'update-notes'));
+  fs.writeFileSync(path.join(bdir, 'update-20190101T000000Z'), 'a file, not a folder');
+  const r = await upd(repo);
+  const left = fs.readdirSync(bdir);
+  const updates = left.filter((n) => /^update-\d{8}T/.test(n) && fs.statSync(path.join(bdir, n)).isDirectory());
+  check('after a good update, the newest 5 folders stay', r.code === 0 && updates.length === 5 && updates.includes('update-20200107T000000Z') && !updates.includes('update-20200103T000000Z') && updates.some((n) => !olds.includes(n)), `${r.code} ${left.join()}`);
+  check('says what it removed', r.out.includes('older update backups, keeping the newest 5'), r.out.slice(-300));
+  check('other backups stay', left.includes('karyasthan-x-pre.db') && left.includes('update-notes'), left.join());
+  check('a file with that kind of name isn\'t its own', fs.existsSync(path.join(bdir, 'update-20190101T000000Z')));
+  await stopBot(repo);
+}
+
 section('update: a failed update goes back');
 {
   const repo = scaffold('fail-npm');

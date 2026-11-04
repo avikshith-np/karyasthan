@@ -10,7 +10,7 @@
 import crypto from 'crypto';
 import { FICTION, GRID, SCENE_ENDINGS, SCENE_MAX, SCENE_PARAS_MAX, SCENE_TEXT_MAX, SCENE_SCHEMA_VERSION, validateScene,
   WALLET_SCHEMA_VERSION, WALLET_CATEGORIES, WALLET_ITEMS_MAX, WALLET_DAYS_MAX,
-  PHONE_SCHEMA_VERSION, PHONE_THREADS_MAX, PHONE_THREAD_MESSAGES_MAX, PHONE_MESSAGES_MAX, PHONE_TEXT_MAX, DREAMS_MAX, DREAMS_SCHEMA_VERSION, DREAM_FRAGMENT_MAX, DREAM_TONES, DREAM_VIVID_MAX, LIVE_BEATS_MAX, LIVE_PHASES, LIVE_PRIVATE_LINE, LIVE_SCHEMA_VERSION, LIVE_WITH_MAX, MIND_ROWS_MAX, MIND_SCHEMA_VERSION, THOUGHTS_MAX, THOUGHTS_SCHEMA_VERSION, THOUGHT_TEXT_MAX } from './schema.js';
+  PHONE_SCHEMA_VERSION, PHONE_THREADS_MAX, PHONE_THREAD_MESSAGES_MAX, PHONE_MESSAGES_MAX, PHONE_TEXT_MAX, DREAMS_MAX, DREAMS_SCHEMA_VERSION, DREAM_FRAGMENT_MAX, DREAM_TONES, DREAM_VIVID_MAX, LIVE_BEATS_MAX, LIVE_PHASES, LIVE_PRIVATE_LINE, LIVE_SCHEMA_VERSION, LIVE_WITH_MAX, MIND_ROWS_MAX, MIND_SCHEMA_VERSION, STANDING_PEOPLE_MAX, STANDING_SCHEMA_VERSION, STANDING_TEXT_MAX, THOUGHTS_MAX, THOUGHTS_SCHEMA_VERSION, THOUGHT_TEXT_MAX } from './schema.js';
 import { normalizeName } from './scrub.js';
 
 const DAY = 86400;
@@ -91,7 +91,7 @@ function ageFrom(birthdate, at, tz) {
  *   people          opted-in rows [{ personJid, publicId, displayName }]
  *   resolvePerson   jid → canonical person jid | null
  */
-export function build({ raw, persona = {}, people = [], journal = [], resolvePerson = () => null, scrubber, salt, venueWords = null, scenes = null, phone = null, feed = null }) {
+export function build({ raw, persona = {}, people = [], journal = [], resolvePerson = () => null, scrubber, salt, venueWords = null, scenes = null, phone = null, feed = null, standing = null }) {
   if (!raw || !scrubber || typeof salt !== 'string') throw new Error('build: missing input');
   const tz = raw.tz;
   const at = raw.at;
@@ -385,6 +385,9 @@ export function build({ raw, persona = {}, people = [], journal = [], resolvePer
   // ── 019 phone ──
   const phoneOut = Array.isArray(phone) ? buildPhone({ raw, persona, phone, scrubber, venueWords, pid, castById, tz }) : null;
 
+  // ── plan 020 D2: how things stand. Absent with nothing to say, like mind ──
+  const standingOut = Array.isArray(standing) ? buildStanding({ rows: standing, raw, persona, scrubber, venueWords, castById, tz }) : null;
+
   const name = clean(persona.displayName || persona.name, 40) ?? 'Him';
   return {
     v: 1,
@@ -406,6 +409,7 @@ export function build({ raw, persona = {}, people = [], journal = [], resolvePer
     ...(wallet ? { wallet, walletSchema: WALLET_SCHEMA_VERSION } : {}),
     ...(phoneOut ? { phone: phoneOut, phoneSchema: PHONE_SCHEMA_VERSION } : {}),
     ...feedOut,
+    ...(standingOut?.people.length ? { standing: standingOut, standingSchema: STANDING_SCHEMA_VERSION } : {}),
   };
 }
 
@@ -658,29 +662,29 @@ export function distKm(aLat, aLon, bLat, bLon) {
 
 /** Whole-phrase (normalized) hit of any of `phrases` in `text`. */
 /**
- * Plan 020 D2: the optional `standing` key, ready and not wired into build() yet (the site's phase 4). rows = life.publicStanding();
- * castById = the document's cast. Fictional people the document lists, words through venue words, the home and region check and the scrubber; a
- * row that fails is dropped, and nothing at all near a heavy onset. → { people: [{ id, name, text, since }] }
+ * Plan 020 D2: the optional `standing` key. rows = life.publicStanding(); castById = the document's cast. Fictional people the document
+ * lists, one row each, words through venue words, the home and region check and the scrubber; a row that fails is dropped, and nothing
+ * at all in a hard stretch or near a heavy onset. No name: the site has it by id. → { people: [{ id, text, since }] }
  */
-export const STANDING_SCHEMA_VERSION = 1;
-const STANDING_TEXT_MAX = 600;
 export function buildStanding({ rows, raw, persona, scrubber, venueWords, castById, tz }) {
-  if (typeof venueWords !== 'function' || !Array.isArray(rows)) return { people: [] };
+  if (typeof venueWords !== 'function' || !Array.isArray(rows) || nearHeavy(raw, dateKeyTz(raw?.at, tz))) return { people: [] };
   const places = Array.isArray(raw?.places) ? raw.places : [];
   const homeNames = places.filter((p) => p.home || p.id === raw?.self?.homePlaceId).map((p) => normalizeName(p.name)).filter((n) => n.length >= 3);
   const region = regionPhrases(persona);
   const people = [];
+  const seen = new Set();
   for (const r of rows) {
     const c = castById.get(r?.castId);
-    if (!c || typeof r.text !== 'string' || !finite(r.validFrom) || nearHeavy(raw, dateKeyTz(r.validFrom, tz))) continue;
+    if (!c || seen.has(c.id) || typeof r.text !== 'string' || !finite(r.validFrom) || nearHeavy(raw, dateKeyTz(r.validFrom, tz))) continue;
     let w;
     try { w = venueWords(r.text.replace(/\s+/g, ' ').trim()); } catch { continue; }
     if (typeof w !== 'string' || w.length > STANDING_TEXT_MAX || mentionsAny(w, homeNames) || mentionsAny(w, region)) continue;
     const t = scrubber.clean(w, STANDING_TEXT_MAX);
     if (!t || scrubber.check(t)) continue;
-    people.push({ id: c.id, name: c.name, text: t, since: Math.round(r.validFrom) });
+    seen.add(c.id);
+    people.push({ id: c.id, text: t, since: Math.round(r.validFrom) });
   }
-  return { people };
+  return { people: people.slice(0, STANDING_PEOPLE_MAX) };
 }
 
 function mentionsAny(text, phrases) {

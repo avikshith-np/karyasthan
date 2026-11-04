@@ -285,7 +285,7 @@ What people say can touch his day: `src/life/influence/` (only the life facade i
 
 ## Public site (spec 013)
 
-Read-only site (`../karyasthan-site`, Cloudflare); the bot pushes a filtered `public.json` to R2. Two-layer fail-closed filter: `src/life/publicView.js` + `src/public/` (scrubber, closed schema, canary). Real people are opt-in; new data = an optional key + schema number beside `"v": 1` (020: `live`, `thoughts`, `dreams`, `mind`). Tests `test:public`. **Read `docs/claude/public-site.md` before changing it.**
+Read-only site (`../karyasthan-site`, Cloudflare); the bot pushes a filtered `public.json` to R2. Two-layer fail-closed filter: `src/life/publicView.js` + `src/public/` (scrubber, closed schema, canary). Real people are opt-in; new data = an optional key + schema number beside `"v": 1` (020: `live`, `thoughts`, `dreams`, `mind`, `standing`). Tests `test:public`. **Read `docs/claude/public-site.md` before changing it.**
 
 ## Real places & schedule edits (spec 014)
 

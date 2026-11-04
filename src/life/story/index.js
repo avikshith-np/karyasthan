@@ -1033,7 +1033,7 @@ export async function standingPass(opts = {}) {
   return standingWorker.runPass(opts);
 }
 
-/** 020 D2: the site's rows, ready and not wired: [{ castId, text, validFrom }]. */
+/** 020 D2: the site's rows (the exporter's `standing` key): [{ castId, text, validFrom }]. Story off → []. */
 export function publicStanding() {
   return storyOn() ? standingWorker.publicRows(safe(() => att?.getState?.(), null)) : [];
 }

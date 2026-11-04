@@ -47,6 +47,8 @@ let deps = {
   publicThoughts: (ids) => (typeof life.publicThoughts === 'function' ? life.publicThoughts(ids) : null),
   publicDreams: (ids) => (typeof life.publicDreams === 'function' ? life.publicDreams(ids) : null),
   publicMind: () => (typeof life.publicMind === 'function' ? life.publicMind() : null),
+  // plan 020 D2: how things stand, [{ castId, text, validFrom }]. Absent or a failed read → no standing key.
+  publicStanding: () => (typeof life.publicStanding === 'function' ? life.publicStanding() : null),
   knownNames: () => store.knownPeopleNames(),
   groupNames: () => store.groupSubjects(),
   persona: () => getPersona() || {},
@@ -242,7 +244,7 @@ export async function exportNow({ upload = true, force = false } = {}) {
     }
     let doc;
     try {
-      doc = build({ raw, persona: deps.persona(), people, journal: store.listJournal(), resolvePerson, scrubber, salt: store.salt(), venueWords: deps.venueWords, scenes: sceneRows(raw), phone: phoneRows(raw), feed: feedRows(raw) });
+      doc = build({ raw, persona: deps.persona(), people, journal: store.listJournal(), resolvePerson, scrubber, salt: store.salt(), venueWords: deps.venueWords, scenes: sceneRows(raw), phone: phoneRows(raw), feed: feedRows(raw), standing: standingRows() });
     } catch (err) {
       issue('build_failed', { err: err?.name });
       last = { ...last, status: 'build_failed', at };
@@ -275,7 +277,7 @@ export async function exportNow({ upload = true, force = false } = {}) {
       last.uploadStatus = 'dry_run';
     }
     try { store.setState('lastExport', { at, size: v.size, hash: hash.slice(0, 16), uploaded, uploadStatus: last.uploadStatus }); } catch { /* best effort */ }
-    log.info({ evt: 'public.export', size: v.size, changed, uploaded, upload: last.uploadStatus, rows: doc.today.rows.length, votes: doc.votes.length, scenes: Array.isArray(doc.scenes) ? doc.scenes.length : null, phone: Array.isArray(doc.phone?.threads) ? doc.phone.threads.reduce((a, t) => a + t.messages.length, 0) : null }, 'public: exported');
+    log.info({ evt: 'public.export', size: v.size, changed, uploaded, upload: last.uploadStatus, rows: doc.today.rows.length, votes: doc.votes.length, scenes: Array.isArray(doc.scenes) ? doc.scenes.length : null, phone: Array.isArray(doc.phone?.threads) ? doc.phone.threads.reduce((a, t) => a + t.messages.length, 0) : null, standing: doc.standing?.people?.length ?? null }, 'public: exported');
     await pullVotes();
     return { status: changed ? 'ok' : 'unchanged', size: v.size, uploaded };
   })();
@@ -308,6 +310,16 @@ export function feedRows(raw) {
     if (Array.isArray(rows)) feed.mind = rows;
   } catch { /* no key */ }
   return feed;
+}
+
+/** Plan 020 D2: the notes on his cast, or null (no read, a failed one, not a list): then no standing key, and the next export tries again. */
+export function standingRows() {
+  try {
+    const rows = deps.publicStanding();
+    return Array.isArray(rows) ? rows : null;
+  } catch {
+    return null;
+  }
 }
 
 /**

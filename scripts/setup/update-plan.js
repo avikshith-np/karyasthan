@@ -63,3 +63,11 @@ export function restoreSteps({ dbPath, backupDb, startCommand, quote, suffix }) 
     ...(startCommand ? [startCommand] : []),
   ];
 }
+
+export const KEEP_UPDATE_BACKUPS = 5;
+const UPDATE_BACKUP = /^update-\d{8}T\d{6}Z$/;
+
+/** Which of update's own backup folders to remove: all but the newest few. Nothing else in the folder is touched. */
+export function oldUpdateBackups(names, keep = KEEP_UPDATE_BACKUPS) {
+  return names.filter((n) => UPDATE_BACKUP.test(n)).sort().reverse().slice(keep);
+}

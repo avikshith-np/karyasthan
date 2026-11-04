@@ -21,6 +21,7 @@ import {
 } from './setup/day-two.js';
 import {
   refusal, migrationFiles, latestVersion, migrationPlan, describeUpdate, oldCodeRefuses, restoreSteps,
+  oldUpdateBackups, KEEP_UPDATE_BACKUPS,
 } from './setup/update-plan.js';
 import {
   managerOf, stopManaged, startManaged, startWords, holderOf, waitGone, waitSteady,
@@ -60,6 +61,20 @@ function sqliteReady() {
   say('SQLite doesn\'t load, usually after a change of Node version. Rebuilding it…');
   spawnSync('npm', ['rebuild', 'better-sqlite3'], { cwd: ROOT, stdio: 'ignore', timeout: 600000 });
   return sqliteLoads(ROOT);
+}
+
+/** After a good update only: a failed one may still need every backup it can find. */
+function pruneOldBackups() {
+  let removed = 0;
+  try {
+    for (const name of oldUpdateBackups(fs.readdirSync(I.backupsDir))) {
+      const p = path.join(I.backupsDir, name);
+      if (!fs.lstatSync(p).isDirectory()) continue;   // a link or a file with that name isn't ours
+      fs.rmSync(p, { recursive: true, force: true });
+      removed += 1;
+    }
+  } catch (err) { say(`! Couldn't clear old update backups: ${err.message}`); }
+  if (removed) say(`Removed ${removed} older update backup${removed === 1 ? '' : 's'}, keeping the newest ${KEEP_UPDATE_BACKUPS}.`);
 }
 
 /** data/backups/update-<time>/: the database, .env and the commit it's going back to. */
@@ -273,6 +288,7 @@ async function main() {
     if (!manager) {
       say(`✓ Updated to ${newCommit.slice(0, 7)}.`);
       say(`The backup is at ${backup.dir}`);
+      pruneOldBackups();
       say(migration.will && dbBefore != null ? 'Start it when you\'re ready: npm start. The database upgrades on that start, with its own backup.' : 'Start it when you\'re ready: npm start');
       say();
       return 0;
@@ -286,6 +302,7 @@ async function main() {
     say(`✓ Updated to ${newCommit.slice(0, 7)} and running (pid ${running.pid}).`);
     if (dbBefore != null && dbNow !== dbBefore) say(`✓ The database went from v${dbBefore} to v${dbNow}.`);
     say(`The backup is at ${backup.dir}`);
+    pruneOldBackups();
     say();
     return 0;
   } catch (err) {

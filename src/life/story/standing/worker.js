@@ -12,7 +12,7 @@
 //                     the newest clean version stands again (no call), and it's rebuilt from there if anything
 //                     still in his life is new. Text is never edited.
 //   noteAt(s, id, at) the version that held at `at`, checked against the log now → the writers' sheets.
-//   view(id)          the dashboard's. publicRows(): the site's, ready and not wired.
+//   view(id)          the dashboard's. publicRows(): the site's (the exporter's optional `standing` key).
 //
 // Real people aren't in this slice. Nothing here logs words: ids, codes and counts only.
 import { createHash } from 'node:crypto';
@@ -389,8 +389,8 @@ export function view(castId) {
 }
 
 /**
- * The site's rows: fictional cast he still has, a live note that holds now. Ready, not exported: the exporter's
- * `buildStanding` turns them into the optional `standing` key when the PM wires it. → [{ castId, text, validFrom }]
+ * The site's rows: fictional cast he still has, a live note that holds now, not written in a heavy window. The exporter's
+ * `buildStanding` turns them into the optional `standing` key. → [{ castId, text, validFrom }]
  */
 export function publicRows(s = deps.getState()) {
   try {
