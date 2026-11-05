@@ -166,6 +166,7 @@ export function whyOf(trigger, ctx = {}) {
     case 'news': return ctx.beat ? `${n}'s news: ${ctx.beat}` : `${n} has some news`;
     case 'on_my_way': return `he is on his way to meet ${n}${ctx.eventAt ? ` at ${ctx.eventAt}` : ''}${ctx.place ? `, ${ctx.place}` : ''}`;
     case 'backing_out': return `he can't make the plan with ${n} after all${ctx.eventAt ? ` (${ctx.eventAt}${ctx.place ? `, ${ctx.place}` : ''})` : ''}; he tells them`;
+    case 'plan_clash': return `what he and ${n} just agreed can't happen; he tells them`;
     case 'romance': return his ? `he can't stop thinking about ${n}` : `${n} has been thinking about him`;
     case 'evening': return `a quiet moment; he thought of ${n}`;
     case 'cast_first': return `${n} texts him out of the blue`;
@@ -241,6 +242,7 @@ export function buildSheet(s, row, ctx = {}) {
     thread: Array.isArray(ctx.thread) ? ctx.thread : [],
     recent: (Array.isArray(ctx.timeline) ? ctx.timeline : []).map(l => clean(l, 220)).filter(Boolean).slice(-10),
     plans: (Array.isArray(ctx.plans) ? ctx.plans : []).map(l => clean(l, 220)).filter(Boolean).slice(0, 6),
+    ...(clean(ctx.planProblem, 160) ? { planProblem: clean(ctx.planProblem, 160) } : {}),   // a plan the code refused: only when there is one
     ...(Array.isArray(ctx.commitments) && ctx.commitments.length ? { commitments: ctx.commitments.map(l => clean(l, 160)).filter(Boolean).slice(0, 4) } : {}),   // 020 D3
   };
   for (const p of String(sheet.now ?? '').split(/\s+/)) if (p) names.add(p.replace(/[()]/g, ''));

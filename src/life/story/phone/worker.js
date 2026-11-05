@@ -48,7 +48,7 @@ import { buildSheet, placeWords, relWhen, timelineLines, planLines } from './fac
 import { jobWordsOf } from '../reducer.js';
 import { HIS_CHARTER, CAST_CHARTER, renderUser, charterFor, BODY_ASK_LINE, THREAD_LINES } from './charter.js';
 import { validateTexts, repeatedPhrase, repeatedToday, questionsIn, gistMiss, gistFallback, bodyAsk, gistAllows, gistIsAsk } from './schema.js';
-import { cueCheck, PLAN_PROMPT, PLAN_TURNS, MIN_CONFIDENCE, renderPlanUser, validatePlanOutput, resolveTextPlan, appendPlan, planMissing, mergeHeld } from './plans.js';
+import { cueCheck, PLAN_PROMPT, PLAN_TURNS, MIN_CONFIDENCE, renderPlanUser, validatePlanOutput, resolveTextPlan, appendPlan, planMissing, mergeHeld, changeCue, planProblem } from './plans.js';
 import { createHash } from 'crypto';
 
 // Phone callers live under their own `life.phone.` prefix: texting never uses up the
@@ -63,6 +63,9 @@ export const PLAN_MAX_PER_DAY = 30;
 export const HOLD_TURNS = 6;           // an agreement short of a detail: this many more turns may finish it
 export const HOLD_QUIET_MIN = 30;      // ...and after this long with no new turn it goes ahead on defaults
 const HELD_KEY = 'phone_plan_held';
+const NOTES_KEY = 'phone_plan_notes';  // a plan the code refused: his next turn is told; none coming within NOTE_WAIT_MIN → one is queued
+export const NOTE_WAIT_MIN = 5;
+const NOTE_KEEP_HOURS = 12;
 export const PLAN_RECENT_HOURS = 6;   // a text plan with them this recent: later "see you then"s spend no call
 export const PER_TICK = 3;
 export const EXCHANGE_MAX = 8;
@@ -121,7 +124,7 @@ const TRIGGER_TYPES = ['phone.text_set', 'scene.played', 'birthday', 'cast.beat'
 // 020: a plan with someone from his world fell through and they were expecting him: he tells them.
 const FELL_THROUGH = new Set(['could_not_go', 'owner_plan', 'owner_cancelled', 'fell_through', 'schedule']);
 const NEWS_BEATS = new Set(['news', 'milestone', 'back', 'trip']);
-const ORGANIC_SKIP = new Set(['owner', 'reply', 'regenerate']);
+const ORGANIC_SKIP = new Set(['owner', 'reply', 'regenerate', 'plan_clash']);   // plan_clash: part of the chat that made the plan
 const MIN = 60;
 const HOUR = 3600;
 const DAY = 86400;
@@ -685,6 +688,7 @@ async function write(s, row, { at, tz, world, beforeAt = null, beforeId = null }
     lastSeen: lastSeenWith(s, row.castId, at, tz),
     timeline: timelineOf(s, row.castId, at, tz),
     plans: plansOf(s, row.castId, at, tz, { aheadHours: PLANS_AHEAD_HOURS }),
+    planProblem: side === 'his' ? planNoteLine(row.castId, at) : null,
     whyCtx: whyCtxOf(s, row, tz),
     urgeBand: urgeBand(urge), register,
   });
@@ -1017,6 +1021,8 @@ export async function runTurn(row) {
     try { deps.rebuild(); } catch { /* the next tick re-reads */ }
     return skip(typeof err?.code === 'string' && err.code.length < 24 ? err.code : 'append');
   }
+  // He has now said it (the sheet he wrote from carried it).
+  if (row.dir === 'out') { try { setPlanNote(row.castId, null); } catch { /* it expires */ } }
   // Plans from texts: never changes what this turn did.
   try { await planFromTexts(row, res); } catch { logPlan('nothing', 'error', { id: res?.eventId ?? null }); }
   submitCheck(row, res, w);
@@ -1079,7 +1085,9 @@ export async function planFromTexts(row, res) {
   const textOf = (r) => (r ? r.editedText || r.text || '' : '');
   // Small talk never reaches the clerk (and isn't logged: most turns end here).
   const held = heldOf(row.castId);
-  if (!held && !cueCheck(textOf(latest), textOf(previous))) return { outcome: 'nothing', code: 'no_cue' };
+  // A plan with them already set may be changing.
+  const changing = textPlanAhead(s0, row.castId, nowSec()) !== null && changeCue(textOf(latest), textOf(previous));
+  if (!held && !changing && !cueCheck(textOf(latest), textOf(previous))) return { outcome: 'nothing', code: 'no_cue' };
   const done = (outcome, code, extra = {}) => { logPlan(outcome, code, { id: eventId, ...extra }); return { outcome, code, ...extra }; };
   const ev = getEvent(eventId);
   if (!selfOrigin(ev) || ev.heavy === true || heavyChain(ev)) return done('nothing', 'origin');
@@ -1087,7 +1095,7 @@ export async function planFromTexts(row, res) {
   const at = nowSec();
   // A plan with them already made in texts lately (the "see you then" after the "deal"): no call.
   const since = at - PLAN_RECENT_HOURS * HOUR;
-  for (const d of s0.decisions instanceof Map ? s0.decisions.values() : []) {
+  for (const d of !changing && s0.decisions instanceof Map ? s0.decisions.values() : []) {
     if (goingTo(d) && d.committed?.by === 'text' && (d.subject?.castIds ?? []).includes(row.castId)
       && finite(d.committed.at) && d.committed.at >= since) { setHeld(row.castId, null); return done('nothing', 'already_planned'); }
   }
@@ -1100,12 +1108,15 @@ export async function planFromTexts(row, res) {
     held: held?.value ?? null,
   });
   let out;
-  try { out = await deps.callRole('clerk', PLAN_PROMPT, user, { caller: CALLER_PLAN, maxTokens: 200, temperature: 0, timeoutMs: 30_000 }); } catch { out = null; }
+  try { out = await deps.callRole('clerk', PLAN_PROMPT, user, { caller: CALLER_PLAN, maxTokens: 300, temperature: 0, timeoutMs: 30_000 }); } catch { out = null; }
   if (!out || out.skipped) return done('nothing', out?.skipped ? 'budget' : 'model_failed');
   if (typeof out.text !== 'string' || (out.status && out.status !== 'ok')) return done('nothing', 'model_failed');
   const v = validatePlanOutput(out.text);
   if (!v.ok) return done('nothing', 'invalid');
   let value = v.value;
+  if (value.change && textPlanAhead(s0, row.castId, nowSec())) {
+    return changePlan(row.castId, eventId, value, { tz, ownerChat: ownerAskEvent(row) !== null, done });
+  }
   if (held) {
     // Being settled, and now called off.
     if (!value.agreed) { setHeld(row.castId, null); return done('nothing', 'called_off'); }
@@ -1153,9 +1164,65 @@ async function settlePlan(castId, eventId, value, { tz, ownerChat, turns, final 
     return done('held', r.code, { kind: value.kind });
   }
   setHeld(castId, null);
-  if (!r.ok) return done(r.outcome, r.code, { kind: value.kind });
+  if (!r.ok) {
+    if (planProblem(r.code)) setPlanNote(castId, { eventId, at: nowSec(), code: r.code });
+    return done(r.outcome, r.code, { kind: value.kind });
+  }
   try { deps.settle(); } catch { /* the next tick fits it */ }
   return done('applied', value.kind, { kind: value.kind, decisionId: r.openedId });
+}
+
+// The soonest plan agreed in texts with them that is still ahead, or null. Only those: an owner's or a routine plan isn't the texts' to change.
+function textPlanAhead(s, castId, at) {
+  let best = null;
+  for (const d of s?.decisions instanceof Map ? s.decisions.values() : []) {
+    if (!goingTo(d) || d.committed?.by !== 'text' || !(d.subject?.castIds ?? []).includes(castId) || !finite(d.subject?.eventAt) || d.subject.eventAt <= at) continue;
+    if (!best || d.subject.eventAt < best.subject.eventAt) best = d;
+  }
+  return best;
+}
+
+// Later texts move or call off a plan they made. Both are his own life's bookkeeping, caused by the text, so a revert
+// brings the old plan back: no "can't make it" text (they just talked about it) and nothing off anyone's trust.
+async function changePlan(castId, eventId, value, { tz, ownerChat, done }) {
+  let r;
+  try {
+    r = underLocks(() => store.inTransaction(() => {
+      const s = deps.getState();
+      if (!isObj(s) || gone(s, eventId)) return { ok: false, outcome: 'nothing', code: 'text_gone' };
+      if (store.lastLive(castId)?.eventId !== eventId) return { ok: false, outcome: 'nothing', code: 'superseded' };
+      const t = Math.max(nowSec(), Number.isSafeInteger(s.at) ? s.at : 0);
+      const d = textPlanAhead(s, castId, t);
+      if (!d) return { ok: false, outcome: 'nothing', code: 'no_plan' };
+      if (!(value.confidence >= MIN_CONFIDENCE)) return { ok: false, outcome: 'nothing', code: 'low_confidence' };
+      if (!finite(d.ponrAt) || t >= d.ponrAt) return { ok: false, outcome: 'nothing', code: 'too_late' };   // he has already set off
+      const close = () => deps.append({ type: 'decision.expired', at: t, actor: 'engine', causeId: eventId, payload: { decisionId: d.id, reason: 'text_changed' } });
+      if (value.change === 'cancel') { close(); return { ok: true, kind: 'cancel', openedId: null }; }
+      const world = deps.worldOf(s) ?? deps.world;
+      const keepPlace = value.placeHint ? null : d.subject.placeId;
+      const kind = !keepPlace ? value.kind : d.kind === 'visit' ? 'visit_his' : s.cast.get(castId)?.home === keepPlace ? 'visit_theirs' : 'outing';
+      const out = { ...value, kind, agreed: true, when: value.when ?? hhmm(d.subject.eventAt, tz) };
+      const plan = resolveTextPlan(s, castId, out, {
+        at: t, tz, world, ownerChat, rnd: rnd(eventId, 'plan', tz, t), met: metPlaces(s, castId, t), newId: eventId,
+        keepPlace, onDay: value.day ? null : dayStart(d.subject.eventAt, tz), ignoreId: d.id,
+      });
+      if (!plan.ok) return plan;
+      if (plan.payload.subject.eventAt === d.subject.eventAt && plan.payload.subject.placeId === d.subject.placeId) return { ok: false, outcome: 'nothing', code: 'no_change' };
+      close();
+      const ids = appendPlan((e) => deps.append(e), { at: t, causeId: eventId, payload: plan.payload });
+      return { ok: true, kind: 'move', ...ids };
+    }));
+    r = await r;
+  } catch {
+    try { deps.rebuild(); } catch { /* the next tick re-reads */ }
+    return done('nothing', 'append');
+  }
+  if (!r.ok) {
+    if (planProblem(r.code)) setPlanNote(castId, { eventId, at: nowSec(), code: r.code });
+    return done(r.outcome, r.code, { kind: value.kind });
+  }
+  try { deps.settle(); } catch { /* the next tick fits it */ }
+  return done('changed', r.kind, { kind: r.kind, decisionId: r.openedId });
 }
 
 // Held agreements: codes and the clerk's closed fields, never the words.
@@ -1188,7 +1255,36 @@ function metPlaces(s, castId, at) {
   } catch { return []; }
 }
 
-export const hasHeldPlans = () => Object.keys(heldAll()).length > 0;
+// Refused plans waiting to be told: codes and ids, never words.
+function notesAll() {
+  const v = storyStateGet(NOTES_KEY);
+  return isObj(v) ? v : {};
+}
+function setPlanNote(castId, rec) {
+  const all = notesAll();
+  if (!rec && !(castId in all)) return;
+  const next = { ...all };
+  if (rec) next[castId] = rec; else delete next[castId];
+  storyStatePatch({ [NOTES_KEY]: next });
+}
+function planNoteLine(castId, at) {
+  const n = notesAll()[castId];
+  return isObj(n) && finite(n.at) && at - n.at <= NOTE_KEEP_HOURS * HOUR ? planProblem(n.code) : null;
+}
+
+/** No turn of his coming in a thread with a refused plan: one is queued, once. Run by the phone job. */
+export function settlePlanNotes(at = nowSec()) {
+  const s = deps.getState();
+  if (!isObj(s)) return;
+  for (const [castId, n] of Object.entries(notesAll())) {
+    if (!isObj(n) || !finite(n.at) || at - n.at > NOTE_KEEP_HOURS * HOUR || !s.cast?.get?.(castId) || gone(s, n.eventId)) { setPlanNote(castId, null); continue; }
+    if (n.queued === true || at - n.at < NOTE_WAIT_MIN * MIN || store.pendingFor(castId).length) continue;
+    store.insertPending({ castId, dir: 'out', trigger: 'plan_clash', triggerEventId: n.eventId, exchange: 0, dueAt: at, createdAt: at });
+    setPlanNote(castId, { ...n, queued: true });
+  }
+}
+
+export const hasPlanWork = () => Object.keys(heldAll()).length > 0 || Object.keys(notesAll()).length > 0;
 
 /** A held agreement nobody has added to for HOLD_QUIET_MIN goes ahead on defaults (run by the phone job). */
 export async function settleHeldPlans(at = nowSec()) {

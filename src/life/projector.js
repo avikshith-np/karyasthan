@@ -183,7 +183,8 @@ const COMMIT_BY = new Set(['owner', 'lean', 'sample', 'early', 'adopted', 'reply
 // 012: an inviter calling a committed invitation off.
 // 015: a god cancel (fell_through), a career change and a departure close a committed one too.
 const CLOSING_REASONS = new Set(['frozen', 'pinned', 'owner_cancelled', 'withdrawn', 'inviter_cancelled',
-  'fell_through', 'career_changed', 'cast_departed']);
+  'fell_through', 'career_changed', 'cast_departed',
+  'text_changed']);   // 2026-11-05: later texts moved or called off a plan made in texts
 const PERSON_JID_RE = /^[0-9A-Za-z._:-]{1,80}@(?:s\.whatsapp\.net|lid)$/;
 // 011
 const WINDOW_SKIES = new Set(['clear', 'cloudy', 'rain', 'storm', 'heat']);

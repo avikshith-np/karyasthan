@@ -111,6 +111,7 @@ export function renderUser(sheet, { keep = THREAD_LINES, bare = false } = {}) {
     ...(sheet.recent?.length ? ['his recent days (true, from his life; [together] = with them):', ...sheet.recent.map(l => `  - ${l}`)] : ['his recent days: nothing with anyone in the last two days']),
     ...(sheet.plans?.length ? ['his plans (true):', ...sheet.plans.map(l => `  - ${l}`)] : ['his plans: none set']),
     ...(commitments.length ? ['his commitments (what he has said he would do, beyond the plans above):', ...commitments.map(l => `  - ${l}`)] : []),
+    line('plan problem', sheet.planProblem),
     line('a dream', sheet.dreamt),   // 020 G: he may say so, if it fits
     ...(sheet.hisViews?.length ? ['where he stands on them (colour, don\'t state it):', ...sheet.hisViews.map(l => `  - ${l}`)] : []),
     `why now: ${sheet.why}`,

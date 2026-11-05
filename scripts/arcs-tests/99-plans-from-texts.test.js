@@ -17,7 +17,7 @@ import { resolveTimezone, localParts, zonedToUnix, dateKey, weekday, hhmm } from
 import * as story from '../../src/life/story/index.js';
 import * as phoneStore from '../../src/life/story/phone/store.js';
 import { plansOf, CALLER_PLAN } from '../../src/life/story/phone/worker.js';
-import { cueCheck, strongCue, placeFor, validatePlanOutput, resolveTextPlan, planLabel, PLAN_PROMPT } from '../../src/life/story/phone/plans.js';
+import { cueCheck, strongCue, placeFor, changeCue, planProblem, validatePlanOutput, resolveTextPlan, planLabel, PLAN_PROMPT } from '../../src/life/story/phone/plans.js';
 import { homeIdsOf } from '../../src/life/publicView.js';
 import { haversineKm } from '../../src/life/travel.js';
 import { HIS_CHARTER, CAST_CHARTER } from '../../src/life/story/phone/charter.js';
@@ -397,7 +397,7 @@ section('going to their place when they have no home yet: one is made, private, 
   await applyAction({ kind: 'text', castId: who, gist: 'free this weekend' });
   await drain();
   plan = () => agreed({ kind: 'visit_theirs', when: '20:00', day: 'saturday' });
-  await say(who, 'in', 'yes come to mine saturday at 8');
+  await say(who, 'in', 'yes, mine works, around eight');
   const p = textPlans(who).at(-1);
   eq('a plan', textPlans(who).length, first + 1);
   const home = S().cast.get(who)?.home;
@@ -411,6 +411,125 @@ section('going to their place when they have no home yet: one is made, private, 
   life.revertEvent(textId, { reason: 'test', by: 'owner' });
   await story.idle();
   check('reverting the text takes the plan and the home with it', S().excluded?.has?.(p.eventId) && S().cast.get(who)?.home !== home && !S().places.has(home), [S().cast.get(who)?.home, S().places.has(home)]);
+}
+
+section('later texts: the cue and the clerk\'s "change" key');
+{
+  check('"can we make it 8 instead"', changeCue('can we make it 8 instead', 'see you at 7'));
+  check('"cant make it" in the turn before', changeCue('oh no ok', "sorry can't make it tonight"));
+  check('small talk', !changeCue('haha same', 'cant sleep either'));
+  eq('move passes', validatePlanOutput(JSON.stringify({ agreed: true, kind: 'outing', when: '20:00', confidence: 0.9, change: 'move' })).value?.change, 'move');
+  eq('cancel passes with no kind', validatePlanOutput(JSON.stringify({ agreed: false, kind: null, confidence: 0.9, change: 'cancel' })).value?.change, 'cancel');
+  eq('anything else → change', validatePlanOutput(JSON.stringify({ agreed: true, kind: 'outing', confidence: 0.9, change: 'maybe' })).reason, 'change');
+  eq('no change: the answer has no such key', Object.hasOwn(validatePlanOutput(JSON.stringify({ agreed: true, kind: 'outing', confidence: 0.9, change: null })).value, 'change'), false);
+  eq('a refusal about his day has words', typeof planProblem('clash_work'), 'string');
+  eq('the owner\'s controls and caps have none', [planProblem('frozen'), planProblem('cap'), planProblem('asleep')], [null, null, null]);
+}
+
+const moved = 'cast:flatmate';
+const started = (castId, from) => listEvents({ types: ['activity.started'], from, limit: 500 }).filter(e => (e.payload?.withCast ?? []).includes(castId));
+const openChat = async (castId) => {
+  his = () => ({ messages: ['you around this week?'], tone: 'warm', topic: 'plan', end: true });
+  plan = () => ({ agreed: false, kind: null, placeHint: null, when: null, day: null, minutes: null, confidence: 0.2 });
+  await applyAction({ kind: 'text', castId, gist: 'you around this week' });
+  await drain();
+};
+const later = (o) => ({ agreed: true, kind: 'outing', placeHint: null, when: null, day: null, minutes: null, confidence: 0.9, change: 'move', ...o });
+
+section('a plan that doesn\'t fit: his next turn is told, and if none is coming one is queued, once');
+{
+  const who = 'cast:coworker-b';
+  await eveningAtHome();
+  await openChat(who);
+  const before = textPlans(who).length;
+  plan = () => agreed({ placeHint: 'cafe', when: '11:00', day: 'wednesday' });
+  theirs = () => ({ messages: ['yes wednesday morning eleven sharp'], tone: 'warm', topic: 'plan', end: true });
+  await say(who, 'in', 'yes wednesday morning eleven sharp');
+  eq('refused: it clashes with work', [planLogs.at(-1)?.outcome, planLogs.at(-1)?.code], ['refused', 'clash_work']);
+  eq('no plan', textPlans(who).length, before);
+  check('nothing queued yet', !phoneStore.pendingFor(who).length);
+  his = () => ({ messages: ['ah wait im at work then, evening instead?'], tone: 'warm', topic: 'plan', end: true });
+  plan = () => ({ agreed: false, kind: null, placeHint: null, when: null, day: null, minutes: null, confidence: 0.2 });
+  const n0 = cr.callsFor('life.phone.his').length;
+  for (let i = 0; i < 6 && cr.callsFor('life.phone.his').length === n0; i++) { await simulateHours(0.25); await drain(); }
+  const hu = cr.callsFor('life.phone.his').at(-1)?.user ?? '';
+  check('a turn of his goes out, told why', /plan problem: what was just agreed can't happen: he is at work then/.test(hu) && /just agreed can't happen; he tells them/.test(hu), hu.slice(-400));
+  const row = phoneStore.threadOf(who, { live: true })[0];
+  eq('it\'s the plan_clash turn', [row?.trigger, row?.dir], ['plan_clash', 'out']);
+  const n1 = cr.callsFor('life.phone.his').length;
+  await simulateHours(0.5); await drain();
+  check('only once, and the next sheet has no such line', !phoneStore.threadOf(who, { live: true }).slice(1).some(r => r.trigger === 'plan_clash') && cr.callsFor('life.phone.his').length >= n1);
+  check('her side is never told', !cr.callsFor('life.phone.cast').some(c => /plan problem/.test(c.user ?? '')));
+}
+
+section('a later text moves a plan: same place and day, a new time, the old one closed, no "can\'t make it"');
+{
+  const who = moved;
+  await eveningAtHome();
+  await openChat(who);
+  plan = () => agreed({ placeHint: 'cafe', when: '19:30', day: 'saturday' });
+  await say(who, 'in', 'sure saturday 7:30 at the cafe');
+  const old = textPlans(who).filter(d => d.status === 'committed').at(-1);
+  eq('the plan', [old?.subject?.placeId, hhmm(old?.subject?.eventAt ?? 0, tz)], ['place:cafe', '19:30']);
+  const trust0 = S().cast.get(who)?.metrics?.trust ?? S().story?.relationships?.[who]?.trust ?? null;
+  const n0 = planCalls();
+  plan = () => later({ when: '20:30' });
+  await say(who, 'out', 'can we make it 8:30 instead, deal?');
+  eq('the clerk was asked, past the recent-plan check', planCalls(), n0 + 1);
+  eq('logged', [planLogs.at(-1)?.outcome, planLogs.at(-1)?.code], ['changed', 'move']);
+  const now = textPlans(who).filter(d => d.status === 'committed').at(-1);
+  eq('one plan going: the cafe, 20:30, the same day', [textPlans(who).filter(d => d.status === 'committed').length, now?.subject?.placeId, hhmm(now?.subject?.eventAt ?? 0, tz), dateKey(now?.subject?.eventAt ?? 0, tz)], [1, 'place:cafe', '20:30', dateKey(old.subject.eventAt, tz)]);
+  eq('the old one closed', S().decisions.get(old.id)?.status, 'cancelled');
+  check('no "can\'t make it" text', !phoneStore.pendingFor(who).some(r => r.trigger === 'backing_out'));
+  eq('trust untouched', S().cast.get(who)?.metrics?.trust ?? S().story?.relationships?.[who]?.trust ?? null, trust0);
+  check('his plans list the new time only', plansOf(S(), who, clock.now(), tz, { aheadHours: 7 * 24 }).filter(l => /Coffee/.test(l)).length === 1);
+
+  const n1 = planCalls();
+  plan = () => later({ when: '11:00', day: 'wednesday' });
+  await say(who, 'in', 'actually how about wednesday 11 instead, ok?');
+  eq('a move that doesn\'t fit: refused, the plan stays', [planCalls(), planLogs.at(-1)?.code, S().decisions.get(now.id)?.status], [n1 + 1, 'clash_work', 'committed']);
+  his = () => ({ messages: ['im at work then, keep saturday?'], tone: 'warm', topic: 'plan', end: true });
+  plan = () => ({ agreed: false, kind: null, placeHint: null, when: null, day: null, minutes: null, confidence: 0.2 });
+  await say(who, 'out', 'im at work then, keep saturday?');
+  check('and he was told', /plan problem/.test(cr.callsFor('life.phone.his').at(-1)?.user ?? ''));
+
+  const movingText = phoneStore.threadOf(who, { live: true }).find(r => r.text === 'can we make it 8:30 instead, deal?');
+  life.revertEvent(movingText.eventId, { reason: 'test', by: 'owner' });
+  await story.idle();
+  eq('reverting the text that moved it brings the old plan back', [S().decisions.get(old.id)?.status, S().excluded?.has?.(now.eventId)], ['committed', true]);
+  life.revertEvent(phoneStore.threadOf(who, { live: true }).find(r => r.text === 'sure saturday 7:30 at the cafe').eventId, { reason: 'test', by: 'owner' });
+  await story.idle();
+}
+
+section('a later text calls it off: he doesn\'t go, no "can\'t make it"; once he has set off it is too late');
+{
+  const who = moved;
+  await eveningAtHome();
+  await openChat(who);
+  plan = () => agreed({ placeHint: 'cafe', when: '22:30', day: 'today' });
+  await say(who, 'in', 'ok tonight 10:30 at the cafe');
+  const d = textPlans(who).filter(x => x.status === 'committed').at(-1);
+  check('a plan tonight', !!d && hhmm(d.subject.eventAt, tz) === '22:30', d?.subject);
+  const t0 = clock.now();
+  plan = () => ({ agreed: false, kind: null, placeHint: null, when: null, day: null, minutes: null, confidence: 0.9, change: 'cancel' });
+  await say(who, 'out', "sorry can't make it after all");
+  eq('logged', [planLogs.at(-1)?.outcome, planLogs.at(-1)?.code], ['changed', 'cancel']);
+  eq('closed', S().decisions.get(d.id)?.status, 'cancelled');
+  check('no "can\'t make it" text on top', !phoneStore.pendingFor(who).some(r => r.trigger === 'backing_out'));
+  plan = () => ({ agreed: false, kind: null, placeHint: null, when: null, day: null, minutes: null, confidence: 0.2 });
+  await simulateHours(3); await drain();
+  eq('the evening passes without it', started(who, t0).filter(e => e.payload?.placeId === 'place:cafe').length, 0);
+
+  await eveningAtHome();
+  await openChat(who);
+  plan = () => agreed({ placeHint: 'cafe', when: '21:30', day: 'today' });
+  await say(who, 'in', 'fine, 9:30 works tonight');
+  const e = textPlans(who).filter(x => x.status === 'committed').at(-1);
+  check('another plan tonight', !!e && hhmm(e.subject.eventAt, tz) === '21:30', e?.subject);
+  await untilTime(e.ponrAt + 60);
+  plan = () => ({ agreed: false, kind: null, placeHint: null, when: null, day: null, minutes: null, confidence: 0.9, change: 'cancel' });
+  await say(who, 'in', 'ugh, i have to skip it, sorry');
+  check('past the point of no return it stands', S().decisions.get(e.id)?.status === 'committed' && planLogs.at(-1)?.code === 'too_late', planLogs.at(-1));
 }
 
 section('the writers are told: agree only to what his plans allow; "on my way" only after a yes');

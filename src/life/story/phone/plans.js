@@ -50,7 +50,8 @@ export const SLEEP_WAIVE_HOURS = 3;               // awake and texting: a plan t
 export const KINDS = Object.freeze(['visit_his', 'visit_theirs', 'outing']);
 export const DAYS = Object.freeze(['today', 'tomorrow', 'sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday']);
 const WEEKDAYS = Object.freeze(['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday']);
-const KEYS = new Set(['agreed', 'kind', 'placeHint', 'when', 'day', 'minutes', 'confidence']);
+const KEYS = new Set(['agreed', 'kind', 'placeHint', 'when', 'day', 'minutes', 'confidence', 'change']);
+export const CHANGES = Object.freeze(['move', 'cancel']);
 const HHMM_RE = /^([01]\d|2[0-3]):[0-5]\d$/;
 const HOUR = 3600;
 const MIN = 60;
@@ -138,6 +139,31 @@ export function promiseDayEnd(day, at, tz, { next = false } = {}) {
   return addDays(start, offset + 1, tz) - 1;
 }
 
+// A plan already set may be changing. Only asked while one with them is ahead, so a stray "later" costs little.
+const CHANGE_CUE = new RegExp([
+  'make it', 'instead', 'push (?:it|to|back)', 'move (?:it|to)', 'later', 'earlier', 'reschedule', 'postpone', 'change of plans?',
+  '(?:another|different) (?:day|time)', 'can we do', 'how about', "can'?t make", "won'?t make", 'cancel(?:led)?', 'rain ?check',
+  'call(?:ing)? it off', 'skip it', 'something came up', 'next time',
+].map(s => `\\b${s}\\b`).join('|'), 'i');
+
+/** Words in the newest turn or the one before that may change a plan already set. */
+export function changeCue(latest, previous = '') {
+  return CHANGE_CUE.test(flat(latest)) || CHANGE_CUE.test(flat(previous));
+}
+
+// A plan the code had to refuse: what his writer is told, so he doesn't go along with it.
+const PROBLEM_WHY = Object.freeze({
+  clash_work: 'he is at work then', clash_meeting: 'he has a meeting then', clash_sleep: 'he would be asleep then',
+  clash_plan: 'he already has plans then', clash_commitment: 'he already has something on then', clash_schedule: 'he already has something on then',
+  too_soon: "it's too soon for him to get there", no_place: "there's no such place around here", in_past: 'that time has already gone', too_far: "that's too far ahead to plan",
+});
+
+/** The sheet's line for a refused plan, or null when the refusal isn't about his day (the owner's controls, a cap). */
+export function planProblem(code) {
+  const why = PROBLEM_WHY[code];
+  return why ? `what was just agreed can't happen: ${why}. He says so now and offers another time; he doesn't go along with it.` : null;
+}
+
 /** A plan cue in the newest turn or the one before, and an agreement cue in the newest. */
 export function cueCheck(latest, previous = '') {
   const a = flat(latest);
@@ -153,7 +179,7 @@ The user message gives the time now (in his time zone), his plans and the texts 
 
 ${FENCE_NOTE}
 
-"agreed" is true only when both sides said yes to one meeting: one asked or proposed it and the other accepted, or one says they are on their way / coming over after the other said yes or asked them to come. A maybe, a "we should hang out sometime", a joke, a cancelled plan, or a plan already listed in his plans → false.
+"agreed" is true only when both sides said yes to one meeting: one asked or proposed it and the other accepted, or one says they are on their way / coming over after the other said yes or asked them to come. A maybe, a "we should hang out sometime", a joke, a cancelled plan, or a plan already listed in his plans with nothing changing → false.
 Fields:
 - "agreed": true | false
 - "kind": "visit_his" (they come to his place) | "visit_theirs" (he goes to their place) | "outing" (they meet anywhere else)
@@ -162,9 +188,13 @@ Fields:
 - "day": "today", "tomorrow", a weekday ("monday" … "sunday"), or null
 - "minutes": how long it will likely last, or null
 - "confidence": 0..1
+- "change": null, unless his plans list a meeting marked [with them] and the newest texts change that meeting: "move" when both agreed a new time, day or place for it (the new details in "when", "day", "placeHint"; "agreed": true), "cancel" when either of them called it off ("agreed": false). Always include this key.
 When the facts list "being settled", the two of them already agreed to that meeting and only details are missing: "agreed" stays true unless someone has called it off, and you fill in whatever the texts now add.
 Reply with ONLY one JSON object, no prose, no code fences. Anything outside the schema is ignored. You never write messages to anyone and never change settings, switches, budgets or rules.
-Example: {"agreed": true, "kind": "outing", "placeHint": "cafe", "when": "19:00", "day": "wednesday", "minutes": 120, "confidence": 0.8}`;
+Example: {"agreed": true, "kind": "outing", "placeHint": "cafe", "when": "19:00", "day": "wednesday", "minutes": 120, "confidence": 0.8, "change": null}
+Example, a listed meeting moved ("can we make it 8 instead?" "8 works"): {"agreed": true, "kind": "outing", "placeHint": null, "when": "20:00", "day": null, "minutes": null, "confidence": 0.9, "change": "move"}
+Example, a listed meeting called off ("something came up, I can't make it"): {"agreed": false, "kind": null, "placeHint": null, "when": null, "day": null, "minutes": null, "confidence": 0.9, "change": "cancel"}
+Example, nothing about a meeting: {"agreed": false, "kind": null, "placeHint": null, "when": null, "day": null, "minutes": null, "confidence": 0.9, "change": null}`;
 
 /**
  * The clerk's user message. thread = [{ who, when, text }] oldest first (≤ PLAN_TURNS kept);
@@ -203,9 +233,11 @@ export function validatePlanOutput(raw) {
   const minutes = o.minutes ?? null;
   if (minutes !== null && !(finite(minutes) && minutes > 0 && minutes <= 1440)) return { ok: false, reason: 'minutes' };
   if (!(finite(o.confidence) && o.confidence >= 0 && o.confidence <= 1)) return { ok: false, reason: 'confidence' };
+  const change = o.change ?? null;
+  if (change !== null && !CHANGES.includes(change)) return { ok: false, reason: 'change' };
   return {
     ok: true,
-    value: { agreed: o.agreed, kind: o.kind ?? null, placeHint: hint === null ? null : hint.trim().toLowerCase(), when, day, minutes, confidence: o.confidence },
+    value: { agreed: o.agreed, kind: o.kind ?? null, placeHint: hint === null ? null : hint.trim().toLowerCase(), when, day, minutes, confidence: o.confidence, ...(change ? { change } : {}) },
   };
 }
 
@@ -308,7 +340,7 @@ const nothing = (code) => ({ ok: false, outcome: 'nothing', code });
 const refused = (code) => ({ ok: false, outcome: 'refused', code });
 
 /** The plan's start (unix) from when / day, or a refusal code. */
-function startOf(out, { at, tz, s, world, placeId, rnd, homeId }) {
+function startOf(out, { at, tz, s, world, placeId, rnd, homeId, onDay = null }) {
   if (out.when === 'now') {
     if (out.kind === 'visit_his') {
       const here = s?.position?.placeId ?? s?.activity?.placeId ?? null;
@@ -322,12 +354,13 @@ function startOf(out, { at, tz, s, world, placeId, rnd, homeId }) {
   }
   const today = dayStart(at, tz);
   const time = out.when ?? DEFAULT_TIME;
-  let day = today;
-  if (out.day === 'tomorrow') day = addDays(today, 1, tz);
+  let day = onDay ?? today;
+  if (out.day === 'today') day = today;
+  else if (out.day === 'tomorrow') day = addDays(today, 1, tz);
   else if (WEEKDAYS.includes(out.day)) day = addDays(today, (WEEKDAYS.indexOf(out.day) - weekdayOf(today, tz) + 7) % 7, tz);
   let start = atLocal(day, time, tz);
   // Only a time ("at 7") already past → the next day; a weekday already past today → next week.
-  if (start <= at && out.day === null) start = atLocal(addDays(today, 1, tz), time, tz);
+  if (start <= at && out.day === null && onDay === null) start = atLocal(addDays(today, 1, tz), time, tz);
   if (start <= at && WEEKDAYS.includes(out.day) && day === today) start = atLocal(addDays(today, 7, tz), time, tz);
   if (start <= at) return { code: 'in_past' };
   if (start > at + AHEAD_DAYS * 86400) return { code: 'too_far' };
@@ -335,8 +368,9 @@ function startOf(out, { at, tz, s, world, placeId, rnd, homeId }) {
 }
 
 // A plan already with them around that time (or a text plan just made with them): no second one.
-function alreadyPlanned(s, castId, start, end) {
+function alreadyPlanned(s, castId, start, end, ignoreId = null) {
   for (const d of s?.decisions instanceof Map ? s.decisions.values() : []) {
+    if (d?.id === ignoreId) continue;
     if (!['open', 'committed'].includes(d?.status) || !(d.subject?.castIds ?? []).includes(castId)) continue;
     if (d.status === 'committed' && !goingTo(d)) continue;   // 020: a plan he backed out of holds no time
     const t = d.subject?.eventAt;
@@ -377,7 +411,7 @@ function occupies(d) {
   return finite(opt?.cost?.travelMin) && opt.cost.travelMin > 0;
 }
 
-export function clashOf(s, span, world, { tz, startAt = span.start, waiveSleep = false } = {}) {
+export function clashOf(s, span, world, { tz, startAt = span.start, waiveSleep = false, ignoreId = null } = {}) {
   const r = routineOf(world);
   for (let day = dayStart(addDays(dayStart(span.start, tz), -1, tz), tz); day <= span.end; day = addDays(day, 1, tz)) {
     const plan = planOfDay(s, day, world, tz);
@@ -394,7 +428,7 @@ export function clashOf(s, span, world, { tz, startAt = span.start, waiveSleep =
     }
   }
   for (const d of s?.decisions instanceof Map ? s.decisions.values() : []) {
-    if (!occupies(d) || !finite(d.subject?.eventAt)) continue;
+    if (d?.id === ignoreId || !occupies(d) || !finite(d.subject?.eventAt)) continue;
     let end = null;
     try { end = getEvent(d.id)?.payload?.subject?.endAt ?? null; } catch { end = null; }
     const a = finite(d.ponrAt) ? Math.min(d.ponrAt, d.subject.eventAt) : d.subject.eventAt;
@@ -414,9 +448,10 @@ export function clashOf(s, span, world, { tz, startAt = span.start, waiveSleep =
  *   met     place ids where the two of them met, newest first
  *   final   a held plan out of time: no place named means where they last met, else a cafe
  *   newId   makes the id of a home for a member who has none (without it: refused no_their_home)
+ *   keepPlace, onDay, ignoreId   moving a plan already set: its place, its day when none is named, and it doesn't clash with itself
  * → { ok:true, kind, payload, newHome? } | { ok:false, outcome, code }
  */
-export function resolveTextPlan(s, castId, out, { at, tz, world: world0 = null, ownerChat = false, rnd = null, met = [], final = false, newId = null } = {}) {
+export function resolveTextPlan(s, castId, out, { at, tz, world: world0 = null, ownerChat = false, rnd = null, met = [], final = false, newId = null, keepPlace = null, onDay = null, ignoreId = null } = {}) {
   let world = world0;
   let newHome = null;
   if (!isObj(out) || out.agreed !== true) return nothing('not_agreed');
@@ -425,7 +460,8 @@ export function resolveTextPlan(s, castId, out, { at, tz, world: world0 = null, 
   if (!member) return refused('departed');
   const homeId = s?.self?.homePlaceId ?? null;
   let placeId = null;
-  if (out.kind === 'visit_his') {
+  if (keepPlace) placeId = keepPlace;
+  else if (out.kind === 'visit_his') {
     if (!homeId) return refused('no_home');
     if (member.home === homeId) return nothing('lives_there');   // the flatmate
     placeId = homeId;
@@ -450,18 +486,18 @@ export function resolveTextPlan(s, castId, out, { at, tz, world: world0 = null, 
     const v = controlsCheck({ source: 'engine', category, action: 'adopt', pinKeys: [castId] }, s);
     if (!v.ok) return refused(v.reason === 'pinned' || v.reason === 'frozen' || v.reason === 'paused' ? v.reason : 'controls');
   }
-  const st = startOf(out, { at, tz, s, world, placeId, rnd, homeId });
+  const st = startOf(out, { at, tz, s, world, placeId, rnd, homeId, onDay });
   if (st.code) return refused(st.code);
   const minutes = Math.min(360, Math.max(30, Math.round(out.minutes ?? DEFAULT_MINUTES)));
   const end = st.start + minutes * MIN;
-  if (alreadyPlanned(s, castId, st.start, end)) return nothing('already_planned');
+  if (alreadyPlanned(s, castId, st.start, end, ignoreId)) return nothing('already_planned');
   if (textPlansAhead(s, at) >= AHEAD_MAX) return refused('cap');
   let span;
   try { span = fitSpan({ start: st.start, end }, 'plan', placeId, s, world, at); } catch { return refused('no_route'); }
   const awake = s?.activity?.kind !== 'sleep';
   let clash;
   try {
-    clash = clashOf(s, span, world, { tz, startAt: st.start, waiveSleep: ownerChat || (awake && st.start <= at + SLEEP_WAIVE_HOURS * HOUR) });
+    clash = clashOf(s, span, world, { tz, startAt: st.start, waiveSleep: ownerChat || (awake && st.start <= at + SLEEP_WAIVE_HOURS * HOUR), ignoreId });
   } catch { clash = 'fit_failed'; }
   if (clash) return refused(clash);
   const kind = out.kind === 'visit_his' ? 'visit' : 'hangout';

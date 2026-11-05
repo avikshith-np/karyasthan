@@ -40,7 +40,7 @@ const EXPIRY_WORDS = Object.freeze({
   could_not_go: "he couldn't make it", unanswered: 'he never answered', owner_cancelled: 'the owner cancelled it',
   schedule: 'a schedule change', owner_plan: "the owner's new plan", fell_through: 'it fell through', frozen: 'frozen', pinned: 'pinned',
   rewound: 'a rewind', sick: 'he was sick', heavy: 'a heavy stretch', paused: 'the story was paused', withdrawn: 'the chat took it back',
-  inviter_cancelled: 'they called it off', career_changed: 'a job change', cast_departed: 'they left his life',
+  inviter_cancelled: 'they called it off', text_changed: 'they changed it in texts', career_changed: 'a job change', cast_departed: 'they left his life',
 });
 
 const round2 = (x) => (typeof x === 'number' && Number.isFinite(x) ? Math.round(x * 100) / 100 : null);

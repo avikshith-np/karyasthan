@@ -61,7 +61,8 @@ export const STATE_KEYS = Object.freeze(['last_weekly_at', 'last_weekly_run', 's
   'sweep_findings',       // 020 E1: the nightly sweep's last run + its findings (derived: a re-run rebuilds them)
   'sweep_dismissed',      // 020 E1: the fingerprints the owner dismissed
   'phone_plan_outcomes',   // 020 E1: what the plan step decided on recent texts (the sweep's text_plan)
-  'phone_plan_held']);     // agreements in texts still short of a detail, per member: codes only
+  'phone_plan_held',       // agreements in texts still short of a detail, per member: codes only
+  'phone_plan_notes']);    // plans the code refused, per member, until his writer has said so: codes only
 
 // Limits (data-model.md §1, §6).
 export const LIMITS = Object.freeze({
