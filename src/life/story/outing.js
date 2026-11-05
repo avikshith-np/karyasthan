@@ -57,11 +57,11 @@ export const START_STEP_SEC = 5 * MIN;
  * length depends on the time). Used to offer a fix for a too_soon outing.
  * → unix seconds | null (no route, or nothing within ~4 h)
  */
-export function earliestStart({ state, now, world: w }, { placeId, from = null } = {}) {
+export function earliestStart({ state, now, world: w }, { placeId, from = null, prepMin: prepOverride = null } = {}) {
   const world = w ?? {};
   const tw = travelWorldOf(state, world);
   const origin = originOf(state, from);
-  const prepMin = routineOf(world).prepMinutes ?? 20;
+  const prepMin = prepOverride ?? routineOf(world).prepMinutes ?? 20;
   const up = (t) => Math.ceil(t / START_STEP_SEC) * START_STEP_SEC;
   let t = up(now + prepMin * MIN);
   for (let i = 0; i < 48; i++) {
@@ -85,11 +85,12 @@ export function earliestStart({ state, now, world: w }, { placeId, from = null }
 export function outingDecisionPayload({ state, now, world: w }, {
   placeId, castIds, startAt, minutes, label, kind, adopted = false, claimId = null, goalId = null, from = null,
   followupId = null,   // 016: a scene's follow-up meet
+  prepMin: prepOverride = null,   // 2026-11-05: going on straight from an outing, he is already out and ready
 }) {
   const world = w ?? {};
   const tw = travelWorldOf(state, world);
   const origin = originOf(state, from);
-  const prepMin = routineOf(world).prepMinutes ?? 20;
+  const prepMin = prepOverride ?? routineOf(world).prepMinutes ?? 20;
   let dl;
   try {
     dl = deadlines({ eventAt: startAt, placeId, from: origin, at: now, prepMin, weather: state.weather ?? null }, tw);

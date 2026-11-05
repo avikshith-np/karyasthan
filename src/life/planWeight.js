@@ -23,7 +23,7 @@ export function oneBeingOn() { return oneBeing; }
 export function planWeight(d) {
   const by = d?.committed?.by;
   if (by === 'owner') return WEIGHT.owner;
-  if (by === 'goal' || by === 'text' || d?.adopted === true) return WEIGHT.promise;
+  if (by === 'goal' || by === 'text' || by === 'scene' || d?.adopted === true) return WEIGHT.promise;
   if (oneBeing && (by === 'reply' || d?.kind === 'career:interview')) return WEIGHT.promise;
   return WEIGHT.wish;
 }
@@ -37,7 +37,7 @@ export function isLockedOuting(d) {
 export function neverRethought(d) {
   const by = d?.committed?.by;
   if (by === 'owner' || by === 'goal') return true;
-  return !oneBeing && (by === 'text' || d?.adopted === true);
+  return !oneBeing && (by === 'text' || by === 'scene' || d?.adopted === true);
 }
 
 /** A committed plan he is going to: go, or late. */

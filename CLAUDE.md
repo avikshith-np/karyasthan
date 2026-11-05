@@ -309,7 +309,7 @@ Owner rewrites his future (PLAY GOD, `godView()`); every preview gets continuity
 
 ## Scene play-outs (spec 016)
 
-How an outing went: `src/life/story/scenes/` (only `story/index.js` imports it). Written the moment it ends, from the live session's record and its outcome (020 C4). Code fact sheet → mind / clerk / code one-liner; explicit register stays on `desire`. Real people get a code template and no model. Facts read as of the outing's start (`stateAtStart`); heavy_window rule; sweep NULLs words when an outing leaves the log. **Read `docs/claude/scenes.md` before changing it.**
+How an outing went: `src/life/story/scenes/` (only `story/index.js` imports it). Written the moment it ends, from the live session's record and its outcome (020 C4). Code fact sheet → mind / clerk / code one-liner; explicit register stays on `desire`. Real people get a code template and no model. Facts read as of the outing's start (`stateAtStart`); heavy_window rule; sweep NULLs words when an outing leaves the log. What a scene says they decided really happens (`plans` on the writer's JSON, `phone/worker.planFromScene`, `by:'scene'`). **Read `docs/claude/scenes.md` before changing it.**
 
 ## The thought stream (plan 020 F2)
 

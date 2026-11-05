@@ -197,7 +197,7 @@ function otherText(r, d) {
 }
 
 // How a plan was settled, in words (a code otherwise): 019 a plan agreed in texts.
-const BY_WORDS = Object.freeze({ text: 'agreed in texts' });
+const BY_WORDS = Object.freeze({ text: 'agreed in texts', scene: 'agreed in person' });
 const byWord = (by) => BY_WORDS[by] ?? by;
 
 function decisionText(d, future, now = d.now) {

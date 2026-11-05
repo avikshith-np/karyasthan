@@ -354,7 +354,7 @@ export function earnedTrust(s, { at = s?.at, days = 1, world = null, cancelled =
     } else if (d.status === 'committed' && TRUST_DECLINE.has(opt)) {
       if (!inWindow(d.committed?.at)) continue;
       const [code, v] = kind === 'occasion' ? ['occasion_skipped', TRUST_OCCASION_SKIP]
-        : num(d.reversals) > 0 ? (d.committed?.by === 'text' ? ['broke_promise', TRUST_BROKE_PROMISE] : ['backed_out', TRUST_BACKED_OUT])
+        : num(d.reversals) > 0 ? (d.committed?.by === 'text' || d.committed?.by === 'scene' ? ['broke_promise', TRUST_BROKE_PROMISE] : ['backed_out', TRUST_BACKED_OUT])
         : ['declined', TRUST_DECLINED];
       if (kind === 'occasion' && opt !== 'skip') continue;
       if (code === 'declined' && !leanedGoIds.has(d.id)) continue;   // a plain decline costs nothing

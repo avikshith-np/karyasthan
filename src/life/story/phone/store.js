@@ -17,7 +17,7 @@ export const STATUSES = Object.freeze(['pending', 'running', 'live', 'skipped', 
 export const DIRS = Object.freeze(['out', 'in']);
 export const TIERS = Object.freeze(['mouth', 'mind', 'clerk']);
 export const TRIGGERS = Object.freeze(['owner', 'reply', 'after_scene', 'birthday', 'news', 'on_my_way', 'romance',
-  'evening', 'cast_first', 'desire', 'regenerate', 'backing_out', 'plan_clash']);
+  'evening', 'cast_first', 'desire', 'regenerate', 'backing_out', 'plan_clash', 'plan_invite']);
 export const TONES = Object.freeze(['friendly', 'warm', 'flirty', 'teasing', 'caring', 'excited', 'apologetic', 'casual', 'logistics', 'annoyed', 'naughty']);
 export const TEXT_MAX = 300;
 export const TOPIC_MAX = 60;
@@ -275,7 +275,7 @@ export function countsSince(since) {
   let organic = 0;
   for (const r of rows) {
     perCast[r.castId] = (perCast[r.castId] ?? 0) + r.n;
-    if (!['owner', 'reply', 'regenerate', 'plan_clash'].includes(r.trigger)) organic += r.n;
+    if (!['owner', 'reply', 'regenerate', 'plan_clash', 'plan_invite'].includes(r.trigger)) organic += r.n;
   }
   return { perCast, organic };
 }

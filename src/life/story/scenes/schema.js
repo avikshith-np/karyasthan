@@ -17,7 +17,41 @@ import { contentProblem } from '../desire.js';
 import { FRIEND, LONG_MINUTES } from './facts.js';
 
 export { LONG_MINUTES };
-export const KEYS = Object.freeze(['narration', 'impressions', 'topics', 'highlight', 'awkward', 'chemistry', 'focus', 'ending', 'effects']);
+export const KEYS = Object.freeze(['narration', 'impressions', 'topics', 'highlight', 'awkward', 'chemistry', 'focus', 'ending', 'effects', 'plans']);
+export const PLAN_KINDS = Object.freeze(['outing', 'visit_his', 'visit_theirs', 'errand', 'chore']);
+export const PLANS_MAX = 3;
+const PLAN_DAYS = Object.freeze(['today', 'tomorrow', 'sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday']);
+const PLAN_KEYS = new Set(['who', 'also', 'kind', 'placeHint', 'spot', 'when', 'day', 'minutes', 'doing']);
+const PLAN_TIME_RE = /^([01]\d|2[0-3]):[0-5]\d$/;
+
+/**
+ * What they decided to do next (2026-11-05). A bad entry is dropped, never the scene: a plan is a bonus on a good
+ * story. who: labels of people there; also: first names of others asked along; none on a real person's scene, none with
+ * them after an outing that went badly. Codes and short lowercase words only.
+ */
+export function plansOf(raw, ctx = {}, { negative = false, selfOnly = false } = {}) {
+  if (selfOnly || !Array.isArray(raw)) return [];
+  const word = (v, re) => (typeof v === 'string' && re.test(v.trim().toLowerCase()) ? v.trim().toLowerCase() : null);
+  const out = [];
+  for (const p of raw.slice(0, PLANS_MAX)) {
+    if (!isObj(p) || Object.keys(p).some(k => !PLAN_KEYS.has(k)) || !PLAN_KINDS.includes(p.kind)) continue;
+    const who = (Array.isArray(p.who) ? p.who : []).map(l => labelOf(l, ctx)).filter(Boolean);
+    const solo = !who.length;
+    if (solo && !['errand', 'chore'].includes(p.kind)) continue;
+    if (!solo && negative) continue;
+    const when = p.when === 'now' || (typeof p.when === 'string' && PLAN_TIME_RE.test(p.when)) ? p.when : null;
+    const day = PLAN_DAYS.includes(p.day) ? p.day : null;
+    const minutes = fin(p.minutes) && p.minutes > 0 && p.minutes <= 1440 ? p.minutes : null;
+    const also = (Array.isArray(p.also) ? p.also : []).filter(n => typeof n === 'string' && /^[\p{L}][\p{L} .'-]{0,39}$/u.test(n)).slice(0, 3);
+    out.push({
+      kind: p.kind, who, also, when, day, minutes,
+      placeHint: word(p.placeHint, /^[a-z][a-z -]{1,23}$/),
+      spot: word(p.spot, /^[a-z][a-z' -]{2,40}$/),
+      doing: word(p.doing, /^[a-z][a-z -]{2,30}$/),
+    });
+  }
+  return out;
+}
 export const METRICS = Object.freeze(['closeness', 'trust', 'tension', 'intimacy', 'passion']);
 export const NARRATION_MIN = 120;
 export const NARRATION_MAX = 1200;
@@ -215,6 +249,7 @@ export function validateSceneOutput(raw, ctx = {}) {
   }
 
   const negative = ctx.negative === true || NEGATIVE_ENDINGS.includes(ending) || ctx.outcome === 'badly';
+  const plans = plansOf(o.plans, ctx, { negative, selfOnly });
   const sc = { ...c, negative };
   const narration = paras.map(p => scrub(p, sc)).join('\n\n');
   if (ctx.register === 'explicit') {
@@ -235,6 +270,7 @@ export function validateSceneOutput(raw, ctx = {}) {
       ending,
       effects,
       negative,
+      ...(plans.length ? { plans } : {}),
     },
   };
 }

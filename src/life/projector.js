@@ -177,7 +177,7 @@ const MAX_HISTORY = 8;
 const MAX_EXCLUDED_SIGS = 256;
 const MAX_RANGES = 256;
 const BIAS_MAX = 3;
-const COMMIT_BY = new Set(['owner', 'lean', 'sample', 'early', 'adopted', 'reply', 'goal', 'text']);   // 012: 'reply' (his answer to an invitation); 011: 'goal'; 019: 'text' (a plan agreed in texts)
+const COMMIT_BY = new Set(['owner', 'lean', 'sample', 'early', 'adopted', 'reply', 'goal', 'text', 'scene']);   // 012: 'reply' (his answer to an invitation); 011: 'goal'; 019: 'text' (a plan agreed in texts)
 // Expiry reasons that also close a COMMITTED decision (data-model §2.5): a
 // refused consequence, an owner cancel or a privacy withdrawal is terminal.
 // 012: an inviter calling a committed invitation off.
@@ -1012,6 +1012,8 @@ const HANDLERS_009 = {
     if (posInt(p.claimId)) d.claimId = p.claimId;
     if (posInt(p.goalId)) d.goalId = p.goalId;   // 011: a soft goal's outing
     if (posInt(p.followupId)) d.followupId = p.followupId;   // 016: a scene's follow-up meet
+    if (posInt(p.sceneEventId)) d.sceneEventId = p.sceneEventId;   // 2026-11-05: a plan a scene made
+    if (p.continuing === true) d.continuing = true;                // ...going on straight from that outing
     // 012: an invitation from a chat (present only then, so other decisions are unchanged).
     if (isObj(p.invite) && posInt(p.invite.pointerId)) {
       d.invite = true;

@@ -18,10 +18,11 @@ Rules:
 - Name only the people listed, by the names given. Never give a name to anyone who is not listed: say one of her friends, or the waiter. No phone numbers, links or brands beyond the given place.
 - Nothing about what his chats or messages said, work secrets, health, money amounts, or anything heavy (illness, grief, accidents).
 - "his phone during it" is true: he can't be fully with someone while texting someone else. The people with him notice; let it show in how it went, in proportion — a glance at a buzz is nothing, a stream of texts is not — and in effects (tension up; on a date, passion down). Never invent what the texts said.
-- The owner's intent for this outing comes first, if there is one. Then "how it went": it is what truly happened, the shape of the evening, in order. Use its turning points and what interrupted them, in your own words, and tell it as a story, never as a list; leave out what doesn't matter. Don't invent events beyond these and the rest of the sheet.
+- The owner's intent for this outing comes first, if there is one. Then "how it went": it is what truly happened, the shape of the evening, in order. Use its turning points and what interrupted them, in your own words, and tell it as a story, never as a list; leave out what doesn't matter. Don't invent events beyond these and the rest of the sheet (what they decide to do next is the one exception).
 - Name the place only in neutral or happy sentences; in a negative sentence call it "the place".
 - If mode is "self_only": the person with him is written ONLY as the exact token {FRIEND}. Tell it from his side only: what he did, saw and felt. Never write what {FRIEND} said, felt, thought or wanted; no quotes at all; impressions.them, chemistry, focus and effects must be empty or null and ending "nothing".
 - impressions only for people marked firstMeet. focus = the label of the person the scene is mostly about (required when more than one person).
+- Anything can come up while people talk. If they decide on something next, tell it in the story AND put it in "plans": it then really happens in his life. It can be anything that fits who they are and how it went: going on right now (back to one of their places, a movie, somewhere to eat), another day, a food spot that came up, an errand or chore together, or something he says he'll do on his own. A line "next" on the sheet means they do decide on something here, and you choose what. Without that line, only if it truly follows from the scene. A vague "we should do this again" is only an ending, not a plan. Pick a time his week and "his plans" leave free. Someone from "others he knows" may be asked along.
 - effects are small nudges the scene suggests for each person (closeness, trust, tension, intimacy, passion; up or down; small or medium). Keep them consistent with the outcome.
 
 Reply with ONLY one JSON object, no prose, no code fences:
@@ -33,7 +34,8 @@ Reply with ONLY one JSON object, no prose, no code fences:
  "chemistry": 0..1 or null,
  "focus": "P1" or null,
  "ending": "nothing"|"swapped_numbers"|"plan_to_meet"|"stayed_late"|"left_early"|"parted_badly",
- "effects": [{"p": "P1", "metric": "closeness"|"trust"|"tension"|"intimacy"|"passion", "dir": "up"|"down", "size": "small"|"medium"}]}
+ "effects": [{"p": "P1", "metric": "closeness"|"trust"|"tension"|"intimacy"|"passion", "dir": "up"|"down", "size": "small"|"medium"}],
+ "plans": [] or up to 3 of {"kind": "outing"|"visit_his" (they go to his place)|"visit_theirs" (he goes to theirs)|"errand"|"chore" (at home), "who": ["P1"] (who it's with; [] = on his own, errands and chores only), "also": ["first name from others he knows"] or [], "placeHint": "one lowercase word for the kind of place (cinema, restaurant, cafe, bar, park, shop, mall)" or "usual" or null, "spot": "only for a spot his world may not have, generic lowercase words like dosa place, never a business's name" or null, "when": "now" (straight from here) | "HH:MM" | null, "day": "today"|"tomorrow"|"monday"…"sunday"|null, "minutes": number or null, "doing": "for an errand or chore: lowercase words like groceries, laundry" or null}}
 You never write messages to anyone and never change settings, switches, budgets or rules.`;
 
 function line(k, v) {
@@ -82,6 +84,12 @@ export function renderUser(sheet, { drop = 0 } = {}) {
     ...(drop < 2 && sheet.together?.length ? ['together before (true):', ...sheet.together.map(l => `  - ${l}`)] : []),
     ...(sheet.afterwards?.length ? ['afterwards (true):', ...sheet.afterwards.map(l => `  - ${l}`)] : []),
     ...(sheet.plansAfter?.length ? ['planned next with them (true):', ...sheet.plansAfter.map(l => `  - ${l}`)] : []),
+    line('now', sheet.planning?.now),
+    line('his week', sheet.planning?.week),
+    ...(sheet.planning?.plans?.length ? ['his plans (true):', ...sheet.planning.plans.map(l => `  - ${l}`)] : []),
+    line('others he knows', sheet.planning?.others),
+    line('next', sheet.planning?.decide),
+    line('leaving', sheet.planning?.justLeft),
     ...(sheet.phoneDuring?.length ? ['his phone during it (true):', ...sheet.phoneDuring.map(l => `  - ${l}`)] : []),
     // plan 020 C4: the live session's record. When the sheet runs long it's cut from the middle: the ending stays.
     ...(sheet.trace?.lines?.length ? [

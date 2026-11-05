@@ -34,7 +34,7 @@ const CAUSE_WORDS = Object.freeze({
   text: 'agreed in texts', reply: 'his reply to an invitation', goal: "a goal's outing",
 });
 const CAUSE_CODES = Object.freeze({
-  sample: 'draw', lean: 'lean', early: 'early', owner: 'owner', adopted: 'adopted', text: 'text', reply: 'reply', goal: 'goal',
+  sample: 'draw', lean: 'lean', early: 'early', owner: 'owner', adopted: 'adopted', text: 'text', scene: 'in person', reply: 'reply', goal: 'goal',
 });
 const EXPIRY_WORDS = Object.freeze({
   could_not_go: "he couldn't make it", unanswered: 'he never answered', owner_cancelled: 'the owner cancelled it',

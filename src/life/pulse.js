@@ -508,6 +508,15 @@ export function fitLockedOuting(state, d, at, world) {
   const home = state.self?.homePlaceId;
   if (!finite(eventAt) || !finite(endAt) || !to || !home || at >= endAt) return null;
   const trip = outingTrip(state, plan, world);
+  // Going on straight from an outing (a scene's "now"): he leaves from where he is, not from the next block of his day.
+  if (d.continuing === true && state.position?.placeId && !state.position.travel && state.position.placeId !== to) {
+    const there = trip(state.position.placeId, to, at);
+    if (there) {
+      const blocks = plan.blocks.filter(b => b.end <= at).map(b => ({ ...b }));
+      const base = typeof d.subjectJid === 'string' && d.subjectJid ? { fromAmendment: true, subjectJid: d.subjectJid } : { fromAmendment: true };
+      return outingAmendment(state, d, plan, world, { blocks, there, departAt: at, mark: { ...base, decisionId: d.id }, trip, workLate: plan.workLate, startAt: eventAt });
+    }
+  }
   const stays = plan.blocks.filter(b => b.kind !== 'commute' && b.end > at && b.start < eventAt).sort((a, b) => b.start - a.start);
   let pick = null;
   let late = null;

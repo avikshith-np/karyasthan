@@ -138,6 +138,8 @@ function busyWith(s, castId) {
 function followupFor(s, session, out, ctx) {
   const castId = out.focus;
   if (!castId || !s?.cast?.has?.(castId)) return null;
+  // Something concrete was decided with them: that plan replaces the vague intent.
+  if ((out.plans ?? []).some(p => (p.who ?? []).includes(castId))) return null;
   const chem = finite(out.chemistry) ? out.chemistry : 0;
   if (!(out.ending === 'plan_to_meet' || (out.ending === 'swapped_numbers' && chem >= FOLLOWUP_CHEMISTRY))) return null;
   if (!memberAllowed(s, castId)) return null;
@@ -181,6 +183,11 @@ export function companionsToUndo(s, { eventOf = () => null, childrenOf = () => [
     let kids = [];
     try { kids = childrenOf(f.id); } catch { kids = []; }
     if (kids.some(e => e?.type === 'decision.opened' && e.payload?.followupId === f.id && s.excluded.has(e.id))) out.lapse.push(f.id);
+  }
+  // A plan the scene made (2026-11-05): goes with the scene unless he has already set off for it.
+  for (const d of s.decisions instanceof Map ? s.decisions.values() : []) {
+    if (!Number.isSafeInteger(d?.sceneEventId) || !gone(d.sceneEventId) || isExcludedId(s, d.id)) continue;
+    ((finite(d.ponrAt) && d.ponrAt <= t) || (finite(d.subject?.eventAt) && d.subject.eventAt <= t) ? out.kept : out.revert).push(d.id);
   }
   for (const a of Object.values(isObj(s.story.arcs) ? s.story.arcs : {})) {
     if (!isObj(a) || a.category !== 'romance') continue;

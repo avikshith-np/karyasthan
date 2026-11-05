@@ -48,6 +48,8 @@ import { buildSheet, placeWords, relWhen, timelineLines, planLines } from './fac
 import { jobWordsOf } from '../reducer.js';
 import { HIS_CHARTER, CAST_CHARTER, renderUser, charterFor, BODY_ASK_LINE, THREAD_LINES } from './charter.js';
 import { validateTexts, repeatedPhrase, repeatedToday, questionsIn, gistMiss, gistFallback, bodyAsk, gistAllows, gistIsAsk } from './schema.js';
+import { placeFor } from './plans.js';
+import { earliestStart } from '../outing.js';
 import { cueCheck, PLAN_PROMPT, PLAN_TURNS, MIN_CONFIDENCE, renderPlanUser, validatePlanOutput, resolveTextPlan, appendPlan, planMissing, mergeHeld, changeCue, planProblem } from './plans.js';
 import { createHash } from 'crypto';
 
@@ -60,6 +62,7 @@ export const CALLER_CAST = 'life.phone.cast';
 // Plans from texts (owner 2026-11-01): one clerk call when two turns read like an agreement to meet.
 export const CALLER_PLAN = 'life.phone.plan';
 export const PLAN_MAX_PER_DAY = 30;
+const AGREED_BY = new Set(['text', 'scene']);   // plans he made with someone, in texts or face to face
 export const HOLD_TURNS = 6;           // an agreement short of a detail: this many more turns may finish it
 export const HOLD_QUIET_MIN = 30;      // ...and after this long with no new turn it goes ahead on defaults
 const HELD_KEY = 'phone_plan_held';
@@ -124,7 +127,7 @@ const TRIGGER_TYPES = ['phone.text_set', 'scene.played', 'birthday', 'cast.beat'
 // 020: a plan with someone from his world fell through and they were expecting him: he tells them.
 const FELL_THROUGH = new Set(['could_not_go', 'owner_plan', 'owner_cancelled', 'fell_through', 'schedule']);
 const NEWS_BEATS = new Set(['news', 'milestone', 'back', 'trip']);
-const ORGANIC_SKIP = new Set(['owner', 'reply', 'regenerate', 'plan_clash']);   // plan_clash: part of the chat that made the plan
+const ORGANIC_SKIP = new Set(['owner', 'reply', 'regenerate', 'plan_clash', 'plan_invite']);   // plan_clash: part of the chat that made the plan
 const MIN = 60;
 const HOUR = 3600;
 const DAY = 86400;
@@ -202,7 +205,7 @@ function rnd(row, purpose, tz, at) {
 // Would this member be expecting him? A plan agreed in texts with them; else they have a thread with
 // him and this wasn't to be their first meeting (nobody gets "can't make it" out of nowhere).
 function knowsAboutPlan(s, d, castId) {
-  if (d.committed?.by === 'text') return true;
+  if (d.committed?.by === 'text' || d.committed?.by === 'scene') return true;
   if (!store.lastLive(castId)) return false;
   try { return deps.firstMeeting?.(s, d, castId) !== true; } catch { return false; }
 }
@@ -575,6 +578,10 @@ export function whyCtxOf(s, row, tz) {
   const p = isObj(ev?.payload) ? ev.payload : {};
   if (row.trigger === 'news') return { beat: typeof p.text === 'string' ? p.text : null };
   if (row.trigger === 'after_scene') return { scene: [p.outcome === 'well' ? 'it went well' : null, p.ending && p.ending !== 'nothing' ? String(p.ending).replace(/_/g, ' ') : null].filter(Boolean).join(', ') || null };
+  if (row.trigger === 'plan_invite') {
+    const d = [...(s.decisions instanceof Map ? s.decisions.values() : [])].find(x => x?.sceneEventId === row.triggerEventId && (x.subject?.castIds ?? []).includes(row.castId));
+    return { eventAt: finite(d?.subject?.eventAt) ? `${dayLabel(d.subject.eventAt, tz)} ${hhmm(d.subject.eventAt, tz)}` : null, place: d?.subject?.placeId ? placeWords(s, d.subject.placeId) : null };
+  }
   if (row.trigger === 'backing_out') {
     const d = s.decisions instanceof Map ? s.decisions.get(posInt(p.decisionId)) : null;
     return { eventAt: finite(d?.subject?.eventAt) ? hhmm(d.subject.eventAt, tz) : null, place: d?.subject?.placeId ? placeWords(s, d.subject.placeId) : null };
@@ -1096,7 +1103,7 @@ export async function planFromTexts(row, res) {
   // A plan with them already made in texts lately (the "see you then" after the "deal"): no call.
   const since = at - PLAN_RECENT_HOURS * HOUR;
   for (const d of !changing && s0.decisions instanceof Map ? s0.decisions.values() : []) {
-    if (goingTo(d) && d.committed?.by === 'text' && (d.subject?.castIds ?? []).includes(row.castId)
+    if (goingTo(d) && AGREED_BY.has(d.committed?.by) && (d.subject?.castIds ?? []).includes(row.castId)
       && finite(d.committed.at) && d.committed.at >= since) { setHeld(row.castId, null); return done('nothing', 'already_planned'); }
   }
   const cap = await planCapReason(at, tz);
@@ -1176,7 +1183,7 @@ async function settlePlan(castId, eventId, value, { tz, ownerChat, turns, final 
 function textPlanAhead(s, castId, at) {
   let best = null;
   for (const d of s?.decisions instanceof Map ? s.decisions.values() : []) {
-    if (!goingTo(d) || d.committed?.by !== 'text' || !(d.subject?.castIds ?? []).includes(castId) || !finite(d.subject?.eventAt) || d.subject.eventAt <= at) continue;
+    if (!goingTo(d) || !AGREED_BY.has(d.committed?.by) || !(d.subject?.castIds ?? []).includes(castId) || !finite(d.subject?.eventAt) || d.subject.eventAt <= at) continue;
     if (!best || d.subject.eventAt < best.subject.eventAt) best = d;
   }
   return best;
@@ -1196,6 +1203,7 @@ async function changePlan(castId, eventId, value, { tz, ownerChat, done }) {
       if (!d) return { ok: false, outcome: 'nothing', code: 'no_plan' };
       if (!(value.confidence >= MIN_CONFIDENCE)) return { ok: false, outcome: 'nothing', code: 'low_confidence' };
       if (!finite(d.ponrAt) || t >= d.ponrAt) return { ok: false, outcome: 'nothing', code: 'too_late' };   // he has already set off
+      if (value.change === 'cancel' && (d.subject.castIds ?? [])[0] !== castId) return { ok: false, outcome: 'nothing', code: 'not_theirs' };   // someone asked along can't call it off for the rest
       const close = () => deps.append({ type: 'decision.expired', at: t, actor: 'engine', causeId: eventId, payload: { decisionId: d.id, reason: 'text_changed' } });
       if (value.change === 'cancel') { close(); return { ok: true, kind: 'cancel', openedId: null }; }
       const world = deps.worldOf(s) ?? deps.world;
@@ -1209,7 +1217,7 @@ async function changePlan(castId, eventId, value, { tz, ownerChat, done }) {
       if (!plan.ok) return plan;
       if (plan.payload.subject.eventAt === d.subject.eventAt && plan.payload.subject.placeId === d.subject.placeId) return { ok: false, outcome: 'nothing', code: 'no_change' };
       close();
-      const ids = appendPlan((e) => deps.append(e), { at: t, causeId: eventId, payload: plan.payload });
+      const ids = appendPlan((e) => deps.append(e), { at: t, causeId: eventId, payload: plan.payload, by: d.committed?.by === 'scene' ? 'scene' : 'text' });
       return { ok: true, kind: 'move', ...ids };
     }));
     r = await r;
@@ -1223,6 +1231,160 @@ async function changePlan(castId, eventId, value, { tz, ownerChat, done }) {
   }
   try { deps.settle(); } catch { /* the next tick fits it */ }
   return done('changed', r.kind, { kind: r.kind, decisionId: r.openedId });
+}
+
+// ── plans a scene made (2026-11-05) ─────────────────────────────────────────
+// Face to face works like the texts: what they decided becomes real, kept unless it clashes, moved or called off by later
+// texts. Companions of the scene, not caused by it (D15): a revert or regenerate takes one only if he hasn't set off.
+const NOW_MAX_MIN = 30;           // "straight from here" only this long after the outing ended
+const NOW_PER_DAY = 3;            // a night of going on from place to place, at most
+const SPOTS_PER_WEEK = 2;
+const DEFAULT_TIME_ALONE = '18:30';
+const titleCase = (t) => t.charAt(0).toUpperCase() + t.slice(1);
+
+function firstNameId(s, name, skip = []) {
+  const want = String(name).trim().toLowerCase().split(/\s+/)[0];
+  for (const c of s.cast instanceof Map ? s.cast.values() : []) {
+    if (skip.includes(c?.id) || s.story?.departed?.[c?.id]) continue;
+    if (String(c?.name ?? '').toLowerCase().split(/\s+/)[0] === want) return c.id;
+  }
+  return null;
+}
+
+// A spot his world doesn't have, generic words only, a short walk or ride from where they were. → a place | null (over the cap)
+function newSpot(s, session, p, eventId, t, world) {
+  const name = titleCase(p.spot);
+  const known = [...(s.places instanceof Map ? s.places.values() : []), ...(Array.isArray(world?.places) ? world.places : [])];
+  const same = known.find(x => String(x?.name ?? '').toLowerCase() === p.spot);
+  if (same) return { existing: same.id };
+  const recent = listEvents({ types: ['place.created'], from: t - 7 * DAY, to: t + 1, limit: 200 }).filter(e => !isExcludedId(s, e.id) && String(e.payload?.id).startsWith('place:spot-'));
+  if (recent.length >= SPOTS_PER_WEEK) return null;
+  const near = known.find(x => x?.id === session.placeId && finite(x?.lat)) ?? known.find(x => x?.id === s.self?.homePlaceId);
+  if (!finite(near?.lat) || !finite(near?.lon)) return null;
+  const seed = [...p.spot].reduce((a, c) => (a * 31 + c.charCodeAt(0)) % 3600, 11);
+  const km = 0.3 + (seed % 27) / 10;
+  const angle = (seed / 3600) * 2 * Math.PI;
+  const slug = p.spot.replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 22) || 'spot';
+  return { place: {
+    id: `place:spot-${slug}-${eventId}`, name: name.slice(0, 60), kind: (p.placeHint && p.placeHint !== 'usual' ? p.placeHint : 'place').replace(/[\s-]+/g, ''),
+    lat: Math.round((near.lat + (km * Math.cos(angle)) / 111) * 1e4) / 1e4,
+    lon: Math.round((near.lon + (km * Math.sin(angle)) / (111 * Math.cos((near.lat * Math.PI) / 180))) * 1e4) / 1e4,
+  } };
+}
+
+/** The scene's plans, in order, each on the fresh state. Never throws back into the scene. */
+export async function planFromScene({ sceneEventId, session, plans, tz }) {
+  const results = [];
+  for (const p of plans) {
+    const castId = p.who[0] ?? null;
+    const done = (outcome, code, extra = {}) => { logPlan(outcome, code, { id: sceneEventId, ...extra }); results.push({ outcome, code, ...extra }); return results.at(-1); };
+    let r;
+    try {
+      r = underLocks(() => store.inTransaction(() => settleScenePlan({ sceneEventId, session, p, castId, tz })));
+      r = await r;
+    } catch {
+      try { deps.rebuild(); } catch { /* the next tick re-reads */ }
+      done('nothing', 'append');
+      continue;
+    }
+    if (!r.ok) {
+      if (castId && planProblem(r.code)) setPlanNote(castId, { eventId: sceneEventId, at: nowSec(), code: r.code });
+      done(r.outcome, r.code, { kind: p.kind });
+      continue;
+    }
+    for (const id of r.asked ?? []) {
+      try { store.insertPending({ castId: id, dir: 'out', trigger: 'plan_invite', triggerEventId: sceneEventId, exchange: 0, dueAt: nowSec() + 2 * MIN, createdAt: nowSec() }); } catch { /* they just aren't asked */ }
+    }
+    try { deps.settle(); } catch { /* the next tick fits it */ }
+    done('applied', `scene_${p.kind}`, { kind: p.kind, decisionId: r.openedId });
+  }
+  return results;
+}
+
+function settleScenePlan({ sceneEventId, session, p, castId, tz }) {
+  const s = deps.getState();
+  if (!isObj(s) || gone(s, sceneEventId)) return { ok: false, outcome: 'nothing', code: 'scene_gone' };
+  const t = Math.max(nowSec(), Number.isSafeInteger(s.at) ? s.at : 0);
+  const world = deps.worldOf(s) ?? deps.world;
+  const met = castId ? metPlaces(s, castId, t) : [];
+  const homeId = s.self?.homePlaceId ?? null;
+  const also = [...new Set(p.also.map(n => firstNameId(s, n, [...p.who, ...session.castIds])).filter(Boolean))].slice(0, 3);
+  const rest = p.who.slice(1);   // others who were there go too
+  const alsoCast = [...rest, ...also];
+  let placeId = null; let spot = null; let kind = p.kind; let label = null; let decisionKind = null;
+  if (p.spot) {
+    const made = newSpot(s, session, p, sceneEventId + (p.spot.length % 7), t, world);
+    if (made?.existing) placeId = made.existing;
+    else if (made?.place) { spot = made.place; placeId = spot.id; }
+  }
+  if (p.kind === 'chore') {
+    placeId = homeId; kind = 'outing'; decisionKind = 'errand';
+    label = `${titleCase(p.doing ?? 'chores')} at home`.slice(0, 80);
+  } else if (p.kind === 'errand') {
+    placeId ??= placeFor(s, p.placeHint ?? p.doing ?? 'shop', world, { met }) ?? placeFor(s, 'shop', world, { met });
+    kind = 'outing';
+    if (!castId) { decisionKind = 'errand'; label = `${titleCase(p.doing ?? 'errands')}`.slice(0, 80); }
+  }
+  // Straight from here: where he is and how long it takes decide when.
+  let startAt = null; let from = null; let prepMin = null; let continuing = false; let cut = null;
+  if (p.when === 'now') {
+    if (t - session.endAt > NOW_MAX_MIN * MIN) return { ok: false, outcome: 'nothing', code: 'too_old' };
+    const made = listEvents({ types: ['decision.opened'], from: t - DAY, to: t + 1, limit: 300 }).filter(e => e.payload?.continuing === true && !isExcludedId(s, e.id));
+    if (made.length >= NOW_PER_DAY) return { ok: false, outcome: 'nothing', code: 'now_cap' };
+    const travel = s.position?.travel;
+    const target = kind === 'visit_his' ? homeId : placeId;
+    if (travel && finite(travel.endAt) && kind === 'visit_his' && travel.to === homeId) {
+      // Already heading home: they go with him.
+      startAt = Math.ceil((Math.max(travel.endAt, t) + 60) / (5 * MIN)) * 5 * MIN; from = homeId; prepMin = 0;
+    } else {
+      from = session.placeId ?? s.position?.placeId ?? homeId; prepMin = 0; continuing = from !== target;
+      if (travel && finite(travel.endAt) && travel.endAt > t && travel.from === session.placeId) cut = travel;
+    }
+  }
+  const out = { agreed: true, confidence: 1, kind, placeHint: p.placeHint, when: p.when === 'now' ? null : (p.when ?? (castId ? null : DEFAULT_TIME_ALONE)), day: p.day, minutes: p.minutes };
+  const extra = { sceneEventId, ...(continuing ? { continuing: true } : {}) };
+  const ctx = {
+    at: t, tz, world, ownerChat: false, rnd: rnd(sceneEventId, 'plan', tz, t), met, final: true, newId: sceneEventId,
+    alsoCast, label, decisionKind, extra, place: spot, keepPlace: placeId, from, prepMin,
+    ignoreId: session.decisionId ?? null,   // the outing that just ended isn't in the way of what comes next
+  };
+  if (p.when === 'now' && startAt === null) {
+    // Ready and out already: the trip alone, from here.
+    if (kind === 'visit_his') ctx.keepPlace = homeId;
+    else if (kind === 'visit_theirs') {
+      const h = s.cast.get(castId)?.home;
+      if (typeof h !== 'string') { ctx.keepPlace = null; }
+    } else ctx.keepPlace = placeId ?? placeFor(s, p.placeHint, world, { met, anyMet: true }) ?? placeFor(s, 'cafe', world, { met });
+    ctx.startAt = null;
+  } else if (startAt !== null) ctx.startAt = startAt;
+  const plan = resolveNow(s, castId, out, ctx, p, t, session);
+  if (!plan.ok) return plan;
+  const add = (e) => deps.append(e);
+  if (spot) add({ type: 'place.created', at: t, actor: 'engine', payload: { id: spot.id, name: spot.name, kind: spot.kind, lat: spot.lat, lon: spot.lon, sceneEventId } });
+  if (plan.newHome) {
+    const { id, name, kind: k, lat, lon } = plan.newHome;
+    add({ type: 'place.created', at: t, actor: 'engine', payload: { id, name, kind: k, lat, lon, sceneEventId } });
+    add({ type: 'cast.updated', at: t, actor: 'engine', payload: { castId, fields: { home: id }, sceneEventId } });
+  }
+  if (cut && plan.payload.subject.placeId !== cut.to) {
+    add({ type: 'travel.arrived', at: t, actor: 'engine', causeId: cut.eventId ?? null, payload: { to: session.placeId } });
+  }
+  const ids = appendPlan(add, { at: t, causeId: null, payload: plan.payload, by: 'scene' });
+  return { ok: true, ...ids, asked: also };
+}
+
+// "Now" needs a start from the trip: resolve once to learn the place, then again from the trip's length.
+function resolveNow(s, castId, out, ctx, p, t, session) {
+  if (p.when !== 'now' || Number.isSafeInteger(ctx.startAt)) return resolveTextPlan(s, castId, out, ctx);
+  const probe = resolveTextPlan(s, castId, { ...out, when: '23:59', day: 'today' }, { ...ctx, startAt: t + 3600 });
+  if (!probe.ok) return probe;
+  const target = probe.payload.subject.placeId;
+  const world = probe.newHome ? { ...ctx.world, places: [...(Array.isArray(ctx.world?.places) ? ctx.world.places : []), probe.newHome] } : ctx.world;
+  const placed = ctx.place ? { ...world, places: [...(Array.isArray(world?.places) ? world.places : []), ctx.place] } : world;
+  let start = null;
+  try { start = earliestStart({ state: s, now: t, world: placed }, { placeId: target, from: ctx.from, prepMin: 0 }); } catch { start = null; }
+  if (!Number.isSafeInteger(start)) return { ok: false, outcome: 'refused', code: 'no_route' };
+  return resolveTextPlan(s, castId, out, { ...ctx, startAt: start, keepPlace: ctx.keepPlace ?? (probe.newHome ? null : target) });   // a new home is made again, under the same id
 }
 
 // Held agreements: codes and the clerk's closed fields, never the words.

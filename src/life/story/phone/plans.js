@@ -248,10 +248,11 @@ const PLACE_ALIAS = Object.freeze({
   coffee: ['cafe'], tea: ['cafe'], 'coffee shop': ['cafe'], café: ['cafe'],
   dinner: ['restaurant'], lunch: ['restaurant', 'cafe'], breakfast: ['cafe', 'restaurant'], brunch: ['cafe', 'restaurant'], food: ['restaurant'],
   drinks: ['bar', 'pub', 'brewpub', 'restaurant'], beer: ['bar', 'pub', 'brewpub'], pub: ['pub', 'bar', 'brewpub'], bar: ['bar', 'pub', 'brewpub'],
-  movie: ['cinema'], movies: ['cinema'], film: ['cinema'], walk: ['park'], shopping: ['mall'], workout: ['gym'],
+  movie: ['cinema'], movies: ['cinema'], film: ['cinema'], walk: ['park'], shopping: ['mall', 'shop'], workout: ['gym'],
+  groceries: ['shop', 'mall'], grocery: ['shop', 'mall'], supermarket: ['shop', 'mall'], market: ['shop', 'mall'], store: ['shop', 'mall'],
 });
 // What they'll do there, for the label ("Coffee with … at the cafe").
-const DOING = Object.freeze({ cafe: 'Coffee', restaurant: 'Dinner', bar: 'Drinks', pub: 'Drinks', brewpub: 'Drinks', cinema: 'A movie', park: 'A walk', gym: 'The gym' });
+const DOING = Object.freeze({ shop: 'Errands', mall: 'Shopping', cafe: 'Coffee', restaurant: 'Dinner', bar: 'Drinks', pub: 'Drinks', brewpub: 'Drinks', cinema: 'A movie', park: 'A walk', gym: 'The gym' });
 
 const firstName = (member) => String(member?.name ?? 'them').replace(/\([^)]*\)/g, ' ').trim().split(/\s+/)[0] || 'them';
 
@@ -451,13 +452,15 @@ export function clashOf(s, span, world, { tz, startAt = span.start, waiveSleep =
  *   keepPlace, onDay, ignoreId   moving a plan already set: its place, its day when none is named, and it doesn't clash with itself
  * → { ok:true, kind, payload, newHome? } | { ok:false, outcome, code }
  */
-export function resolveTextPlan(s, castId, out, { at, tz, world: world0 = null, ownerChat = false, rnd = null, met = [], final = false, newId = null, keepPlace = null, onDay = null, ignoreId = null } = {}) {
+export function resolveTextPlan(s, castId, out, { at, tz, world: world0 = null, ownerChat = false, rnd = null, met = [], final = false, newId = null, keepPlace = null, onDay = null, ignoreId = null,
+  label = null, decisionKind = null, alsoCast = [], startAt = null, from = null, prepMin = null, extra = null, place = null } = {}) {
   let world = world0;
   let newHome = null;
   if (!isObj(out) || out.agreed !== true) return nothing('not_agreed');
   if (!(out.confidence >= MIN_CONFIDENCE)) return nothing('low_confidence');
-  const member = s?.cast?.get?.(castId);
-  if (!member) return refused('departed');
+  const member = castId ? s?.cast?.get?.(castId) : null;   // no one: an errand or chore of his own (a scene's plan)
+  if (castId && !member) return refused('departed');
+  if (place) world = { ...(world ?? {}), places: [...(Array.isArray(world?.places) ? world.places : []), place] };   // a new spot, not in his world yet
   const homeId = s?.self?.homePlaceId ?? null;
   let placeId = null;
   if (keepPlace) placeId = keepPlace;
@@ -483,14 +486,14 @@ export function resolveTextPlan(s, castId, out, { at, tz, world: world0 = null, 
   // Asleep: only an owner-started chat makes a plan of it (the wake machinery gets him up).
   if (s?.activity?.kind === 'sleep' && !ownerChat) return refused('asleep');
   for (const category of ['social', 'cast']) {
-    const v = controlsCheck({ source: 'engine', category, action: 'adopt', pinKeys: [castId] }, s);
+    const v = controlsCheck({ source: 'engine', category, action: 'adopt', pinKeys: [castId, ...alsoCast].filter(Boolean) }, s);
     if (!v.ok) return refused(v.reason === 'pinned' || v.reason === 'frozen' || v.reason === 'paused' ? v.reason : 'controls');
   }
-  const st = startOf(out, { at, tz, s, world, placeId, rnd, homeId, onDay });
+  const st = Number.isSafeInteger(startAt) ? { start: startAt } : startOf(out, { at, tz, s, world, placeId, rnd, homeId, onDay });
   if (st.code) return refused(st.code);
   const minutes = Math.min(360, Math.max(30, Math.round(out.minutes ?? DEFAULT_MINUTES)));
   const end = st.start + minutes * MIN;
-  if (alreadyPlanned(s, castId, st.start, end, ignoreId)) return nothing('already_planned');
+  if (castId && alreadyPlanned(s, castId, st.start, end, ignoreId)) return nothing('already_planned');
   if (textPlansAhead(s, at) >= AHEAD_MAX) return refused('cap');
   let span;
   try { span = fitSpan({ start: st.start, end }, 'plan', placeId, s, world, at); } catch { return refused('no_route'); }
@@ -500,12 +503,14 @@ export function resolveTextPlan(s, castId, out, { at, tz, world: world0 = null, 
     clash = clashOf(s, span, world, { tz, startAt: st.start, waiveSleep: ownerChat || (awake && st.start <= at + SLEEP_WAIVE_HOURS * HOUR), ignoreId });
   } catch { clash = 'fit_failed'; }
   if (clash) return refused(clash);
-  const kind = out.kind === 'visit_his' ? 'visit' : 'hangout';
+  const kind = decisionKind ?? (out.kind === 'visit_his' ? 'visit' : 'hangout');
   let payload;
   try {
     payload = outingDecisionPayload({ state: s, now: at, world }, {
-      placeId, castIds: [castId], startAt: st.start, minutes, label: planLabel(s, out.kind, member, placeId), kind,
+      placeId, castIds: [castId, ...alsoCast].filter(Boolean), startAt: st.start, minutes, label: label ?? planLabel(s, out.kind, member, placeId), kind,
+      ...(from ? { from } : {}), ...(Number.isFinite(prepMin) ? { prepMin } : {}),
     });
+    if (extra) payload = { ...payload, ...extra };
   } catch (e) {
     if (e instanceof OutingError) return refused(e.reason);
     return refused('failed');
@@ -517,7 +522,7 @@ export function resolveTextPlan(s, castId, out, { at, tz, world: world0 = null, 
  * The engine chain for a resolved plan, caused by the agreeing text (so a revert of that text
  * takes the plan, and the pulse's fitted day with it). `add(event)` → the appended event.
  */
-export function appendPlan(add, { at, causeId, payload }) {
+export function appendPlan(add, { at, causeId, payload, by = 'text' }) {
   const opened = add({ type: 'decision.opened', at, actor: 'engine', causeId, payload });
   const lean = add({
     type: 'decision.lean', at, actor: 'engine', causeId: opened.id,
@@ -525,7 +530,7 @@ export function appendPlan(add, { at, causeId, payload }) {
   });
   const committed = add({
     type: 'decision.committed', at, actor: 'engine', causeId: lean.id,
-    payload: { decisionId: opened.id, optionId: 'go', p: 1, sampled: false, by: 'text' },
+    payload: { decisionId: opened.id, optionId: 'go', p: 1, sampled: false, by },
   });
   return { openedId: opened.id, committedId: committed.id };
 }

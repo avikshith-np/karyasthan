@@ -22,6 +22,7 @@
 // Logging: evt 'arcs_scene' with codes only — never the sheet, the text or a hint.
 import { config, getPersona } from '../../../utils/config.js';
 import { logger } from '../../../utils/logger.js';
+import { routineOf } from '../../routine.js';
 import { now as clockNow, dateKey, dayStart, resolveTimezone, ageOn, hhmm, dayLabel } from '../../clock.js';
 import { rngFor as rngForDefault } from '../../rng.js';
 import { getEvent, listEvents, lastEventId, causeChain, childEvents, revertEvent as logRevert } from '../../eventLog.js';
@@ -51,6 +52,7 @@ export const HEAVY_WINDOW_BEFORE = 2 * 86400;
 export const HEAVY_WINDOW_AFTER = 31 * 86400;
 export const PER_TICK = 3;
 const DAY = 86400;
+const MIN = 60;
 const HOUR = 3600;
 
 const isObj = (v) => v !== null && typeof v === 'object' && !Array.isArray(v);
@@ -505,7 +507,7 @@ export function contextFor(s, session, { tone = null, toneOutcome = null, fixed 
     prev: prevOf(b, session),
     history, standing, historyAfter, beatsAfter, commitments,
     texting: (() => { try { return deps.texting(session.castIds, session.startAt) ?? {}; } catch { return {}; } })(),
-    ...aroundSession(s, session, tz),
+    ...aroundSession(s, session, tz, outcome),
   };
 }
 
@@ -547,7 +549,41 @@ export function afterwardsCheck(eventIds) {
   return out;
 }
 
-function aroundSession(s, session, tz) {
+// What the writer needs to make a plan that fits: the time, his usual week, what's set, who else he knows.
+// How often they do decide on something next, by how it went: a code draw on the outing, the same for every version of it.
+export const DECIDE_NEXT_P = Object.freeze({ well: 0.5, fine: 0.2, flat: 0, badly: 0 });
+// Left alone the writers all settle on a meal on Saturday: the code picks what sort of thing comes up.
+const DECIDE_KINDS = Object.freeze(['going on somewhere right now', 'back to one of their places', 'a plan for another day', 'somewhere new to try', 'something to see or do, not a meal', 'an errand or chore, together or his own']);
+// Going on together from here. Told plainly, and with no "walked home" line: the writers keep to that line
+// over any hint (2026-11-05: 0 of 9 went on until it was gone and the sheet said so).
+const GO_ON = Object.freeze({
+  'going on somewhere right now': 'they do not part here: they go on somewhere together right now, straight from here. In "plans" use "when": "now"',
+  'back to one of their places': 'they do not part here: they go back to one of their places together right now, straight from here. In "plans" use "when": "now"',
+});
+function planningOf(s, atEnd, session, tz, outcome) {
+  const at = nowSec();
+  let week = null;
+  try { const r = routineOf(deps.worldOf(s) ?? deps.world); if (r?.workStart && r?.workEnd) week = `work Mon–Fri ${r.workStart}–${r.workEnd}; weekends free`; } catch { week = null; }
+  let plans = [];
+  try {
+    plans = (deps.plans?.(atEnd, session.castIds[0], at, tz, { aheadHours: 7 * 24, skipDecisionId: session.decisionId ?? null }) ?? [])
+      .map(l => (typeof l === 'string' ? l : l?.text)).filter(Boolean).map(l => l.replace(/\s*\[with them[^\]]*\]$/, '')).slice(0, 6);
+  } catch { plans = []; }
+  const here = new Set(session.castIds);
+  const others = [...(s.cast instanceof Map ? s.cast.values() : [])].filter(c => c?.name && !here.has(c.id) && !s.story?.departed?.[c.id])
+    .map(c => String(c.name).replace(/\([^)]*\)/g, ' ').trim().split(/\s+/)[0]).filter(Boolean).slice(0, 12);
+  const draw = parseInt(sha(`decide:${session.activityEventId}`).slice(0, 8), 16) / 0xffffffff;
+  // Going on from here only while it's fresh and nothing of his day (work, a meeting) starts within two hours.
+  const busySoon = (Array.isArray(s.plan?.blocks) ? s.plan.blocks : [])
+    .some(b => ['work', 'meeting'].includes(b?.kind) && b.end > at && b.start < at + 2 * HOUR);
+  const kinds = at - session.endAt <= 30 * MIN && !busySoon ? DECIDE_KINDS : DECIDE_KINDS.filter(k => !GO_ON[k]);
+  const kind = kinds[parseInt(sha(`kind:${session.activityEventId}`).slice(0, 8), 16) % kinds.length];
+  const on = draw < (DECIDE_NEXT_P[outcome] ?? 0);
+  const decide = on ? GO_ON[kind] ?? `they decide on something to do next. What comes up: ${kind}, or whatever fits them better` : null;
+  return { now: `${dayLabel(at, tz)} ${hhmm(at, tz)}`, week, plans, others, ...(decide ? { decide } : {}), ...(on && GO_ON[kind] ? { goOn: true } : {}) };
+}
+
+function aroundSession(s, session, tz, outcome = null) {
   if (session.mode !== 'full' || !session.castIds?.length) return {};
   const call = (fn, ...a) => { try { return typeof fn === 'function' ? fn(...a) : null; } catch { return null; } };
   const lastSaw = {};
@@ -567,7 +603,14 @@ function aroundSession(s, session, tz) {
   }
   let afterwards = [];
   try { afterwards = afterwardsNow(s, session, tz); } catch { afterwards = []; }
-  return { lastSaw, together: [...new Set(together)], afterwards, plansAfter: [...new Set(plansAfter)], ...phoneDuring(s, session) };
+  const age = nowSec() - session.endAt;
+  const planning = age <= PLANS_MAX_AGE_HOURS * HOUR ? planningOf(s, atEnd, session, tz, outcome) : null;
+  // Written as it ends, he has only just set off: they may still decide to go on together. A line of its own: "afterwards" is compared with the log.
+  if (planning && age <= 30 * MIN && afterwards.length === 1 && / on his own$/.test(afterwards[0])) {
+    if (planning.goOn) afterwards = [];   // they go on: his walk home is what gets cut short
+    else planning.justLeft = 'he has only just set off: if they decide to go on together instead, that replaces the "afterwards" line';
+  }
+  return { lastSaw, together: [...new Set(together)], afterwards, plansAfter: [...new Set(plansAfter)], ...(planning ? { planning } : {}), ...phoneDuring(s, session) };
 }
 
 // #14 one stream of attention: what his phone did while they were together — texts with other
@@ -774,7 +817,7 @@ export async function runScene(row, { regenOf = null, by = 'owner' } = {}) {
   const vctx = {
     labels: built.labels, mode: session.mode, outcome: built.outcome, firstMeet: ctx.firstMeet,
     maxChars, parasMax,
-    names: [...built.names, ...(ctx.persona.aliases ?? []), ...String(ctx.tone ?? '').split(/\s+/)],
+    names: [...built.names, ...(ctx.persona.aliases ?? []), ...String(ctx.tone ?? '').split(/\s+/), ...(built.sheet?.planning?.others ?? [])],
     knownNames: knownNames ?? [], castNames, venueNames: venueNamesNow(), negative: ctx.negative,
     register,
   };
@@ -916,7 +959,21 @@ export function settleCompanions() {
   return { reverted: plan.revert.length, lapsed: plan.lapse.length, kept: plan.kept.length };
 }
 
-async function commit({ row, session, out, built, ctx, regenOf, by, tier, model, fellBack, caller, reason, heavyWindow = false, intended = false, heat = null }) {
+// Plans a scene made (2026-11-05): after its commit, so a plan that fails never undoes the story.
+export const PLANS_MAX_AGE_HOURS = 6;
+async function commit(args) {
+  const res = await commitScene(args);
+  const { out, session, tier, ctx } = args;
+  if (out?.plans?.length && tier !== 'code' && Number.isSafeInteger(res?.eventId) && typeof deps.planFromScene === 'function'
+    && nowSec() - session.endAt <= PLANS_MAX_AGE_HOURS * HOUR) {
+    try {
+      if (!effectsBlocked(deps.getState(), session)) await deps.planFromScene({ sceneEventId: res.eventId, session, plans: out.plans, tz: ctx.tz });
+    } catch { log({ status: 'plans', skip: 'error' }); }
+  }
+  return res;
+}
+
+async function commitScene({ row, session, out, built, ctx, regenOf, by, tier, model, fellBack, caller, reason, heavyWindow = false, intended = false, heat = null }) {
   const fallback = tier === 'code' && !intended;   // a real person's code scene is the intended result, not a degrade
   return underLocks(() => {
     let reverted = false;

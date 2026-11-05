@@ -145,6 +145,7 @@ export function aroundOf(ctx = {}) {
   if (before.length) out.together = before;
   if (after.length) out.afterwards = after;
   if (plans.length) out.plansAfter = plans;
+  if (isObj(ctx.planning)) out.planning = ctx.planning;
   return out;
 }
 

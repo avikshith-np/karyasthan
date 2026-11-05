@@ -1309,6 +1309,7 @@ function wire() {
     });
   }
   sceneWorker.configure({
+    planFromScene: (a) => phoneWorker.planFromScene(a),
     claimCheck: checkWorker.seam,
     now, getState, append, world, pulse, worldOf: (s) => worldOf(s, world),
     rebuild: () => { try { att?.rebuild?.(); } catch { /* the next tick re-reads */ } },

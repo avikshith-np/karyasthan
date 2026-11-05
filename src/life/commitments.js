@@ -13,7 +13,7 @@ import { planWeight, WEIGHT } from './planWeight.js';
 import { dayLabel, hhmm } from './clock.js';
 
 export const STATUSES = Object.freeze(['overdue', 'no_plan', 'open', 'on', 'kept', 'broken', 'lapsed']);
-export const SOURCES = Object.freeze(['decision', 'invitation', 'claim', 'goal', 'text']);
+export const SOURCES = Object.freeze(['decision', 'invitation', 'claim', 'goal', 'text', 'scene']);
 const DAY = 86400;
 const HOUR = 3600;
 export const CHAT_WHAT = 'a plan from a chat';
@@ -91,7 +91,7 @@ function decisionRow(s, fold, { at, moves, causeOf }) {
     castIds: fromChat ? [] : castIds,
     what: fromChat ? CHAT_WHAT : clean(goLabel ?? String(o.kind ?? 'a plan').replace(/[_:-]+/g, ' ')),
     when: eventAt,
-    source: invite ? 'invitation' : o.adopted === true || posInt(o.claimId) ? 'claim' : posInt(o.goalId) ? 'goal' : by === 'text' ? 'text' : 'decision',
+    source: invite ? 'invitation' : o.adopted === true || posInt(o.claimId) ? 'claim' : posInt(o.goalId) ? 'goal' : by === 'text' ? 'text' : by === 'scene' ? 'scene' : 'decision',
     by,
     weight: invite ? WEIGHT.promise : planWeight(shapeOf(fold)),
     status, fromChat, flag: false, covered, code,

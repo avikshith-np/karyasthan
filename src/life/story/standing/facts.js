@@ -49,7 +49,7 @@ function planLine(ev, fold, day, venueNames) {
   const p = ev.payload ?? {};
   switch (ev.type) {
     case 'decision.committed':
-      if (p.optionId === 'go') return `${day}: plan: ${label('go')}: he said yes${commitBy(ev) === 'text' ? ' (agreed in texts)' : ''}`;
+      if (p.optionId === 'go') return `${day}: plan: ${label('go')}: he said yes${commitBy(ev) === 'text' ? ' (agreed in texts)' : commitBy(ev) === 'scene' ? ' (agreed in person)' : ''}`;
       if (p.optionId === 'late') return `${day}: plan: ${label('late')}: he'd come late`;
       return null;   // a plain no to a passing idea isn't news: every evening has one
     case 'decision.reversed':
