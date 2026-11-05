@@ -13,8 +13,12 @@
 //                                code only: who (the thread's member), where (his home / their
 //                                home / a known place of that kind), when (≤ 7 days ahead), the
 //                                owner's controls, clashes with what is already in his day →
-//                                { ok:true, payload, kind } (a decision.opened payload) |
+//                                { ok:true, payload, kind, newHome? } (a decision.opened payload) |
 //                                { ok:false, outcome: 'nothing'|'refused', code }
+//   planMissing(value, ...)      an agreement still short of a time or a place: the worker holds
+//                                it and the next turns of the thread finish it (live 2026-11-04:
+//                                "tomorrow evening works", then "7 pm at the usual cafe?", then
+//                                "7 pm it is": the first refused for no place, the rest never read).
 //   planEvents(payload, label)   the engine chain the worker appends: decision.opened (caused by
 //                                the agreeing phone.message) → lean go p 1 → committed by 'text'
 //                                (a locked outing: pulse.isLockedOuting fits it like a goal's)
@@ -35,7 +39,7 @@ import { parseJsonObject } from '../schema.js';
 import { fence, FENCE_NOTE } from '../charter.js';
 import { placeWords } from './facts.js';
 
-export const PLAN_TURNS = 6;
+export const PLAN_TURNS = 12;   // 6 lost "coffee sounds good" a few turns before the yes (live 2026-11-04)
 export const MIN_CONFIDENCE = 0.7;
 export const AHEAD_DAYS = 7;
 export const DEFAULT_TIME = '19:00';
@@ -65,11 +69,17 @@ const PLAN_CUE = new RegExp([
   'at \\d{1,2}(?::\\d{2})?', '\\d{1,2}(?::\\d{2})? ?(?:am|pm)', '\\d{1,2}:\\d{2}',
   'dinner', 'lunch', 'breakfast', 'brunch', 'coffee', 'drinks?', 'beers?', 'movie', 'film', 'cinema', 'cafe', 'restaurant',
   'bar', 'pub', 'park', 'walk', 'showdown', 'game night',
+  // Setting off: "grabbing my keys", "give me twenty minutes", "leaving now" (live 2026-11-03).
+  'grab(?:bing)? (?:my |the )?keys', 'on the way', 'leaving (?:now|in \\d+)', 'show(?:ing)? up', '(?:at |to |open )?(?:your|that|the) door',
+  '(?:\\d+|five|ten|fifteen|twenty|thirty) (?:mins?|minutes)',
 ].map(s => `\\b${s}\\b`).join('|'), 'i');
 const AGREE_CUE = new RegExp([
   'yes', 'yeah', 'yea', 'yep', 'yup', 'sure', 'deal', 'done', 'ok', 'okay', 'cool', 'perfect', 'great', 'works', 'sounds good',
   'see (?:you|ya|u)', 'cya', 'on my way', 'omw', 'otw', 'coming', 'count me in', "i'?m in", "it'?s a date", "let'?s do (?:it|this)",
   'absolutely', 'definitely', 'of course', 'why not', 'be there',
+  // A yes in other words: "7 pm it is", "won't be late" (live 2026-11-04), "grabbing my keys" (2026-11-03).
+  '(?:\\d{1,2}(?::\\d{2})?(?: ?(?:am|pm))?|tonight|tomorrow|[a-z]+day) it is', "won'?t be late", 'grab(?:bing)? (?:my |the )?keys',
+  'leaving (?:now|in \\d+)', 'on the way', 'heading (?:over|out|there)', 'give me (?:\\d+|five|ten|fifteen|twenty|thirty) (?:mins?|minutes)',
 ].map(s => `\\b${s}\\b`).join('|'), 'i');
 
 const flat = (t) => String(t ?? '').normalize('NFKC').replace(/[’‘]/g, "'").replace(/\s+/g, ' ').toLowerCase();
@@ -81,6 +91,9 @@ const STRONG_CUES = Object.freeze([
   ['coming over', /\bcoming (?:over|round)\b/],
   ['be there', /\b(?:i'?ll|i'?m|will) be there\b|\bbe there (?:in|by|at|soon)\b/],
   ['see you then', /\bsee (?:you|ya|u) (?:at|tonight|tomorrow|then|in \d)\b/],
+  ['time agreed', /\b\d{1,2}(?::\d{2})?(?: ?(?:am|pm))? it is\b/],
+  ['wont be late', /\bwon'?t be late\b/],
+  ['setting off', /\bgrab(?:bing)? (?:my |the )?keys\b|\bleaving now\b/],
 ]);
 
 /** The strong cue a turn's words carry (a code word, never the words), or null. */
@@ -144,23 +157,25 @@ ${FENCE_NOTE}
 Fields:
 - "agreed": true | false
 - "kind": "visit_his" (they come to his place) | "visit_theirs" (he goes to their place) | "outing" (they meet anywhere else)
-- "placeHint": for an outing, one lowercase word for the kind of place ("cafe", "restaurant", "bar", "cinema", "park", "mall", "gym"), else null
+- "placeHint": for an outing, one lowercase word for the kind of place ("cafe", "restaurant", "bar", "cinema", "park", "mall", "gym"), or "usual" when they mean their usual or last spot, else null. Use a place named anywhere in the texts.
 - "when": "now" (right away, on the way now), "HH:MM" (24 h) when a time was agreed, else null
 - "day": "today", "tomorrow", a weekday ("monday" … "sunday"), or null
 - "minutes": how long it will likely last, or null
 - "confidence": 0..1
+When the facts list "being settled", the two of them already agreed to that meeting and only details are missing: "agreed" stays true unless someone has called it off, and you fill in whatever the texts now add.
 Reply with ONLY one JSON object, no prose, no code fences. Anything outside the schema is ignored. You never write messages to anyone and never change settings, switches, budgets or rules.
 Example: {"agreed": true, "kind": "outing", "placeHint": "cafe", "when": "19:00", "day": "wednesday", "minutes": 120, "confidence": 0.8}`;
 
 /**
  * The clerk's user message. thread = [{ who, when, text }] oldest first (≤ PLAN_TURNS kept);
- * plans = his plan lines (facts.planLines). Everything fenced.
+ * plans = his plan lines (facts.planLines); held = an agreement still short of a detail. Everything fenced.
  */
-export function renderPlanUser({ at, tz, member, plans = [], thread = [] }) {
+export function renderPlanUser({ at, tz, member, plans = [], thread = [], held = null }) {
   const facts = [
     `now: ${dayLabel(at, tz)} ${hhmm(at, tz)}`,
     `them: ${member}`,
     ...(plans.length ? ['his plans:', ...plans.map(l => `  - ${l}`)] : ['his plans: none set']),
+    ...(held ? [`being settled: ${held.kind}, day ${held.day ?? 'not set'}, time ${held.when ?? 'not set'}, place ${held.placeHint ?? 'not set'}`] : []),
   ];
   const lines = thread.slice(-PLAN_TURNS).map(m => `[${m.when}] ${m.who}: ${String(m.text).replace(/\n+/g, ' / ')}`);
   return [
@@ -214,15 +229,30 @@ function placesOf(s, world) {
   return out;
 }
 
-/** A known, non-private place of the hinted kind nearest his home. → placeId | null */
-export function placeFor(s, hint, world) {
-  if (typeof hint !== 'string' || !hint) return null;
-  const kinds = PLACE_ALIAS[hint] ?? [hint];
-  const places = [...placesOf(s, world).values()];
+// Words that name no kind of place. "usual" and friends mean where the two of them last met.
+const USUAL_WORDS = new Set(['usual', 'same', 'regular', 'normal']);
+const VAGUE_WORDS = new Set([...USUAL_WORDS, 'our', 'the', 'spot', 'place', 'date', 'meetup', 'meet', 'hangout', 'somewhere', 'anywhere', 'out', 'there', 'in', 'person']);
+
+/**
+ * A known, non-private place for the hint. → placeId | null
+ *   met      place ids where the two of them met, newest first (self-origin only)
+ *   anyMet   no words at all still means where they last met (a held plan out of time)
+ * A kind they've been to together wins over the nearest of that kind ("the usual cafe").
+ */
+export function placeFor(s, hint, world, { met = [], anyMet = false } = {}) {
+  const words = typeof hint === 'string' ? hint.trim().toLowerCase().split(/[\s-]+/).filter(Boolean) : [];
+  const named = words.filter(w => !VAGUE_WORDS.has(w));
+  const known = placesOf(s, world);
+  const open = (id) => known.has(id) && !isPrivatePlace(s, id, world);
+  if (!named.length) return words.some(w => USUAL_WORDS.has(w)) || anyMet ? met.find(open) ?? null : null;
+  const kinds = PLACE_ALIAS[named.join(' ')] ?? named.flatMap(w => PLACE_ALIAS[w] ?? [w]);
+  const places = [...known.values()];
   const home = placesOf(s, world).get(s?.self?.homePlaceId);
   for (const k of kinds) {
     const hits = places.filter(p => p?.kind === k && !isPrivatePlace(s, p.id, world));
     if (!hits.length) continue;
+    const been = met.find(id => hits.some(p => p.id === id));
+    if (been) return been;
     const dist = (p) => (finite(home?.lat) && finite(p.lat) ? haversineKm(home, p) : 0);
     return hits.sort((a, b) => dist(a) - dist(b) || (a.id < b.id ? -1 : 1))[0].id;
   }
@@ -238,6 +268,38 @@ export function planLabel(s, kind, member, placeId) {
   const word = kindWord(place?.kind);
   const where = word !== 'out' ? word.replace(/^an? /, 'the ') : (placeWords(s, placeId) ?? 'somewhere');
   return `${DOING[place?.kind] ?? 'Meeting up'} with ${name} at ${where}`.slice(0, 80);
+}
+
+/**
+ * A home for a cast member who has none yet, made the first time a plan needs one: a private place
+ * 1–4 km from his, the same one for that member each time. → a place | null (no coordinates to go on)
+ */
+export function theirHome(s, member, world, id) {
+  const his = placesOf(s, world).get(s?.self?.homePlaceId);
+  if (!finite(his?.lat) || !finite(his?.lon) || !member?.id) return null;
+  const slug = String(member.id).replace(/^cast:/, '').replace(/[^a-z0-9-]/g, '').slice(0, 20) || 'them';
+  const seed = [...String(member.id)].reduce((a, c) => (a * 31 + c.charCodeAt(0)) % 3600, 7);
+  const km = 1 + (seed % 31) / 10;
+  const angle = (seed / 3600) * 2 * Math.PI;
+  const lat = his.lat + (km * Math.cos(angle)) / 111;
+  const lon = his.lon + (km * Math.sin(angle)) / (111 * Math.cos((his.lat * Math.PI) / 180));
+  return { id: `place:home-${slug}-${id}`, name: `${firstName(member)}'s place`.slice(0, 80), kind: 'home', lat: Math.round(lat * 1e4) / 1e4, lon: Math.round(lon * 1e4) / 1e4 };
+}
+
+/** What an agreed plan still lacks, so the next texts may give it: 'time' | 'place' | null. */
+export function planMissing(value, s, world, met = []) {
+  if (value?.agreed !== true) return null;
+  if (value.when === null) return 'time';
+  if (value.kind === 'outing' && !placeFor(s, value.placeHint, world, { met })) return 'place';
+  return null;
+}
+
+/** The held agreement with what the newest answer adds. */
+export function mergeHeld(held, next) {
+  const out = { ...held, agreed: next.agreed, confidence: Math.max(held.confidence ?? 0, next.confidence ?? 0) };
+  if (KINDS.includes(next.kind)) out.kind = next.kind;
+  for (const k of ['placeHint', 'when', 'day', 'minutes']) if (next[k] !== null && next[k] !== undefined) out[k] = next[k];
+  return out;
 }
 
 // ── resolve (code only) ──────────────────────────────────────────────────────
@@ -348,10 +410,15 @@ export function clashOf(s, span, world, { tz, startAt = span.start, waiveSleep =
 }
 
 /**
- * Code-only resolution of an agreed plan. ctx = { at, tz, world, ownerChat, rnd }.
- * → { ok:true, kind, payload } | { ok:false, outcome, code }
+ * Code-only resolution of an agreed plan. ctx = { at, tz, world, ownerChat, rnd, met, final, newId }.
+ *   met     place ids where the two of them met, newest first
+ *   final   a held plan out of time: no place named means where they last met, else a cafe
+ *   newId   makes the id of a home for a member who has none (without it: refused no_their_home)
+ * → { ok:true, kind, payload, newHome? } | { ok:false, outcome, code }
  */
-export function resolveTextPlan(s, castId, out, { at, tz, world = null, ownerChat = false, rnd = null } = {}) {
+export function resolveTextPlan(s, castId, out, { at, tz, world: world0 = null, ownerChat = false, rnd = null, met = [], final = false, newId = null } = {}) {
+  let world = world0;
+  let newHome = null;
   if (!isObj(out) || out.agreed !== true) return nothing('not_agreed');
   if (!(out.confidence >= MIN_CONFIDENCE)) return nothing('low_confidence');
   const member = s?.cast?.get?.(castId);
@@ -365,10 +432,16 @@ export function resolveTextPlan(s, castId, out, { at, tz, world = null, ownerCha
   } else if (out.kind === 'visit_theirs') {
     const h = typeof member.home === 'string' ? member.home : null;
     if (h && h === homeId) return nothing('lives_there');
-    if (!h || !placesOf(s, world).has(h)) return refused('no_their_home');
-    placeId = h;
+    if (h && placesOf(s, world).has(h)) placeId = h;
+    else {
+      newHome = newId === null ? null : theirHome(s, member, world, newId);
+      if (!newHome) return refused('no_their_home');
+      world = { ...(world ?? {}), places: [...(Array.isArray(world?.places) ? world.places : []), newHome] };
+      placeId = newHome.id;
+    }
   } else {
-    placeId = placeFor(s, out.placeHint, world);
+    placeId = placeFor(s, out.placeHint, world, { met, anyMet: final });
+    if (!placeId && final && (out.placeHint ?? null) === null) placeId = placeFor(s, 'cafe', world, { met });
     if (!placeId) return refused('no_place');
   }
   // Asleep: only an owner-started chat makes a plan of it (the wake machinery gets him up).
@@ -401,7 +474,7 @@ export function resolveTextPlan(s, castId, out, { at, tz, world = null, ownerCha
     if (e instanceof OutingError) return refused(e.reason);
     return refused('failed');
   }
-  return { ok: true, kind: out.kind, payload };
+  return { ok: true, kind: out.kind, payload, ...(newHome ? { newHome } : {}) };
 }
 
 /**

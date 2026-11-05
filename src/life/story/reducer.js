@@ -639,6 +639,8 @@ export const STORY_HANDLERS = Object.freeze({
       if (v) upd[k] = v;
     }
     if (typeof p.fields.birthday === 'string' && DATE_RE.test(p.fields.birthday)) upd.birthday = p.fields.birthday;
+    // A home made for them when a plan in texts first needs one (phone/plans.js theirHome).
+    if (typeof p.fields.home === 'string' && PLACE_ID_RE.test(p.fields.home)) upd.home = p.fields.home;
     if (!Object.keys(upd).length) return;
     s.cast.set(id, { ...s.cast.get(id), ...upd });
     if (upd.status) Object.assign(lifeOf(st, id), { status: upd.status, statusAt: ev.at });

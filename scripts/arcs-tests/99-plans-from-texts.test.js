@@ -17,7 +17,9 @@ import { resolveTimezone, localParts, zonedToUnix, dateKey, weekday, hhmm } from
 import * as story from '../../src/life/story/index.js';
 import * as phoneStore from '../../src/life/story/phone/store.js';
 import { plansOf, CALLER_PLAN } from '../../src/life/story/phone/worker.js';
-import { cueCheck, validatePlanOutput, resolveTextPlan, planLabel, PLAN_PROMPT } from '../../src/life/story/phone/plans.js';
+import { cueCheck, strongCue, placeFor, validatePlanOutput, resolveTextPlan, planLabel, PLAN_PROMPT } from '../../src/life/story/phone/plans.js';
+import { homeIdsOf } from '../../src/life/publicView.js';
+import { haversineKm } from '../../src/life/travel.js';
 import { HIS_CHARTER, CAST_CHARTER } from '../../src/life/story/phone/charter.js';
 import { isLockedOuting } from '../../src/life/pulse.js';
 import { logger } from '../../src/utils/logger.js';
@@ -276,6 +278,139 @@ section('a refusal through the live path: nothing appended, logged refused <code
   for (let i = 0; i < 8 && !planLogs.some(l => l.code === 'no_place'); i++) { await simulateHours(0.25); await drain(); }
   check('logged refused no_place', planLogs.some(l => l.outcome === 'refused' && l.code === 'no_place'), planLogs.slice(-3));
   eq('no plan appended', textPlans(mgr).length, before);
+}
+
+section('real phrasings from the 3 and 4 Nov threads now reach the plan step');
+{
+  check('"7 pm it is" after "7 pm at the usual cafe?"', cueCheck("7 pm it is\nwon't be late", '7 pm at the usual cafe? dont be late'));
+  check('"grabbing my keys now"', cueCheck('grabbing my keys now', 'waiting right here'));
+  check('"give me twenty minutes"', cueCheck('still in bed, give me twenty minutes', 'are you coming or not'));
+  check('still small talk: "showing up is the easy part"', !cueCheck('showing up is the easy part', 'you just focus on showing up next time'));
+  check('still small talk: "the door was open"', !cueCheck('the door was open', 'lol what happened'));
+  eq('the nightly check sees them', [strongCue('7 pm it is'), strongCue("ok won't be late"), strongCue('grabbing my keys now'), strongCue('haha same')], ['time agreed', 'wont be late', 'setting off', null]);
+}
+
+section('where: "the usual" is where they last met; a kind they have been to wins over the nearest');
+{
+  const s = S();
+  eq('no words, nothing known → none', placeFor(s, null, world), null);
+  eq('no words, not out of time → none even with history', placeFor(s, null, world, { met: ['place:restaurant'] }), null);
+  eq('no words, out of time → where they last met', placeFor(s, null, world, { met: ['place:restaurant'], anyMet: true }), 'place:restaurant');
+  eq('"usual" → where they last met', placeFor(s, 'usual', world, { met: ['place:restaurant', 'place:cafe'] }), 'place:restaurant');
+  eq('"usual", and his home is never it', placeFor(s, 'usual', world, { met: ['place:home', 'place:cafe'] }), 'place:cafe');
+  eq('"usual cafe" → the cafe', placeFor(s, 'usual cafe', world, { met: ['place:restaurant', 'place:cafe'] }), 'place:cafe');
+  eq('"date" names no place', placeFor(s, 'date', world), null);
+  eq('"coffee" still a cafe', placeFor(s, 'coffee', world), 'place:cafe');
+  eq('an unknown kind stays unknown', placeFor(s, 'bowling', world, { met: ['place:cafe'] }), null);
+  const base = { agreed: true, kind: 'outing', placeHint: null, when: '19:30', day: 'saturday', minutes: 90, confidence: 0.9 };
+  const t = clock.now();
+  eq('resolve, not out of time: no place → no_place', resolveTextPlan(s, rival, base, { at: t, tz, world }).code, 'no_place');
+  eq('resolve, out of time, no history → a cafe', resolveTextPlan(s, rival, base, { at: t, tz, world, final: true }).payload?.subject?.placeId, 'place:cafe');
+}
+
+const say = async (castId, dir, words) => {
+  if (dir === 'in') theirs = () => ({ messages: [words], tone: 'warm', topic: 'plan', end: true });
+  else his = () => ({ messages: [words], tone: 'warm', topic: 'plan', end: true });
+  const id = phoneStore.insertPending({ castId, dir, trigger: 'reply', triggerEventId: msgEv(castId), exchange: 3, dueAt: clock.now(), createdAt: clock.now() });
+  await drain();
+  check(`"${words}" went out`, phoneStore.getMessage(id)?.status === 'live', phoneStore.getMessage(id));
+};
+const agreed = (o) => ({ agreed: true, kind: 'outing', placeHint: null, when: null, day: 'tomorrow', minutes: null, confidence: 0.9, ...o });
+const eveningAtHome = async () => {
+  let k = 0;
+  while (at(k, 20, 30) <= clock.now() || [0, 6].includes(weekday(at(k, 12), tz))) k++;
+  await untilTime(at(k, 20, 30));
+  // Home and alone: an earlier section's plan may have him out with someone.
+  for (let i = 0; i < 16 && (S().position?.placeId !== 'place:home' || (S().activity?.withCast ?? []).length); i++) await simulateHours(0.25);
+  return k;
+};
+
+section('the live case: agreed, then the time and place follow in later turns → one plan with all of it');
+{
+  const who = 'cast:manager';
+  await eveningAtHome();
+  const first = textPlans(who).length;
+  his = () => ({ messages: ['coffee sometime?'], tone: 'warm', topic: 'plan', end: true });
+  plan = () => ({ agreed: false, kind: null, placeHint: null, when: null, day: null, minutes: null, confidence: 0.2 });
+  await applyAction({ kind: 'text', castId: who, gist: 'coffee sometime' });
+  await drain();
+  plan = () => agreed({});
+  await say(who, 'in', 'tomorrow evening works perfectly');
+  eq('held: no time yet', [planLogs.at(-1)?.outcome, planLogs.at(-1)?.code], ['held', 'held_time']);
+  eq('nothing in his day yet', textPlans(who).length, first);
+  const n0 = planCalls();
+  plan = () => agreed({ placeHint: 'cafe', when: '19:00' });
+  await say(who, 'out', '7 pm at the usual cafe?');
+  eq('a question with no yes is still read while it is held', planCalls(), n0 + 1);
+  check('the clerk is told what is being settled', /being settled: outing, day tomorrow/.test(cr.callsFor(CALLER_PLAN).at(-1)?.user ?? ''));
+  const p = textPlans(who).at(-1);
+  eq('one plan: the cafe, tomorrow, 19:00', [textPlans(who).length, p?.subject?.placeId, hhmm(p?.subject?.eventAt ?? 0, tz), p?.subject?.eventAt >= at(1, 0)], [first + 1, 'place:cafe', '19:00', true]);
+  eq('logged applied', planLogs.at(-1)?.outcome, 'applied');
+  const n1 = planCalls();
+  await say(who, 'in', '7 pm it is');
+  eq('"7 pm it is" after that: no second plan and no call', [textPlans(who).length, planCalls()], [first + 1, n1]);
+  // Clear the evening for the sections below.
+  life.revertEvent(phoneStore.threadOf(who, { live: true }).find(r => r.text === '7 pm at the usual cafe?').eventId, { reason: 'test', by: 'owner' });
+  await story.idle();
+}
+
+section('agreed and then nobody adds anything: it goes ahead on defaults after a quiet half hour');
+{
+  const who = 'cast:coworker-a';
+  await eveningAtHome();
+  const first = textPlans(who).length;
+  plan = () => agreed({ day: 'sunday' });
+  await say(who, 'in', 'deal, sunday then');
+  eq('held', planLogs.at(-1)?.outcome, 'held');
+  await simulateHours(0.25); await drain();
+  eq('not yet at 15 minutes', textPlans(who).length, first);
+  for (let i = 0; i < 4 && textPlans(who).length === first; i++) { await simulateHours(0.25); await drain(); }
+  const p = textPlans(who).at(-1);
+  eq('then a plan: 19:00, no place named → a cafe', [textPlans(who).length, hhmm(p?.subject?.eventAt ?? 0, tz), p?.subject?.placeId], [first + 1, '19:00', 'place:cafe']);
+}
+
+section('agreed, then called off before it was settled: no plan');
+{
+  const who = 'cast:coworker-b';
+  await eveningAtHome();
+  const first = textPlans(who).length;
+  plan = () => agreed({ day: 'tomorrow' });
+  await say(who, 'in', 'sure, tomorrow works');
+  eq('held', planLogs.at(-1)?.outcome, 'held');
+  plan = () => ({ agreed: false, kind: null, placeHint: null, when: null, day: null, minutes: null, confidence: 0.9 });
+  await say(who, 'out', 'actually cant make it, sorry');
+  eq('called off', [planLogs.at(-1)?.outcome, planLogs.at(-1)?.code], ['nothing', 'called_off']);
+  await simulateHours(1); await drain();
+  eq('no plan', textPlans(who).length, first);
+}
+
+section('going to their place when they have no home yet: one is made, private, and goes with the text');
+{
+  const who = 'cast:manager';
+  await eveningAtHome();
+  const member = S().cast.get(who);
+  check('no home place yet', typeof member?.home !== 'string', member?.home);
+  eq('resolve without an id still refuses', resolveTextPlan(S(), who, agreed({ kind: 'visit_theirs', when: '20:00', day: 'saturday' }), { at: clock.now(), tz, world }).code, 'no_their_home');
+  const first = textPlans(who).length;
+  his = () => ({ messages: ['free this weekend?'], tone: 'warm', topic: 'plan', end: true });
+  plan = () => ({ agreed: false, kind: null, placeHint: null, when: null, day: null, minutes: null, confidence: 0.2 });
+  await applyAction({ kind: 'text', castId: who, gist: 'free this weekend' });
+  await drain();
+  plan = () => agreed({ kind: 'visit_theirs', when: '20:00', day: 'saturday' });
+  await say(who, 'in', 'yes come to mine saturday at 8');
+  const p = textPlans(who).at(-1);
+  eq('a plan', textPlans(who).length, first + 1);
+  const home = S().cast.get(who)?.home;
+  check('their home is set and is that plan\'s place', typeof home === 'string' && home.startsWith('place:home-') && p?.subject?.placeId === home, [home, p?.subject?.placeId]);
+  eq('a private place of kind home, near his', S().places.get(home)?.kind, 'home');
+  check('within 5 km of his home', haversineKm(S().places.get('place:home'), S().places.get(home)) <= 5);
+  check('never offered as a place to go out to', placeFor(S(), 'home', world) === null);
+  check('the public filter counts it as a home', homeIdsOf(S()).has(home));
+  eq('the label', p?.options?.find(o => o.id === 'go')?.label, "Over at Manager's place");
+  const textId = msgEv(who);
+  life.revertEvent(textId, { reason: 'test', by: 'owner' });
+  await story.idle();
+  check('reverting the text takes the plan and the home with it', S().excluded?.has?.(p.eventId) && S().cast.get(who)?.home !== home && !S().places.has(home), [S().cast.get(who)?.home, S().places.has(home)]);
 }
 
 section('the writers are told: agree only to what his plans allow; "on my way" only after a yes');

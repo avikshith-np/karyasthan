@@ -224,7 +224,7 @@ try {
   eq('countRefusals since', store.countRefusals({ since: now() - 1 }), 1);
 
   section('story_state');
-  eq('every known key, null when unset', store.getState(), { last_weekly_at: null, last_weekly_run: null, seed: null, extract_counters: null, degraded: null, scenes_cursor: null, scenes_on: null, phone_cursor: null, phone_on: null, phone_rolled: null, phone_bond_rolled: null, sweep_findings: null, sweep_dismissed: null, phone_plan_outcomes: null });   // 016: the scene detector's cursor + its on flag; 019: the phone's; 020: the nightly sweep's
+  eq('every known key, null when unset', store.getState(), { last_weekly_at: null, last_weekly_run: null, seed: null, extract_counters: null, degraded: null, scenes_cursor: null, scenes_on: null, phone_cursor: null, phone_on: null, phone_rolled: null, phone_bond_rolled: null, sweep_findings: null, sweep_dismissed: null, phone_plan_outcomes: null, phone_plan_held: null });   // 016: the scene detector's cursor + its on flag; 019: the phone's; 020: the nightly sweep's
   {
     // 020 E1: the sweep's two list keys may hold 64 KB; every other key stays at the small limit.
     const big = (n) => ({ filler: 'x'.repeat(n) });

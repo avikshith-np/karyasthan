@@ -48,7 +48,7 @@ import { buildSheet, placeWords, relWhen, timelineLines, planLines } from './fac
 import { jobWordsOf } from '../reducer.js';
 import { HIS_CHARTER, CAST_CHARTER, renderUser, charterFor, BODY_ASK_LINE, THREAD_LINES } from './charter.js';
 import { validateTexts, repeatedPhrase, repeatedToday, questionsIn, gistMiss, gistFallback, bodyAsk, gistAllows, gistIsAsk } from './schema.js';
-import { cueCheck, PLAN_PROMPT, PLAN_TURNS, renderPlanUser, validatePlanOutput, resolveTextPlan, appendPlan } from './plans.js';
+import { cueCheck, PLAN_PROMPT, PLAN_TURNS, MIN_CONFIDENCE, renderPlanUser, validatePlanOutput, resolveTextPlan, appendPlan, planMissing, mergeHeld } from './plans.js';
 import { createHash } from 'crypto';
 
 // Phone callers live under their own `life.phone.` prefix: texting never uses up the
@@ -59,7 +59,10 @@ export const CALLER_MIND = 'life.phone.mind';
 export const CALLER_CAST = 'life.phone.cast';
 // Plans from texts (owner 2026-11-01): one clerk call when two turns read like an agreement to meet.
 export const CALLER_PLAN = 'life.phone.plan';
-export const PLAN_MAX_PER_DAY = 12;
+export const PLAN_MAX_PER_DAY = 30;
+export const HOLD_TURNS = 6;           // an agreement short of a detail: this many more turns may finish it
+export const HOLD_QUIET_MIN = 30;      // ...and after this long with no new turn it goes ahead on defaults
+const HELD_KEY = 'phone_plan_held';
 export const PLAN_RECENT_HOURS = 6;   // a text plan with them this recent: later "see you then"s spend no call
 export const PER_TICK = 3;
 export const EXCHANGE_MAX = 8;
@@ -1075,7 +1078,8 @@ export async function planFromTexts(row, res) {
   if (!latest || latest.eventId !== eventId) return { outcome: 'nothing', code: 'not_newest' };
   const textOf = (r) => (r ? r.editedText || r.text || '' : '');
   // Small talk never reaches the clerk (and isn't logged: most turns end here).
-  if (!cueCheck(textOf(latest), textOf(previous))) return { outcome: 'nothing', code: 'no_cue' };
+  const held = heldOf(row.castId);
+  if (!held && !cueCheck(textOf(latest), textOf(previous))) return { outcome: 'nothing', code: 'no_cue' };
   const done = (outcome, code, extra = {}) => { logPlan(outcome, code, { id: eventId, ...extra }); return { outcome, code, ...extra }; };
   const ev = getEvent(eventId);
   if (!selfOrigin(ev) || ev.heavy === true || heavyChain(ev)) return done('nothing', 'origin');
@@ -1085,7 +1089,7 @@ export async function planFromTexts(row, res) {
   const since = at - PLAN_RECENT_HOURS * HOUR;
   for (const d of s0.decisions instanceof Map ? s0.decisions.values() : []) {
     if (goingTo(d) && d.committed?.by === 'text' && (d.subject?.castIds ?? []).includes(row.castId)
-      && finite(d.committed.at) && d.committed.at >= since) return done('nothing', 'already_planned');
+      && finite(d.committed.at) && d.committed.at >= since) { setHeld(row.castId, null); return done('nothing', 'already_planned'); }
   }
   const cap = await planCapReason(at, tz);
   if (cap) return done('nothing', cap);
@@ -1093,6 +1097,7 @@ export async function planFromTexts(row, res) {
   const user = renderPlanUser({
     at, tz, member: name, plans: plansOf(s0, row.castId, at, tz, { aheadHours: PLANS_AHEAD_HOURS }),
     thread: threadLines(s0, row.castId, tz).slice(-PLAN_TURNS),
+    held: held?.value ?? null,
   });
   let out;
   try { out = await deps.callRole('clerk', PLAN_PROMPT, user, { caller: CALLER_PLAN, maxTokens: 200, temperature: 0, timeoutMs: 30_000 }); } catch { out = null; }
@@ -1100,29 +1105,104 @@ export async function planFromTexts(row, res) {
   if (typeof out.text !== 'string' || (out.status && out.status !== 'ok')) return done('nothing', 'model_failed');
   const v = validatePlanOutput(out.text);
   if (!v.ok) return done('nothing', 'invalid');
-  const ownerChat = ownerAskEvent(row) !== null;
-  // Resolve and append on the fresh state, under the locks (the clerk call awaited).
+  let value = v.value;
+  if (held) {
+    // Being settled, and now called off.
+    if (!value.agreed) { setHeld(row.castId, null); return done('nothing', 'called_off'); }
+    value = mergeHeld(held.value, value);
+  }
+  return settlePlan(row.castId, eventId, value, { tz, ownerChat: ownerAskEvent(row) !== null, turns: (held?.turns ?? 0) + 1, done });
+}
+
+// Resolve and append on the fresh state, under the locks (the clerk call awaited). final: a held
+// plan out of time goes ahead on defaults; else an agreement short of a detail is held.
+async function settlePlan(castId, eventId, value, { tz, ownerChat, turns, final = false, done }) {
   let r;
   try {
     r = underLocks(() => store.inTransaction(() => {
       const s = deps.getState();
       if (!isObj(s) || gone(s, eventId)) return { ok: false, outcome: 'nothing', code: 'text_gone' };
-      if (store.lastLive(row.castId)?.eventId !== eventId) return { ok: false, outcome: 'nothing', code: 'superseded' };
+      if (!final && store.lastLive(castId)?.eventId !== eventId) return { ok: false, outcome: 'nothing', code: 'superseded' };
       const t = Math.max(nowSec(), Number.isSafeInteger(s.at) ? s.at : 0);
       const world = deps.worldOf(s) ?? deps.world;
-      const plan = resolveTextPlan(s, row.castId, v.value, { at: t, tz, world, ownerChat, rnd: rnd(eventId, 'plan', tz, t) });
+      const met = metPlaces(s, castId, t);
+      const out = final || turns > HOLD_TURNS;
+      if (!out && value.confidence >= MIN_CONFIDENCE) {
+        const miss = planMissing(value, s, world, met);
+        if (miss) return { ok: false, outcome: 'held', code: `held_${miss}`, at: t };
+      }
+      const plan = resolveTextPlan(s, castId, value, { at: t, tz, world, ownerChat, rnd: rnd(eventId, 'plan', tz, t), met, final: out, newId: eventId });
       if (!plan.ok) return plan;
-      const ids = appendPlan((e) => deps.append(e), { at: t, causeId: eventId, payload: plan.payload });
+      const add = (e) => deps.append(e);
+      if (plan.newHome) {
+        const { id, name, kind, lat, lon } = plan.newHome;
+        add({ type: 'place.created', at: t, actor: 'engine', causeId: eventId, payload: { id, name, kind, lat, lon } });
+        add({ type: 'cast.updated', at: t, actor: 'engine', causeId: eventId, payload: { castId, fields: { home: id } } });
+      }
+      const ids = appendPlan(add, { at: t, causeId: eventId, payload: plan.payload });
       return { ok: true, kind: plan.kind, ...ids };
     }));
     r = await r;
   } catch {
+    setHeld(castId, null);
     try { deps.rebuild(); } catch { /* the next tick re-reads */ }
     return done('nothing', 'append');
   }
-  if (!r.ok) return done(r.outcome, r.code, { kind: v.value.kind });
+  if (r.outcome === 'held') {
+    setHeld(castId, { eventId, at: r.at, turns, ownerChat, value });
+    return done('held', r.code, { kind: value.kind });
+  }
+  setHeld(castId, null);
+  if (!r.ok) return done(r.outcome, r.code, { kind: value.kind });
   try { deps.settle(); } catch { /* the next tick fits it */ }
-  return done('applied', v.value.kind, { kind: v.value.kind, decisionId: r.openedId });
+  return done('applied', value.kind, { kind: value.kind, decisionId: r.openedId });
+}
+
+// Held agreements: codes and the clerk's closed fields, never the words.
+function heldAll() {
+  const v = storyStateGet(HELD_KEY);
+  return isObj(v) ? v : {};
+}
+function heldOf(castId) {
+  const h = heldAll()[castId];
+  return isObj(h) && posInt(h.eventId) && isObj(h.value) ? h : null;
+}
+function setHeld(castId, rec) {
+  const all = heldAll();
+  if (!rec && !(castId in all)) return;
+  const next = { ...all };
+  if (rec) next[castId] = rec; else delete next[castId];
+  storyStatePatch({ [HELD_KEY]: next });
+}
+
+/** Where the two of them met, newest first: his own life only, never a chat's outing or a private place's name. */
+function metPlaces(s, castId, at) {
+  try {
+    const ids = [];
+    for (const e of listEvents({ types: ['activity.started'], from: at - 120 * DAY, to: at, order: 'desc', limit: 400 })) {
+      if (e.redacted || isExcludedId(s, e.id) || !selfOrigin(e) || !Array.isArray(e.payload?.withCast) || !e.payload.withCast.includes(castId)) continue;
+      const id = e.payload.placeId;
+      if (typeof id === 'string' && !ids.includes(id)) ids.push(id);
+    }
+    return ids;
+  } catch { return []; }
+}
+
+export const hasHeldPlans = () => Object.keys(heldAll()).length > 0;
+
+/** A held agreement nobody has added to for HOLD_QUIET_MIN goes ahead on defaults (run by the phone job). */
+export async function settleHeldPlans(at = nowSec()) {
+  const s = deps.getState();
+  if (!isObj(s)) return;
+  const tz = tzOf(s);
+  for (const castId of Object.keys(heldAll())) {
+    const h = heldOf(castId);
+    if (!h) { setHeld(castId, null); continue; }
+    if (at - h.at < HOLD_QUIET_MIN * 60) continue;
+    const done = (outcome, code, extra = {}) => { logPlan(outcome, code, { id: h.eventId, ...extra }); return { outcome, code, ...extra }; };
+    try { await settlePlan(castId, h.eventId, h.value, { tz, ownerChat: h.ownerChat === true, turns: h.turns, final: true, done }); }
+    catch { setHeld(castId, null); logPlan('nothing', 'error', { id: h.eventId }); }
+  }
 }
 
 // The owner's phone.text_set that started this turn's exchange (the turn itself, or a reply

@@ -773,6 +773,10 @@ async function phoneJob() {
       logger.warn({ evt: 'issue', where: 'arcs.phone.sweep', err: err?.name || 'Error' }, 'story: phone sweep failed');
     }
   }
+  // Only awaited when one is held: an await here on every job lets the rest of it interleave with a Director preview → apply.
+  try { if (phoneWorker.hasHeldPlans()) await phoneWorker.settleHeldPlans(t); } catch (err) {
+    logger.warn({ evt: 'issue', where: 'arcs.phone.held', err: err?.name || 'Error' }, 'story: held text plans not settled');
+  }
   try { phoneWorker.scan(); } catch (err) {
     logger.warn({ evt: 'issue', where: 'arcs.phone.scan', err: err?.name || 'Error' }, 'story: text triggers not scanned');
   }
